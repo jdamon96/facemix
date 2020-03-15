@@ -3,6 +3,7 @@ var express = require('express');
 var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
+const PORT = process.env.PORT || 3000;
 
 var twilio = require('twilio')(
   process.env.TWILIO_ACCOUNT_SID,
@@ -11,6 +12,6 @@ var twilio = require('twilio')(
 
 app.use(express.static('public'));
 
-http.listen(3000, function() {
-  console.log('listening on *:3000');
+http.listen(PORT, function() {
+  console.log(`listening on ${PORT}`);
 });
