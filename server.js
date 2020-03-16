@@ -33,6 +33,25 @@ io.on('connection', function(socket){
 
     });
 
+    socket.on('token', function(){
+        twilio.tokens.create(function(err, response){
+            if(err) {
+                console.log(err);
+            }
+            else {
+                socket.emit('token', response);
+            }
+        });
+    });
+
+    socket.on('candidate', function(candidate){
+        socket.broadcast.emit('candidate', candidate);
+    });
+
+    socket.on('offer', function(offer){
+        socket.broadcast.emit('offer', offer);
+    });
+
 });
 
 

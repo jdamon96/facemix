@@ -21,7 +21,47 @@ var VideoChat = {
         VideoChat.localVideo.srcObject = stream;
         VideoChat.socket.emit('join', 'test');
         VideoChat.socket.on('ready', VideoChat.readyToCall);
+        VideoChat.socket.on('offer', VideoChat.onOffer);
     },
+
+    onOffer: function(offer){
+        console.log('Got an offer');
+        console.log(offer);
+    },
+
+    onToken: function(token){
+        VideoChat.peerConnection = new RTCPeerConnection({
+            iceServers: token.iceServers
+        });
+
+        VideoChat.peerConnection.onicecandidate = VideoChat.onIceCandidate;
+
+        // We set up the socket listener for the 'candidate' event within this onToken function because this is when we create the peerConnection and will be ready to deal with candidates
+        VideoChat.socket.on('candidate', VideoChat.onCandidate);
+
+        VideoChat.peerConnection.addStream(VideoChat.localStream);
+        VideoChat.peerConnection.createOffer(
+            function(offer){
+                VideoChat.peerConnection.setLocalDescription(offer);
+                socket.emit('offer', JSON.stringify(offer));
+            },
+            function(err){
+                console.log(err);
+            }
+        );
+    },
+
+    onIceCandidate: function(event){
+        if(event.candidate){
+            console.log('Generated candidate');
+            VideoChat.socket.emit('candidate', JSON.stringify(event.candidate));
+        }
+    },
+
+    onCandidate: function(candidate){
+        rtcCandidate = new RTCIceCandidate(JSON.parse(candidate));
+        VideoChat.peerConnection.addIceCandidate(rtcCandidate);
+    }
 
     readyToCall: function(event){
         VideoChat.callButton.removeAttribute('disabled');
@@ -32,7 +72,8 @@ var VideoChat = {
     },
 
     startCall: function(event){
-        console.log('things are going as planned');
+        VideoChat.socket.on('token', VideoChat.onToken);
+        VideoChat.socket.emit('token');
     }
 
 };
