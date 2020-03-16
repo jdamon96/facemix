@@ -43,7 +43,7 @@ var VideoChat = {
         VideoChat.peerConnection.createOffer(
             function(offer){
                 VideoChat.peerConnection.setLocalDescription(offer);
-                socket.emit('offer', JSON.stringify(offer));
+                VideoChat.socket.emit('offer', JSON.stringify(offer));
             },
             function(err){
                 console.log(err);
