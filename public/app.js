@@ -61,7 +61,7 @@ var VideoChat = {
     onCandidate: function(candidate){
         rtcCandidate = new RTCIceCandidate(JSON.parse(candidate));
         VideoChat.peerConnection.addIceCandidate(rtcCandidate);
-    }
+    },
 
     readyToCall: function(event){
         VideoChat.callButton.removeAttribute('disabled');
