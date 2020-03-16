@@ -1,4 +1,6 @@
 var VideoChat = {
+    var connected = false;
+    var localICECandidates = [];
 
     socket: io(),
 
@@ -43,6 +45,7 @@ var VideoChat = {
 
     createAnswer: function(offer){
         return function(){
+            connected = true;
             rtcOffer = new RTCSessionDescription(JSON.parse(offer));
             VideoChat.peerConnection.setRemoteDescription(rtcOffer);
             VideoChat.peerConnection.createAnswer(
@@ -81,12 +84,28 @@ var VideoChat = {
     onAnswer: function(answer){
         var rtcAnswer = new RTCSessionDescription(JSON.parse(answer));
         VideoChat.peerConnection.setRemoteDescription(rtcAnswer);
+        // Set connected to true
+        VideoChat.connected = true;
+        // Take buffer of localICECandidates and emit now that connected
+        VideoChat.localICECandidates.forEach(candidate => {
+            VideoChat.socket.emit('candidate', JSON.stringify(candidate));
+        });
+        // Re-initialize buffer to empty
+        VideoChat.localICECandidates = [];
     },
 
+    /* 
+    ** Here we check if the VideoChat is connected before sending the candidate to the server.
+    ** If the VideoChat is not connected, then we add them to a local buffer (the array localICECandidates)
+    */
     onIceCandidate: function(event){
         if(event.candidate){
-            console.log('Generated candidate');
-            VideoChat.socket.emit('candidate', JSON.stringify(event.candidate));
+            if(VideoChat.connected){
+                console.log('Generated candidate');  
+                VideoChat.socket.emit('candidate', JSON.stringify(event.candidate));
+            } else {
+                VideoChat.localICECandidates.push(event.candidate)
+            }
         }
     },
 
