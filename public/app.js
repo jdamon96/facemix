@@ -1,6 +1,6 @@
 var VideoChat = {
-    connected: false;
-    localICECandidates: [];
+    connected: false,
+    localICECandidates: [],
 
     socket: io(),
 
