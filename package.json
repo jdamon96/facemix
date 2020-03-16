@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "bundle": "./node_modules/browserify/bin/cmd.js public/app.js public/scripts/bundle.js",
+    "bundle": "./node_modules/browserify/bin/cmd.js ./public/app.js ./public/bundle.js",
     "postintall": "npm run bundle"
   },
   "dependencies": {
