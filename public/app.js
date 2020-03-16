@@ -1,4 +1,4 @@
-import adapter from 'webrtc-adapter';
+const adapter = require('webrtc-adapter');
 
 var VideoChat = {
     connected: false,
