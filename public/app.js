@@ -25,21 +25,11 @@ var VideoChat = {
     },
 
     onOffer: function(offer){
-        console.log('Got an offer');
-        console.log(offer);
+        VideoChat.socket.on('token', VideoChat.onToken(VideoChat.createAnswer(offer)));
+        VideoChat.socket.emit('token');
     },
 
-    onToken: function(token){
-        VideoChat.peerConnection = new RTCPeerConnection({
-            iceServers: token.iceServers
-        });
-
-        VideoChat.peerConnection.onicecandidate = VideoChat.onIceCandidate;
-
-        // We set up the socket listener for the 'candidate' event within this onToken function because this is when we create the peerConnection and will be ready to deal with candidates
-        VideoChat.socket.on('candidate', VideoChat.onCandidate);
-
-        VideoChat.peerConnection.addStream(VideoChat.localStream);
+    createOffer: function(){
         VideoChat.peerConnection.createOffer(
             function(offer){
                 VideoChat.peerConnection.setLocalDescription(offer);
@@ -49,6 +39,48 @@ var VideoChat = {
                 console.log(err);
             }
         );
+    },
+
+    createAnswer: function(offer){
+        return function(){
+            rtcOffer = new RTCSessionDescription(JSON.parse(offer));
+            VideoChat.peerConnection.setRemoteDescription(rtcOffer);
+            VideoChat.peerConnection.createAnswer(
+                function(answer){
+                    VideoChat.peerConnection.setLocalDescription(answer);
+                    VideoChat.socket.emit('answer', JSON.stringify(answer));
+                },
+                function(err){
+                    console.log(err);
+                }
+            );
+        }
+    },
+
+    onToken: function(callback){
+        return function(token){
+            VideoChat.peerConnection = new RTCPeerConnection({
+                iceServers: token.iceServers
+            });
+
+            VideoChat.peerConnection.addStream(VideoChat.localStream);
+            VideoChat.peerConnection.onicecandidate = VideoChat.onIceCandidate;
+            VideoChat.peerConnection.onaddstream = VideoChat.onAddStream;
+            // We set up the socket listener for the 'candidate' event within this onToken function because this is when we create the peerConnection and will be ready to deal with candidates
+            VideoChat.socket.on('candidate', VideoChat.onCandidate);
+            VideoChat.socket.on('answer', VideoChat.onAnswer);
+            callback();
+        }
+    },
+
+    onAddStream: function(event){
+        VideoChat.remoteVideo = document.getElementById('remote-video');
+        VideoChat.remoteVideo.srcObject = event.stream;
+    },
+
+    onAnswer: function(answer){
+        var rtcAnswer = new RTCSessionDescription(JSON.parse(answer));
+        VideoChat.peerConnection.setRemoteDescription(rtcAnswer);
     },
 
     onIceCandidate: function(event){
@@ -72,7 +104,7 @@ var VideoChat = {
     },
 
     startCall: function(event){
-        VideoChat.socket.on('token', VideoChat.onToken);
+        VideoChat.socket.on('token', VideoChat.onToken(VideoChat.createOffer));
         VideoChat.socket.emit('token');
     }
 
