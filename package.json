@@ -8,7 +8,12 @@
   },
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "bundle": "./node_modules/browserify/bin/cmd.js public/app.js public/scripts/bundle.js",
+    "postintall": "npm run bundle"
+  },
   "dependencies": {
+    "browserify": "^16.5.0",
     "express": "^4.17.1",
     "socket.io": "^2.3.0",
     "twilio": "^3.40.0",
