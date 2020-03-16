@@ -1,6 +1,6 @@
 var VideoChat = {
-    var connected = false;
-    var localICECandidates = [];
+    connected: false;
+    localICECandidates: [];
 
     socket: io(),
 
@@ -45,7 +45,7 @@ var VideoChat = {
 
     createAnswer: function(offer){
         return function(){
-            connected = true;
+            VideoChat.connected = true;
             rtcOffer = new RTCSessionDescription(JSON.parse(offer));
             VideoChat.peerConnection.setRemoteDescription(rtcOffer);
             VideoChat.peerConnection.createAnswer(
