@@ -132,8 +132,8 @@ var VideoChat = {
 };
 
 // get references to DOM button objects
-VideoChat.videoButton = document.getElementById('get-video');
-VideoChat.callButton = document.getElementById('call');
+VideoChat.videoButton = document.getElementById('find-chat');
+VideoChat.callButton = document.getElementById('chat-with-friend');
 
 // add event listeners to DOM button objects
 VideoChat.videoButton.addEventListener(
