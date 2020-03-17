@@ -120,8 +120,8 @@ var VideoChat = {
         VideoChat.callButton.removeAttribute('disabled');
     },
 
-    noMediaStream: function(){
-        console.log('No media stream available');
+    noMediaStream: function(error){
+        console.log('getUserMedia() error: ' + error);
     },
 
     startCall: function(event){
