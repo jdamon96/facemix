@@ -8,14 +8,15 @@
 
   <body>
 
-    <h1>Video Chat</h1>
-    <video id="local-video" height="150" autoplay></video>
-    <video id="remote-video" height="150" autoplay></video>
-
-    <div>
-      <button id="get-video" onclick="">Get Video</button>
-      <button id="call" disabled="disabled" onclick="">Call</button>
+    <div class="button-container">
+      <button id="find-chat" onclick="">Find a chat</button>
+      <button id="chat-with-friend" onclick="">Chat with a friend</button>
     </div>
+
+    <canvas id="client_canvas" width="600" height="600">
+        Browser does not support WebGL
+    </canvas>
+
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="./bundle.js"></script>

@@ -7,7 +7,6 @@ var VideoChat = {
     socket: io(),
 
     requestMediaStream: function(event){
-        alert('u jsut clicked');
         navigator.mediaDevices
             .getUserMedia({video: true, audio: true})
             .then(stream => {
