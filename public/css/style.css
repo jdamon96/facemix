@@ -20,21 +20,25 @@ body {
 }
 
 #find-chat {
-    font-size: 16px;
+    left: 20%;
+    margin: 5px;
+    font-size: 32px;
     font-weight: bold;
 	border: 3px solid black;
     border-radius: 5px;
-    width: 400px;
-    height: 100px;
+    width: 300px;
+    height: 70px;
 }
 
 #chat-with-friend {
-    font-size: 16px;
+    left: 20%;
+    margin: 5px;
+    font-size: 32px;
     font-weight: bold;
     border: 3px solid black;
     border-radius: 5px;
-    width: 400px;
-    height: 100px;
+    width: 300px;
+    height: 70px;
 }
 
 #self-preview-canvas {
