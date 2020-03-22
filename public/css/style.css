@@ -20,6 +20,8 @@ body {
 }
 
 #find-chat {
+    font-size: 16px;
+    font-weight: bold;
 	border: 3px solid black;
     border-radius: 5px;
     width: 400px;
@@ -27,6 +29,8 @@ body {
 }
 
 #chat-with-friend {
+    font-size: 16px;
+    font-weight: bold;
     border: 3px solid black;
     border-radius: 5px;
     width: 400px;
