@@ -22,8 +22,8 @@ body {
 #find-chat {
     position: absolute;
     display: block;
-    margin: 0 auto;
-    top: 20%;
+    left: 10%;
+    top: 30%;
 
     width: 300px;
     height: 70px;
@@ -43,8 +43,8 @@ body {
 #chat-with-friend {
     position: absolute;
     display: block;
-    margin: 0 auto;
-    top: 40%;
+    left: 10%;
+    top: 60%;
 
     width: 300px;
     height: 70px;
