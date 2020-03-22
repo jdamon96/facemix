@@ -1,7 +1,10 @@
+html, body {
+    height: 100%;
+}
+
 body {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    height: 100%;
 }
 
 .button-container {
@@ -17,14 +20,14 @@ body {
 }
 
 #find-chat {
-	border: 5px solid black;
+	border: 3px solid black;
     border-radius: 5px;
     width: 400px;
     height: 100px;
 }
 
 #chat-with-friend {
-    border: 5px solid black;
+    border: 3px solid black;
     border-radius: 5px;
     width: 400px;
     height: 100px;
