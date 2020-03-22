@@ -1,13 +1,32 @@
-.button-container {
+body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
 
+.button-container {
+    grid-row: 1 / 2;
+    height: 100%;
+
+    position: relative;
+}
+
+.canvas-container {
+    grid-row: 2 / 3;
+    height: 100%;
 }
 
 #find-chat {
-	background-color: red;
+	border: 5px solid black;
+    border-radius: 5px;
+    width: 400px;
+    height: 100px;
 }
 
 #chat-with-friend {
-
+    border: 5px solid black;
+    border-radius: 5px;
+    width: 400px;
+    height: 100px;
 }
 
 #self-preview-canvas {
