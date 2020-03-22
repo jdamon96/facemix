@@ -39,7 +39,7 @@ body {
 }
 
 #find-chat:active {
-    margin: 5px;
+    padding: 5px;
 }
 
 #chat-with-friend {
@@ -64,7 +64,7 @@ body {
 }
 
 #chat-with-friend:active {
-    margin: 5px;
+    padding: 5px;
 }
 
 /* Homepage Self Preview section CSS*/
