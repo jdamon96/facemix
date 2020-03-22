@@ -17,6 +17,7 @@ body {
 }
 
 #find-chat {
+    outline: none;
     position: absolute;
     display: block;
     left: 10%;
@@ -42,6 +43,7 @@ body {
 }
 
 #chat-with-friend {
+    outline: none;
     position: absolute;
     display: block;
     left: 10%;
