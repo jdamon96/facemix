@@ -7,16 +7,13 @@ body {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
+/* Homepage Controller section CSS*/
+
 .button-container {
     grid-column: 1 / 2;
     height: 100%;
 
     position: relative;
-}
-
-.canvas-container {
-    grid-column: 2 / 4;
-    height: 100%;
 }
 
 #find-chat {
@@ -60,6 +57,22 @@ body {
     background-color: #f9e5e9;
 }
 
-#self-preview-canvas {
+/* Homepage Self Preview section CSS*/
 
+.canvas-container {
+    grid-column: 2 / 4;
+    height: 100%;
+
+    position: relative;
+}
+
+#self-preview-canvas {
+    width: 75%;
+    height: 75%;
+
+    border: 1px solid blue;
+
+    position: absolute;
+    left: 12.5%;
+    top: 12.5%;
 }	
