@@ -20,25 +20,34 @@ body {
 }
 
 #find-chat {
-    left: 20%;
-    margin: 5px;
-    font-size: 32px;
-    font-weight: bold;
-	border: 3px solid black;
-    border-radius: 5px;
+    display: block;
+    margin: 0 auto;
+    margin-top: 300px;
+
     width: 300px;
     height: 70px;
+
+    border: 3px solid black;
+    border-radius: 5px;
+
+    font-size: 32px;
+    font-weight: bold;
+
 }
 
 #chat-with-friend {
-    left: 20%;
-    margin: 5px;
-    font-size: 32px;
-    font-weight: bold;
-    border: 3px solid black;
-    border-radius: 5px;
+    display: block;
+    margin: 0 auto;
+    margin-top: 600px;
+
     width: 300px;
     height: 70px;
+
+    border: 3px solid black;
+    border-radius: 5px;
+
+    font-size: 32px;
+    font-weight: bold;
 }
 
 #self-preview-canvas {
