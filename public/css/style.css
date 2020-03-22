@@ -34,37 +34,13 @@ body {
 
 }
 
+/* hover visual effect*/
 #find-chat:hover {
     background-color: #009AD5;
 }
 
+/* onClick visual effect*/
 #find-chat:active {
-    transform: scale(.95);
-    box-shadow: 0 3px 15px -2px;
-}
-
-#chat-with-friend {
-    outline: none;
-    position: absolute;
-    display: block;
-    left: 10%;
-    top: 55%;
-
-    width: 300px;
-    height: 70px;
-
-    border: 3px solid black;
-    border-radius: 5px;
-
-    font-size: 32px;
-    font-weight: bold;
-}
-
-#chat-with-friend:hover {
-    background-color: #f9e5e9;
-}
-
-#chat-with-friend:active {
     transform: scale(.95);
     box-shadow: 0 3px 15px -2px;
 }
