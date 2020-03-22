@@ -35,6 +35,10 @@ body {
 
 }
 
+#find-chat:hover {
+    background-color: #009AD5;
+}
+
 #chat-with-friend {
     display: block;
     margin: 0 auto;
@@ -48,6 +52,10 @@ body {
 
     font-size: 32px;
     font-weight: bold;
+}
+
+#chat-with-friend:hover {
+    background-color: #f9e5e9;
 }
 
 #self-preview-canvas {
