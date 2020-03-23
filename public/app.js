@@ -100,9 +100,8 @@ function handleCameraToggle(){
 
 }
 
-//var nextChat button = document.getElementById('next-chat');
-
-function handleNextChat(){
-    // leave the room and send a message to the other client to leave their room and enter the queing process
-}
+cameraToggleButton.addEventListener(
+    'click',
+    handleCameraToggle
+)
 
