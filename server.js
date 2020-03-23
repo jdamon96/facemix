@@ -4,6 +4,7 @@ var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 const PORT = process.env.PORT || 3000;
+const LOBBY_NAME = 'main-lobby';
 
 var twilio = require('twilio')(
   process.env.TWILIO_ACCOUNT_SID,
@@ -14,9 +15,9 @@ app.use(express.static('public'));
 
 io.on('connection', function(socket){
 
-    socket.on('join', function(room){
-        console.log('ROOM_NAME: ' + room);
-        var clients = io.sockets.adapter.rooms[room];
+    socket.on('join', function(){
+        socket.join(LOBBY_NAME);
+        var clients = io.sockets.adapter.rooms[LOBBY_NAME];
         var numClients = typeof clients !=='undefined' ? clients.length: 0;
         console.log('NUM CLIENTS: ' + numClients);
 
@@ -25,7 +26,6 @@ io.on('connection', function(socket){
             content: numClients 
         });
 
-        socket.join(room);
 /*
         if(numClients == 0){
             socket.join(room);
