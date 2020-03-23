@@ -22,9 +22,9 @@ io.on('connection', function(socket){
         return (id1 + id2);
     }
 
-    socket.on('join', function(room_name){
+    socket.on('join', function(roomname){
 
-        if(!room_name){
+        if(!roomname){
             // if there is someone else looking for a chat partner, make a unique room, join it, and invite them to join it
             if(waitlist[0]){
                 const chat_partner_id = waitlist[0];
@@ -33,16 +33,16 @@ io.on('connection', function(socket){
                 waitlist.shift(); // removes the item from the beginning of the array 
                 console.log('pairing with ' + chat_partner_id);
 
-                const new_room_name = getRoomName(socket.id, chat_partner_id);
+                const room_name = getRoomName(socket.id, chat_partner_id);
 
                 const roominvitation = {
                     recipient: chat_partner_id,
-                    room_name: new_room_name
+                    room_name: room_name
                 }
 
                 //client joins the room for them and their chat partner
-                socket.join(new_room_name);
-                console.log(socket.id + ' joined room ' + new_room_name);
+                socket.join(room_name);
+                console.log(socket.id + ' joined room ' + room_name);
 
                 //sends invitation to other sockets w/ recipient details for chat partner to check
                 socket.broadcast.emit('roominvitation', roominvitation);
@@ -63,11 +63,63 @@ io.on('connection', function(socket){
             }            
         }
 
-        if(room_name){
-            socket.join(room_name);
-            console.log(socket.id + ' joined room ' + room_name);
+        if(roomname){
+            socket.join(roomname);
+            console.log(socket.id + ' joined room ' + roomname);
         }
+    
+/*    
+        var clients = io.sockets.adapter.rooms[LOBBY_NAME];
+        var numClients = typeof clients !=='undefined' ? clients.length: 0;
+        
+
+        io.sockets.in(socket.room).emit().emit('message', {
+            title: 'room_count',
+            content: numClients 
+        });
+
+        if(numClients == 0){
+            socket.join(room);
+        }
+        else if (numClients == 1){
+            socket.join(room);
+            socket.emit('ready', room);
+            socket.broadcast.emit('ready', room);
+        }
+        else {
+            socket.emit('full', room);
+        }
+
+        */
 
     });
 
+    socket.on('token', function(){
+        twilio.tokens.create(function(err, response){
+            if(err) {
+                console.log(err);
+            }
+            else {
+                socket.emit('token', response);
+            }
+        });
+    });
+
+    socket.on('candidate', function(candidate){
+        socket.broadcast.emit('candidate', candidate);
+    });
+
+    socket.on('offer', function(offer){
+        socket.broadcast.emit('offer', offer);
+    });
+
+    socket.on('answer', function(answer){
+        socket.broadcast.emit('answer', answer);
+    });
+
+});
+
+
+http.listen(PORT, function() {
+  console.log(`listening on ${PORT}`);
 });
