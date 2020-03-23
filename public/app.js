@@ -57,11 +57,17 @@ function handleRoomInvitation(roomInvitation){
 
 socket.on('message', handleMessage);
 
+
 /**********************************/
 /* Button handlers and event listeners */
 /**********************************/
 
 var findChatButton = document.getElementById('find-chat');
+
+/* disable 'find chat' button if no access to client media feed */
+if(localMediaStream == null){
+    findChatButton.disabled = true;
+}
 
 function handleFindChat(){
     socket.emit('join');
@@ -72,6 +78,27 @@ findChatButton.addEventListener(
     'click',
     handleFindChat
 )
+
+var cameraToggleButton = document.getElementById('camera-toggle');
+
+function handleCameraToggle(){
+
+    // get access to client media streams
+    navigator.mediaDevice
+        .getUserMedia({video: true, audio: true})
+        .then(stream => {
+            console.log('Media stream acquired');
+            localMediaStream = stream;
+        })
+        .catch(error => {
+            console.log('No media stream');
+            console.log(error);
+        });
+
+    // enable the find chat button
+    findChatButton.disabled = false;
+
+}
 
 //var nextChat button = document.getElementById('next-chat');
 
