@@ -42,7 +42,7 @@ io.on('connection', function(socket){
 
         // if there's no one else waiting for a chat partner, join the waitlist
         } else {
-            waitlist.push(socket.id;);
+            waitlist.push(socket.id);
             // tell the client it's now waiting
             socket.emit('message', {
                 title: 'waiting',
@@ -51,7 +51,7 @@ io.on('connection', function(socket){
         }
 
 
-        
+
 
     
 /*    
