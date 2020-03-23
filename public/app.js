@@ -70,6 +70,6 @@ var findChatButton = document.getElementById('find-chat');
 
 findChatButton.addEventListener(
     'click',
-    findChatHandler()
+    findChatHandler
 )
 
