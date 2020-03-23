@@ -32,7 +32,8 @@ var socket = io();
 /********************************/
 
 function handleMessage(message){
-    console.log('Message: ' + message);
+    console.log(message.title);
+    console.log(message.content);
 }
 
 function findChatHandler(){

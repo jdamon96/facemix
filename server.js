@@ -19,12 +19,10 @@ io.on('connection', function(socket){
         var clients = io.sockets.adapter.rooms[room];
         var numClients = typeof clients !=='undefined' ? clients.length: 0;
 
-        var message = {
+        socket.emit('message', {
             title: 'room_count',
             content: numClients
-        }
-
-        socket.emit('message', message);
+        });
 
 /*
         if(numClients == 0){
