@@ -46,7 +46,7 @@ function handleMessage(message){
 function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
         console.log('Found chat partner');
-        socket.join(roomInvitation.room_name);
+        socket.join('join', roomInvitation.room_name);
     }
 }
 
