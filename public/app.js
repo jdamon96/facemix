@@ -3,6 +3,7 @@
 /********************************/
 
 const adapter = require('webrtc-adapter');
+const ChatSession = require('./js/ChatSession.js')
 
 /********************************/
 /* Declare required global variables */
@@ -24,27 +25,26 @@ var localMediaStream = null;
 
 var peerMediaStream = null;
 
+var socket = io();
 
 /********************************/
 /* Define required functions */
 /********************************/
 
+function handleMessage(message){
+    console.log('Message: ' + message);
+}
 
+function findChatHandler(){
+    socket.emit('join', 'test');
+
+    socket.on('message', handleMessage());
+}
 
 /********************************/
 /* Initial code run upon website load */
 /********************************/
 
-
-navigator.mediaDevices
-    .getUserMedia({video: true, audio: true})
-    .then(stream => {
-        localMediaStream = stream;
-        console.log(localMediaStream);
-    })
-    .catch(error => {
-        console.log(error);
-    });
 
 
 /**********************************/

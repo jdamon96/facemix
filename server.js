@@ -15,10 +15,18 @@ app.use(express.static('public'));
 io.on('connection', function(socket){
 
     socket.on('join', function(room){
-        
+        console.log('ROOM_NAME: ' + room);
         var clients = io.sockets.adapter.rooms[room];
         var numClients = typeof clients !=='undefined' ? clients.length: 0;
 
+        var message = {
+            title: 'room_count',
+            content: numClients
+        }
+
+        socket.emit('message', message);
+
+/*
         if(numClients == 0){
             socket.join(room);
         }
@@ -30,6 +38,8 @@ io.on('connection', function(socket){
         else {
             socket.emit('full', room);
         }
+
+        */
 
     });
 
