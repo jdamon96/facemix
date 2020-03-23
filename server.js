@@ -18,10 +18,11 @@ io.on('connection', function(socket){
         console.log('ROOM_NAME: ' + room);
         var clients = io.sockets.adapter.rooms[room];
         var numClients = typeof clients !=='undefined' ? clients.length: 0;
-        console.log('NUM CLIENTS: ' + numClients)
-        socket.emit('message', {
+        console.log('NUM CLIENTS: ' + numClients);
+
+        io.sockets.in(socket.room).emit().emit('message', {
             title: 'room_count',
-            content: numClients
+            content: numClients 
         });
 
 /*
