@@ -3,7 +3,6 @@
 /********************************/
 
 const adapter = require('webrtc-adapter');
-import VideoCall from './js/VideoCall.js'
 
 /********************************/
 /* Declare required global variables */
@@ -45,14 +44,7 @@ navigator.mediaDevices
     })
     .catch(error => {
         console.log(error);
-    })
-
-
-
-
-
-
-
+    });
 
 
 /**********************************/
