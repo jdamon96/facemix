@@ -67,30 +67,6 @@ io.on('connection', function(socket){
             socket.join(room_name);
             console.log(socket.id + ' joined room ' + room_name);
         }
-    
-/*    
-        var clients = io.sockets.adapter.rooms[LOBBY_NAME];
-        var numClients = typeof clients !=='undefined' ? clients.length: 0;
-        
-
-        io.sockets.in(socket.room).emit().emit('message', {
-            title: 'room_count',
-            content: numClients 
-        });
-
-        if(numClients == 0){
-            socket.join(room);
-        }
-        else if (numClients == 1){
-            socket.join(room);
-            socket.emit('ready', room);
-            socket.broadcast.emit('ready', room);
-        }
-        else {
-            socket.emit('full', room);
-        }
-
-        */
 
     });
 
