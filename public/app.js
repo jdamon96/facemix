@@ -32,14 +32,28 @@ var socket = io();
 /********************************/
 
 function handleMessage(message){
-    console.log(message.title);
-    console.log(message.content);
+
+    switch(message.title){
+        case 'waiting':
+            waitingForChat = message.content;
+            console.log('Waiting for chat partner: ' + waitingForChat);
+            break;
+        case: 'room_count':
+            console.log('room count: ' + message.contents)
+    }
+}
+
+function handleRoomInvitation(roomInvitation){
+    if(socket.id === roomInvitation.recipient){
+        console.log('Found chat partner');
+        socket.join(roomInivitation.room_name);
+    }
 }
 
 function findChatHandler(){
-    socket.emit('join', 'test');
+    socket.emit('join');
 
-    socket.on('message', handleMessage);
+    socket.on('roominvitation', handleRoomInvitation);
 }
 
 /********************************/
