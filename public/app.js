@@ -38,7 +38,7 @@ function handleMessage(message){
             waitingForChat = message.content;
             console.log('Waiting for chat partner: ' + waitingForChat);
             break;
-        case: 'room_count':
+        case 'room_count':
             console.log('room count: ' + message.contents)
     }
 }
