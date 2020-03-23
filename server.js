@@ -28,9 +28,13 @@ io.on('connection', function(socket){
             // if there is someone else looking for a chat partner, make a unique room, join it, and invite them to join it
             if(waitlist[0]){
                 const chat_partner_id = waitlist[0];
+
+                console.log(chat_partner_id + ' is next on the waitlist');
                 waitlist.shift(); // removes the item from the beginning of the array 
                 console.log('pairing with ' + chat_partner_id);
+
                 const room_name = getRoomName(socket.id, chat_partner_id);
+
                 const roominvitation = {
                     recipient: chat_partner_id,
                     room_name: room_name
@@ -38,12 +42,18 @@ io.on('connection', function(socket){
 
                 //client joins the room for them and their chat partner
                 socket.join(room_name);
+                console.log(socket.id + ' joined room ' + room_name);
 
                 //sends invitation to other sockets w/ recipient details for chat partner to check
                 socket.broadcast.emit('roominvitation', roominvitation);
+                console.log('room invitation sent')
+                console.log(roominvitation);
+
 
             // if there's no one else waiting for a chat partner, join the waitlist
             } else {
+                console.log('Waitlist is empty');
+                console.log('Adding ' + socket.id + ' to the waitlist');
                 waitlist.push(socket.id);
                 // tell the client it's now waiting
                 socket.emit('message', {
@@ -55,6 +65,7 @@ io.on('connection', function(socket){
 
         if(roomname){
             socket.join(roomname);
+            console.log(socket.id + ' joined room ' + room_name);
         }
     
 /*    
