@@ -70,7 +70,7 @@ function handleFindChat(){
 
 findChatButton.addEventListener(
     'click',
-    handleFindeChat
+    handleFindChat
 )
 
 //var nextChat button = document.getElementById('next-chat');
