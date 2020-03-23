@@ -39,7 +39,7 @@ function handleMessage(message){
 function findChatHandler(){
     socket.emit('join', 'test');
 
-    socket.on('message', handleMessage());
+    socket.on('message', handleMessage);
 }
 
 /********************************/
