@@ -50,11 +50,6 @@ function handleRoomInvitation(roomInvitation){
     }
 }
 
-function findChatHandler(){
-    socket.emit('join');
-
-    socket.on('roominvitation', handleRoomInvitation);
-}
 
 /********************************/
 /* Initial code run upon website load */
@@ -68,8 +63,19 @@ socket.on('message', handleMessage);
 
 var findChatButton = document.getElementById('find-chat');
 
+function handleFindChat(){
+    socket.emit('join');
+    socket.on('roominvitation', handleRoomInvitation);
+}
+
 findChatButton.addEventListener(
     'click',
-    findChatHandler
+    handleFindeChat
 )
+
+//var nextChat button = document.getElementById('next-chat');
+
+function handleNextChat(){
+    // leave the room and send a message to the other client to leave their room and enter the queing process
+}
 
