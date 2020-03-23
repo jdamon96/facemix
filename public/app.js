@@ -60,7 +60,7 @@ function findChatHandler(){
 /* Initial code run upon website load */
 /********************************/
 
-
+socket.on('message', handleMessage);
 
 /**********************************/
 /* Button handlers and event listeners */
