@@ -25,6 +25,7 @@ io.on('connection', function(socket){
             content: numClients 
         });
 
+        socket.join(room);
 /*
         if(numClients == 0){
             socket.join(room);
