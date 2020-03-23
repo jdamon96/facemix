@@ -84,7 +84,7 @@ var cameraToggleButton = document.getElementById('camera-toggle');
 function handleCameraToggle(){
 
     // get access to client media streams
-    navigator.mediaDevice
+    navigator.mediaDevices
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Media stream acquired');
