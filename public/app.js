@@ -20,6 +20,8 @@ var chatPartner = null;
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
 
+var model;
+
 var socket = io();
 
 /********************************/
@@ -45,18 +47,24 @@ function handleRoomInvitation(roomInvitation){
     }
 }
 
-async function loadModel(){
-    return await facemesh.load();
-}
+
 
 /********************************/
 /* Initial code run upon website load */
 /********************************/
 
-const model = async () => {
-    await loadModel();
+async function getScaledMesh() {
+    const video = document.getElementById('videoElement');
+    const faces = await model.estimateFaces(video);
+    return faces[0].scaledMesh;
 }
-console.log(model);
+async function logScaledMesh() {
+    setInterval(async () => {
+        var scaledMesh = await getScaledMesh();
+        console.log(scaledMesh);
+        /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
+    }, 100);
+}
 
 socket.on('message', handleMessage);
 
@@ -106,10 +114,6 @@ Can't be MediaStream
 * which is then passed to model.estimateFaces
 */
 
-async function getFaces(){
-    const faces = await model.estimateFaces(localVideo);
-    return faces;
-}
 
 function handleCameraToggle(){
 
@@ -119,9 +123,7 @@ function handleCameraToggle(){
         .then(stream => {
             console.log('Media stream acquired');
             localVideo.localStream = stream;
-
-
-             
+            logScaledMesh();             
         })
         .catch(error => {
             console.log('No media stream');
