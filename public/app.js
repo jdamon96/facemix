@@ -118,7 +118,7 @@ function handleCameraToggle(){
             }, 100);
 
              
-        });
+        })
         .catch(error => {
             console.log('No media stream');
             console.log(error);
