@@ -21,8 +21,6 @@ var chatPartner = null;
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
 
-var model;
-
 var socket = io();
 
 /********************************/
@@ -49,16 +47,17 @@ function handleRoomInvitation(roomInvitation){
 }
 
 async function loadModel(){
-    model = await facemesh.load();
+    return await facemesh.load();
 }
 
 /********************************/
 /* Initial code run upon website load */
 /********************************/
 
+const model = loadModel();
 
 socket.on('message', handleMessage);
-loadModel();
+
 
 
 /**********************************/
@@ -105,7 +104,12 @@ Can't be MediaStream
 * which is then passed to model.estimateFaces
 */
 
-async function handleCameraToggle(){
+async function getFaces(){
+    const faces = await model.estimateFaces(localVideo);
+    return faces;
+}
+
+function handleCameraToggle(){
 
     // get access to client media streams
     navigator.mediaDevices
@@ -113,11 +117,8 @@ async function handleCameraToggle(){
         .then(stream => {
             console.log('Media stream acquired');
             localVideo.localStream = stream;
-            
-            console.log(model);
-            const faces = await model.estimateFaces(localVideo);
 
-            console.log(faces);
+
              
         })
         .catch(error => {
@@ -125,6 +126,8 @@ async function handleCameraToggle(){
             console.log(error);
         });
 
+    // get faces
+    const faces = getFaces();
     // enable the find chat button
     findChatButton.disabled = false;
 
