@@ -136,7 +136,7 @@ function handleCameraToggle(){
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Media stream acquired');
-            localVideo.localStream = stream;        
+            localVideo.srcObject = stream;        
         })
         .catch(error => {
             console.log('No media stream');
