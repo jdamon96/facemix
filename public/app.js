@@ -93,7 +93,10 @@ function handleCameraToggle(){
 
             // Load the MediaPipe facemesh model assets.
             facemesh.load().then(model => {
+                console.log('hello from inside');
+                console.log(model);
                 model.estimateFaces(localMediaStream).then(faces => {
+                    console.log('hello from inside2');
                     faces.forEach(face => console.log(face.scaledMesh));
                 });
             })
