@@ -3,7 +3,7 @@
 /********************************/
 
 const adapter = require('webrtc-adapter');
-const ChatSession = require('./js/ChatSession.js')
+const ChatSession = require('./js/ChatSession.js');
 
 /********************************/
 /* Declare required global variables */
@@ -89,7 +89,18 @@ function handleCameraToggle(){
         .then(stream => {
             console.log('Media stream acquired');
             localMediaStream = stream;
-            console.log(localMediaStream.getVideoTracks());
+            console.log(localMediaStream);
+
+            // Load the MediaPipe facemesh model assets.
+            const model = await facemesh.load();
+             
+            // Pass in a video stream to the model to obtain 
+            // an array of detected faces from the MediaPipe graph.
+            const faces = await model.estimateFaces(localMediaStream);
+             
+            // Each face object contains a `scaledMesh` property,
+            // which is an array of 468 landmarks.
+            faces.forEach(face => console.log(face.scaledMesh));
         })
         .catch(error => {
             console.log('No media stream');
