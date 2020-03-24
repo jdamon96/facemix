@@ -109,6 +109,7 @@ function handleCameraToggle(){
             localVideo.localStream = stream;
 
             setInterval(function(){
+                console.log(model);
                 model.estimateFaces(localVideo).then(faces => {
                     console.log(faces[0].scaledMesh);
                 });
