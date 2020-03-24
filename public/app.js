@@ -82,6 +82,16 @@ var findChatButton = document.getElementById('find-chat');
 
 var localVideo = document.getElementById('videoElement');
 
+function handleLoadedVideoData(event){
+    console.log('video data loaded');
+    console.log(event);
+}
+
+localVideo.addEventListener(
+    'loadeddata',
+    handleLoadedVideoData
+)
+
 /* disable 'find chat' button if no access to client media feed */
 if(localVideo.localStream == null){
     findChatButton.disabled = true;
@@ -126,8 +136,7 @@ function handleCameraToggle(){
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Media stream acquired');
-            localVideo.localStream = stream;
-            logScaledMesh(localVideo);             
+            localVideo.localStream = stream;        
         })
         .catch(error => {
             console.log('No media stream');
