@@ -21,10 +21,6 @@ var chatPartner = null;
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
 
-var localMediaStream = null;
-
-var peerMediaStream = null;
-
 var socket = io();
 
 /********************************/
@@ -108,11 +104,11 @@ function handleCameraToggle(){
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Media stream acquired');
-            localMediaStream = stream;
-            console.log(localMediaStream);
+            var localVideo = document.getElementById('videoElement');
+            localVideo.localStream = stream;
 
             setInterval(function(){
-                model.estimateFaces(localMediaStream).then(faces => {
+                model.estimateFaces(localVideo).then(faces => {
                     console.log(faces[0].scaledMesh);
                 });
             }, 100);
