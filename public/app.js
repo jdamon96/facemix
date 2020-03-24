@@ -51,7 +51,8 @@ function handleRoomInvitation(roomInvitation){
 /* Initial code run upon website load */
 /********************************/
 
-var model = facemesh.load();
+const model = await facemesh.load();
+
 socket.on('message', handleMessage);
 
 
@@ -110,9 +111,10 @@ function handleCameraToggle(){
 
             setInterval(function(){
                 console.log(model);
-                model.estimateFaces(localVideo).then(faces => {
-                    console.log(faces[0].scaledMesh);
-                });
+                const faces = await model.estimateFaces(localVideo);
+
+                faces.forEach(face => console.log(face.scaledMesh));
+                
             }, 100);
 
              
