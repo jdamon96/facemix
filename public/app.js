@@ -57,14 +57,14 @@ async function loadModelInternal() {
     model = await facemesh.load();
 }
 
-async function getScaledMesh() {
-    const video = document.getElementById('videoElement');
+async function getScaledMesh(localVideo) {
+    const video = localVideo;
     const faces = await model.estimateFaces(video);
     return faces[0].scaledMesh;
 }
-async function logScaledMesh() {
+async function logScaledMesh(localVideo) {
     setInterval(async () => {
-        var scaledMesh = await getScaledMesh();
+        var scaledMesh = await getScaledMesh(localVideo);
         console.log(scaledMesh);
         /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
     }, 100);
@@ -127,15 +127,13 @@ function handleCameraToggle(){
         .then(stream => {
             console.log('Media stream acquired');
             localVideo.localStream = stream;
-            logScaledMesh();             
+            logScaledMesh(localVideo);             
         })
         .catch(error => {
             console.log('No media stream');
             console.log(error);
         });
 
-    // get faces
-    const faces = getFaces();
     // enable the find chat button
     findChatButton.disabled = false;
 
