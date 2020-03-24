@@ -21,6 +21,8 @@ var chatPartner = null;
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
 
+var model;
+
 var socket = io();
 
 /********************************/
@@ -46,14 +48,17 @@ function handleRoomInvitation(roomInvitation){
     }
 }
 
+async function loadModel(){
+    model = await facemesh.load();
+}
 
 /********************************/
 /* Initial code run upon website load */
 /********************************/
 
-const model = await facemesh.load();
 
 socket.on('message', handleMessage);
+loadModel();
 
 
 /**********************************/
@@ -100,7 +105,7 @@ Can't be MediaStream
 * which is then passed to model.estimateFaces
 */
 
-function handleCameraToggle(){
+async function handleCameraToggle(){
 
     // get access to client media streams
     navigator.mediaDevices
@@ -108,7 +113,6 @@ function handleCameraToggle(){
         .then(stream => {
             console.log('Media stream acquired');
             localVideo.localStream = stream;
-
             
             console.log(model);
             const faces = await model.estimateFaces(localVideo);
