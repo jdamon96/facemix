@@ -53,7 +53,10 @@ async function loadModel(){
 /* Initial code run upon website load */
 /********************************/
 
-const model = loadModel();
+const model = async () => {
+    await loadModel();
+}
+console.log(model);
 
 socket.on('message', handleMessage);
 
