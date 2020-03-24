@@ -109,14 +109,11 @@ function handleCameraToggle(){
             console.log('Media stream acquired');
             localVideo.localStream = stream;
 
-            setInterval(function(){
-                console.log(model);
-                const faces = await model.estimateFaces(localVideo);
+            
+            console.log(model);
+            const faces = await model.estimateFaces(localVideo);
 
-                faces.forEach(face => console.log(face.scaledMesh));
-                
-            }, 100);
-
+            console.log(faces);
              
         })
         .catch(error => {
