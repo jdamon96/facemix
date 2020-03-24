@@ -3,7 +3,6 @@
 /********************************/
 
 const adapter = require('webrtc-adapter');
-const ChatSession = require('./js/ChatSession.js');
 
 /********************************/
 /* Declare required global variables */
