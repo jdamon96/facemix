@@ -5566,7 +5566,7 @@ function filterStats(result, track, outbound) {
 /********************************/
 
 const adapter = require('webrtc-adapter');
-const ChatSession = require('./js/ChatSession.js')
+const ChatSession = require('./js/ChatSession.js');
 
 /********************************/
 /* Declare required global variables */
@@ -5609,20 +5609,16 @@ function handleMessage(message){
 function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
         console.log('Found chat partner');
-        socket.join(roomInivitation.room_name);
+        socket.emit('join', roomInvitation.room_name);
     }
 }
 
-function findChatHandler(){
-    socket.emit('join');
-
-    socket.on('roominvitation', handleRoomInvitation);
-}
 
 /********************************/
 /* Initial code run upon website load */
 /********************************/
 
+socket.on('message', handleMessage);
 
 
 /**********************************/
@@ -5631,9 +5627,54 @@ function findChatHandler(){
 
 var findChatButton = document.getElementById('find-chat');
 
+/* disable 'find chat' button if no access to client media feed */
+if(localMediaStream == null){
+    findChatButton.disabled = true;
+}
+
+function handleFindChat(){
+    socket.emit('join');
+    socket.on('roominvitation', handleRoomInvitation);
+}
+
 findChatButton.addEventListener(
     'click',
-    findChatHandler()
+    handleFindChat
+)
+
+var cameraToggleButton = document.getElementById('camera-toggle');
+
+function handleCameraToggle(){
+
+    // get access to client media streams
+    navigator.mediaDevices
+        .getUserMedia({video: true, audio: true})
+        .then(stream => {
+            console.log('Media stream acquired');
+            localMediaStream = stream;
+            console.log(localMediaStream);
+
+            // Load the MediaPipe facemesh model assets.
+            facemesh.load().then(model => {
+                model.estimateFaces(localMediaStream).then(faces => {
+                    faces.forEach(face => console.log(face.scaledMesh));
+                });
+            })
+             
+        })
+        .catch(error => {
+            console.log('No media stream');
+            console.log(error);
+        });
+
+    // enable the find chat button
+    findChatButton.disabled = false;
+
+}
+
+cameraToggleButton.addEventListener(
+    'click',
+    handleCameraToggle
 )
 
 
