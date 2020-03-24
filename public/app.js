@@ -61,8 +61,10 @@ socket.on('message', handleMessage);
 
 var findChatButton = document.getElementById('find-chat');
 
+var localVideo = document.getElementById('videoElement');
+
 /* disable 'find chat' button if no access to client media feed */
-if(localMediaStream == null){
+if(localVideo.localStream == null){
     findChatButton.disabled = true;
 }
 
@@ -104,7 +106,6 @@ function handleCameraToggle(){
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Media stream acquired');
-            var localVideo = document.getElementById('videoElement');
             localVideo.localStream = stream;
 
             setInterval(function(){
