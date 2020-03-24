@@ -53,6 +53,10 @@ function handleRoomInvitation(roomInvitation){
 /* Initial code run upon website load */
 /********************************/
 
+async function loadModelInternal() {
+    model = await facemesh.load();
+}
+
 async function getScaledMesh() {
     const video = document.getElementById('videoElement');
     const faces = await model.estimateFaces(video);
@@ -67,7 +71,7 @@ async function logScaledMesh() {
 }
 
 socket.on('message', handleMessage);
-
+loadModelInternal();
 
 
 /**********************************/
