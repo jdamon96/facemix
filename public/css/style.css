@@ -90,3 +90,7 @@ body {
     left: 12.5%;
     top: 12.5%;
 }	
+
+#videoElement {
+    position: absolute;
+}

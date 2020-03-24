@@ -55,6 +55,7 @@ function handleRoomInvitation(roomInvitation){
 /* Initial code run upon website load */
 /********************************/
 
+var model = facemesh.load();
 socket.on('message', handleMessage);
 
 
@@ -81,6 +82,25 @@ findChatButton.addEventListener(
 
 var cameraToggleButton = document.getElementById('camera-toggle');
 
+/*
+must be either an:
+- HTMLVideoElement 
+- HTMLImageElement
+- HTMLCanvasElement
+- ImageData in browser
+- OffscreenCanvas
+- ImageData in webworker
+- {data: Uint32Array, width: number, height: number}
+
+Can't be MediaStream
+*/
+
+
+/* 
+* Look a Web Worker to convert MediaStream to ImageData 
+* which is then passed to model.estimateFaces
+*/
+
 function handleCameraToggle(){
 
     // get access to client media streams
@@ -91,17 +111,14 @@ function handleCameraToggle(){
             localMediaStream = stream;
             console.log(localMediaStream);
 
-            // Load the MediaPipe facemesh model assets.
-            facemesh.load().then(model => {
-                console.log('hello from inside');
-                console.log(model);
+            setInterval(function(){
                 model.estimateFaces(localMediaStream).then(faces => {
-                    console.log('hello from inside2');
-                    faces.forEach(face => console.log(face.scaledMesh));
+                    console.log(faces[0].scaledMesh);
                 });
-            })
+            }, 100);
+
              
-        })
+        });
         .catch(error => {
             console.log('No media stream');
             console.log(error);
