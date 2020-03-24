@@ -89,6 +89,7 @@ function handleCameraToggle(){
         .then(stream => {
             console.log('Media stream acquired');
             localMediaStream = stream;
+            console.log(localMediaStream);
         })
         .catch(error => {
             console.log('No media stream');
