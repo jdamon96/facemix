@@ -47,11 +47,7 @@ function handleRoomInvitation(roomInvitation){
     }
 }
 
-
-
-/********************************/
-/* Initial code run upon website load */
-/********************************/
+/* Facemesh model related functions*/ß
 
 async function loadModelInternal() {
     model = await facemesh.load();
@@ -70,9 +66,17 @@ async function logScaledMesh(localVideo) {
     }, 100);
 }
 
-socket.on('message', handleMessage);
-loadModelInternal();
 
+
+/********************************/
+/* Initial code run upon website load */
+/********************************/
+
+/* Add message event handler for client socket*/
+socket.on('message', handleMessage);
+
+/* Load facemesh model */
+loadModelInternal();
 
 /**********************************/
 /* Button handlers and event listeners */
@@ -94,7 +98,7 @@ localVideo.addEventListener(
 )
 
 /* disable 'find chat' button if no access to client media feed */
-if(localVideo.localStream == null){
+if(localVideo.srcObject == null){
     findChatButton.disabled = true;
 }
 
