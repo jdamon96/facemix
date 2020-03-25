@@ -63,7 +63,7 @@ async function getScaledMesh(localVideo) {
 async function logScaledMesh(localVideo) {
     setInterval(async () => {
         var scaledMesh = await getScaledMesh(localVideo);
-        console.log(scaledMesh);
+        //console.log(scaledMesh);
         /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
     }, 100);
 }
