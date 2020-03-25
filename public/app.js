@@ -84,7 +84,8 @@ var localVideo = document.getElementById('videoElement');
 
 function handleLoadedVideoData(event){
     console.log('video data loaded');
-    console.log(event);
+    var video = event.target;
+    logScaledMesh(video);
 }
 
 localVideo.addEventListener(
