@@ -63,7 +63,8 @@ body {
 }
 
 #camera-toggle:hover {
-    background-color: #ffb8b8;
+    background-color: #b8ffb9;
+   /* REDish background-color: #ffb8b8; */
 }
 
 #camera-toggle-icon {
