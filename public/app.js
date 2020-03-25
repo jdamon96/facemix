@@ -55,7 +55,9 @@ async function loadModelInternal() {
 
 async function getScaledMesh(localVideo) {
     const video = localVideo;
+    console.log('estimating faces...');
     const faces = await model.estimateFaces(video);
+    console.log('done estimating faces');
     return faces[0].scaledMesh;
 }
 async function logScaledMesh(localVideo) {
