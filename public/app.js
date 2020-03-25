@@ -47,7 +47,7 @@ function handleRoomInvitation(roomInvitation){
     }
 }
 
-/* Facemesh model related functions*/ß
+/* Facemesh model related functions*/
 
 async function loadModelInternal() {
     model = await facemesh.load();
