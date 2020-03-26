@@ -23,6 +23,7 @@ body {
     outline: none;
     position: absolute;
     display: block;
+    left: 300px;
     bottom: 10%;
 
     width: 300px;
@@ -52,8 +53,8 @@ body {
     outline: none;
     position: absolute;
     display: block;
-    left: 10%;
-    top: 25%;
+    left: 100px;
+    bottom: 10%;
 
     width: auto;
     height: 70px;
