@@ -57,6 +57,7 @@ function handleMessage(message){
 
         case 'roleupdate':
             role = message.role
+            break;
     }
 }
 
@@ -266,7 +267,7 @@ function handleRoomJoin(data){
 function handleFindChat(){
     socket.emit('join');
     socket.on('roominvitation', handleRoomInvitation);
-    socket.on('roomjoined', handleRoomJoin)
+    socket.on('roomjoined', handleRoomJoin);
 }
 
 /*

@@ -52,7 +52,7 @@ io.on('connection', function(socket){
                 }
 
                 socket.emit('roleupdate', roleupdate);
-                console.log('room invitation sent')
+                console.log('room invitation sent');
                 console.log(roominvitation);
 
 
@@ -75,6 +75,7 @@ io.on('connection', function(socket){
                 room: roomname,
                 newParticipant: socket.id
             }
+            console.log(socket.rooms[0]);
             socket.to(socket.rooms[0]).emit('roomjoined', roomjoined);
         }
     });
