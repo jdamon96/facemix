@@ -48,7 +48,7 @@ io.on('connection', function(socket){
                 socket.broadcast.emit('roominvitation', roominvitation);
 
                 const roleupdate = {
-                    role: 'HOST';
+                    role: 'HOST'
                 }
 
                 socket.emit('roleupdate', roleupdate);
