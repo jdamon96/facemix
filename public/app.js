@@ -245,9 +245,7 @@ if(localVideo.srcObject == null){
     findChatButton.disabled = true;
 }
 
-function handleRoomJoin(){
-    ChatInstance.
-}
+
 
 /*
 * Handler function for clicking the 'Find-Chat' button
@@ -255,7 +253,7 @@ function handleRoomJoin(){
 function handleFindChat(){
     socket.emit('join');
     socket.on('roominvitation', handleRoomInvitation);
-    socket.on('roomjoined', handleRoomJoin)
+    //socket.on('roomjoined', handleRoomJoin)
 }
 
 /*
