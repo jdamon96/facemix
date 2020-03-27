@@ -70,6 +70,7 @@ io.on('connection', function(socket){
         }
 
         if(roomname){
+            console.log('roomname: ' + roomname);
             socket.join(roomname);
             const roomjoined = {
                 room: roomname,
