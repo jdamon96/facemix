@@ -65,33 +65,35 @@ io.on('connection', function(socket){
 
         if(roomname){
             socket.join(roomname);
+            socket.emit('')
             console.log(socket.id + ' joined room ' + roomname);
         }
-    
-/*    
-        var clients = io.sockets.adapter.rooms[LOBBY_NAME];
-        var numClients = typeof clients !=='undefined' ? clients.length: 0;
-        
+    });
 
-        io.sockets.in(socket.room).emit().emit('message', {
-            title: 'room_count',
-            content: numClients 
+    socket.on('token', function(){
+        twilio.tokens.create(function(err, response){
+            if(err) {
+                console.log(err);
+            }
+            else {
+                socket.emit('token', response);
+            }
         });
+    });
 
-        if(numClients == 0){
-            socket.join(room);
-        }
-        else if (numClients == 1){
-            socket.join(room);
-            socket.emit('ready', room);
-            socket.broadcast.emit('ready', room);
-        }
-        else {
-            socket.emit('full', room);
-        }
+    socket.on('candidate', function(candidate){
+        socket.to(socket.rooms[0]).emit('candidate', candidate);
+        //socket.broadcast.emit('candidate', candidate);
+    });
 
-        */
+    socket.on('offer', function(offer){
+        socket.to(socket.rooms[0]).emit('offer', offer);
+        //socket.broadcast.emit('offer', offer);
+    });
 
+    socket.on('answer', function(answer){
+        socket.to(socket.rooms[0]).emit('answer', answer);
+        //socket.broadcast.emit('answer', answer);
     });
 
 });
