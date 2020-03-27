@@ -17,6 +17,11 @@ var waitingForChat = false;
 // if in a chat, this holds the current chat partner
 var chatPartner = null;
 
+// client role can be HOST or GUEST. 
+//      HOST creates rooms and initiates RTC Peer Connection (sends offer)
+//      GUEST recieves room invitations and responds to RTCPeerConnection offer (sends answer)
+var role = ''
+
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
 
@@ -49,6 +54,9 @@ function handleMessage(message){
         case 'room_count':
             console.log('room count: ' + message.contents);
             break;
+
+        case 'roleupdate':
+            role = message.role
     }
 }
 
@@ -57,6 +65,7 @@ function handleMessage(message){
 */
 function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
+        role = 'GUEST';
         console.log('Found chat partner');
         socket.emit('join', roomInvitation.room_name);
     }
@@ -246,6 +255,10 @@ if(localVideo.srcObject == null){
 }
 
 
+function handleRoomJoin(data){
+    console.log(data);
+}
+
 
 /*
 * Handler function for clicking the 'Find-Chat' button
@@ -253,7 +266,7 @@ if(localVideo.srcObject == null){
 function handleFindChat(){
     socket.emit('join');
     socket.on('roominvitation', handleRoomInvitation);
-    //socket.on('roomjoined', handleRoomJoin)
+    socket.on('roomjoined', handleRoomJoin)
 }
 
 /*

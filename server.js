@@ -46,6 +46,12 @@ io.on('connection', function(socket){
 
                 //sends invitation to other sockets w/ recipient details for chat partner to check
                 socket.broadcast.emit('roominvitation', roominvitation);
+
+                const roleupdate = {
+                    role: 'HOST';
+                }
+
+                socket.emit('roleupdate', roleupdate);
                 console.log('room invitation sent')
                 console.log(roominvitation);
 
@@ -65,8 +71,11 @@ io.on('connection', function(socket){
 
         if(roomname){
             socket.join(roomname);
-            socket.emit('')
-            console.log(socket.id + ' joined room ' + roomname);
+            const roomjoined = {
+                room: roomname,
+                newParticipant: socket.id
+            }
+            socket.to(socket.rooms[0]).emit('roomjoined', roomjoined);
         }
     });
 
