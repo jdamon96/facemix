@@ -19,7 +19,10 @@ io.on('connection', function(socket){
 
 
     function getRoomName(id1, id2){
-        return (id1 + id2);
+        var roomName = id1 + id2;
+        console.log('new room name: ');
+        console.log(roomName);
+        return (roomName);
     }
 
     socket.on('join', function(roomname){
@@ -103,7 +106,6 @@ io.on('connection', function(socket){
             }
             socket.to(roomname).emit('roomjoined', roomjoined);
             console.log('Socket room: ');
-            console.log(socket.room);
             console.log(socket.rooms);
         }
     });
