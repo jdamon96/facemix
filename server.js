@@ -81,7 +81,7 @@ io.on('connection', function(socket){
 
             /* if there are 0 clients currently in the room */
             if(numClients == 0){
-                socket.join(room);
+                socket.join(roomname);
                 console.log('rooms: ');
                 console.log(socket.rooms);
             }
@@ -98,15 +98,6 @@ io.on('connection', function(socket){
                 socket.emit('full', room);
                 console.log('Room is full (already has 2+ clients)');
             }
-            console.log('roomname: ' + roomname);
-            socket.join(roomname);
-            const roomjoined = {
-                room: roomname,
-                newParticipant: socket.id
-            }
-            socket.to(roomname).emit('roomjoined', roomjoined);
-            console.log('Socket room: ');
-            console.log(socket.rooms);
         }
     });
 
