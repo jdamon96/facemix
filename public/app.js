@@ -86,6 +86,7 @@ async function getScaledMesh(localVideo) {
     //console.log('done estimating faces');
     return faces[0].scaledMesh;
 }
+
 async function logScaledMesh(localVideo) {
     setInterval(async () => {
         var scaledMesh = await getScaledMesh(localVideo);

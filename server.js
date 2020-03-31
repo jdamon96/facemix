@@ -70,6 +70,31 @@ io.on('connection', function(socket){
         }
 
         if(roomname){
+            /* Get list of socket clients in room 'roomname'*/
+            var clients = io.sockets.adapter.rooms[roomname];
+
+            /* Get number of clients in room 'roomname'*/
+            var numClients = typeof clients !=='undefined' ? clients.length: 0;
+
+            /* if there are 0 clients currently in the room */
+            if(numClients == 0){
+                socket.join(room);
+                console.log('rooms: ');
+                console.log(socket.rooms);
+            }
+            /* if there is 1 client currently in the room */
+            else if (numClients == 1){
+                socket.join(room);
+                console.log('rooms: ');
+                console.log(socket.rooms);
+                socket.emit('ready', room);
+                socket.broadcast.emit('ready', room);
+            }
+            /* if there are 2+ clients currently in the room*/
+            else {
+                socket.emit('full', room);
+                console.log('Room is full (already has 2+ clients)');
+            }
             console.log('roomname: ' + roomname);
             socket.join(roomname);
             const roomjoined = {
