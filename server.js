@@ -84,13 +84,15 @@ io.on('connection', function(socket){
             /* if there are 0 clients currently in the room */
             if(numClients == 0){
                 socket.join(roomname);
-                console.log('rooms: ');
+                console.log('rooms before: ');
                 console.log(socket.rooms);
             }
             /* if there is 1 client currently in the room */
             else if (numClients == 1){
+                console.log('rooms before join: ');
+                console.log(socket.rooms);
                 socket.join(roomname);
-                console.log('rooms: ');
+                console.log('rooms after join: ');
                 console.log(socket.rooms);
                 //socket.emit('ready', roomname);
                 //socket.broadcast.emit('ready', roomname);
