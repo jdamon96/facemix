@@ -26,7 +26,7 @@ io.on('connection', function(socket){
     }
 
     socket.on('join', function(roomname){
-
+        var NEW_ROOM_NAME = 'XxXxXxXxXxXxXxXxXxXxX'
         if(!roomname){
             // if there is someone else looking for a chat partner, make a unique room, join it, and invite them to join it
             if(waitlist[0]){
@@ -36,16 +36,16 @@ io.on('connection', function(socket){
                 waitlist.shift(); // removes the item from the beginning of the array 
                 console.log('pairing with ' + chat_partner_id);
 
-                const room_name = getRoomName(socket.id, chat_partner_id);
+                const roomName = getRoomName(socket.id, chat_partner_id);
 
                 const roominvitation = {
                     recipient: chat_partner_id,
-                    room_name: room_name
+                    roomname: NEW_ROOM_NAME
                 }
 
                 //client joins the room for them and their chat partner
-                socket.join(room_name);
-                console.log(socket.id + ' joined room ' + room_name);
+                socket.join(NEW_ROOM_NAME);
+                console.log(socket.id + ' joined room ' + NEW_ROOM_NAME);
 
                 //sends invitation to other sockets w/ recipient details for chat partner to check
                 socket.broadcast.emit('roominvitation', roominvitation);
@@ -73,6 +73,7 @@ io.on('connection', function(socket){
         }
 
         if(roomname){
+            
             /* Get list of socket clients in room 'roomname'*/
             var clients = io.sockets.adapter.rooms[roomname];
 

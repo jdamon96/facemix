@@ -68,7 +68,7 @@ function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
         role = 'GUEST';
         console.log('Found chat partner');
-        socket.emit('join', roomInvitation.room_name);
+        socket.emit('join', roomInvitation.roomname);
     }
 }
 
