@@ -84,11 +84,11 @@ io.on('connection', function(socket){
             }
             /* if there is 1 client currently in the room */
             else if (numClients == 1){
-                socket.join(room);
+                socket.join(roomname);
                 console.log('rooms: ');
                 console.log(socket.rooms);
-                socket.emit('ready', room);
-                socket.broadcast.emit('ready', room);
+                //socket.emit('ready', roomname);
+                //socket.broadcast.emit('ready', roomname);
             }
             /* if there are 2+ clients currently in the room*/
             else {
