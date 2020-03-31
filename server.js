@@ -16,7 +16,8 @@ app.use(express.static('public'));
 let waitlist = [];
 
 io.on('connection', function(socket){
-
+    console.log('init rooms log: ');
+    console.log(socket.rooms);
 
     function getRoomName(id1, id2){
         var roomName = id1 + id2;
@@ -73,7 +74,7 @@ io.on('connection', function(socket){
         }
 
         if(roomname){
-            
+
             /* Get list of socket clients in room 'roomname'*/
             var clients = io.sockets.adapter.rooms[roomname];
 
