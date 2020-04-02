@@ -100,6 +100,10 @@ io.on('connection', function(socket){
                     title: 'text-message',
                     content: 'hello roommates'
                 });
+                
+                /* TO-DO: emit event here that instructs
+                 * the clients to set up an RTC connection 
+                 * between themselves */ 
             }
             /* if there are 2+ clients currently in the room*/
             else {
