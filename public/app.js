@@ -54,9 +54,10 @@ function handleMessage(message){
             role = message.role
             break;
 
-        case: 'text-message':
+        case 'text-message':
             console.log('New text message:');
             console.log(message.content)
+            break;
     }
 }
 
