@@ -83,24 +83,22 @@ io.on('connection', function(socket){
 
             /* if there are 0 clients currently in the room */
             if(numClients == 0){
-                socket.join(roomname);
-                console.log('rooms before: ');
-                console.log(socket.rooms);
+                console.log('First person joining room');
+                socket.room = roomname;
+                socket.join(socket.room);
+                io.sockets.in(socket.room).emit("update", "A person has connected to " + room.name + " room.");
             }
             /* if there is 1 client currently in the room */
             else if (numClients == 1){
-                console.log('rooms before join: ');
-                console.log(socket.rooms);
-                socket.join(roomname);
-                console.log('rooms after join: ');
-                console.log(socket.rooms);
-                //socket.emit('ready', roomname);
-                //socket.broadcast.emit('ready', roomname);
+                console.log('Second person joining room');
+                socket.room = roomname;
+                socket.join(socket.room);
+                io.sockets.in(socket.room).emit("update", "A person has connected to " + room.name + " room.");
             }
             /* if there are 2+ clients currently in the room*/
             else {
                 socket.emit('full', room);
-                console.log('Room is full (already has 2+ clients)');
+                console.log('Room is full   ');
             }
         }
     });
