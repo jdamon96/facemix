@@ -50,14 +50,13 @@ function handleMessage(message){
             console.log('Waiting for chat partner: ' + waitingForChat);
             break;
 
-        /** if the message title is 'room_count'... **/
-        case 'room_count':
-            console.log('room count: ' + message.contents);
-            break;
-
         case 'roleupdate':
             role = message.role
             break;
+
+        case: 'text-message':
+            console.log('New text message:');
+            console.log(message.content)
     }
 }
 

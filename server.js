@@ -86,14 +86,20 @@ io.on('connection', function(socket){
                 console.log('First person joining room');
                 socket.room = roomname;
                 socket.join(socket.room);
-                io.sockets.in(socket.room).emit("update", "A person has connected to " + room.name + " room.");
+                io.sockets.in(socket.room).emit("message", {
+                    title: 'text-message',
+                    content: 'hello roommates'
+                });
             }
             /* if there is 1 client currently in the room */
             else if (numClients == 1){
                 console.log('Second person joining room');
                 socket.room = roomname;
                 socket.join(socket.room);
-                io.sockets.in(socket.room).emit("update", "A person has connected to " + room.name + " room.");
+                io.sockets.in(socket.room).emit("message", {
+                    title: 'text-message',
+                    content: 'hello roommates'
+                });
             }
             /* if there are 2+ clients currently in the room*/
             else {
