@@ -27,41 +27,67 @@ io.on('connection', function(socket){
     }
 
     socket.on('join', function(roomname){
-        var NEW_ROOM_NAME = 'XxXxXxXxXxXxXxXxXxXxX'
+        
         if(!roomname){
-            // if there is someone else looking for a chat partner, make a unique room, join it, and invite them to join it
-            if(waitlist[0]){
-                const chat_partner_id = waitlist[0];
+            /*
+            * Get access to the first slot in the line of clients waiting to chat
+            */
+            const firstInLine = waitlist[0];
+    
+            /*
+            * If there is a chat partner waiting in line:
+            *   - make a unique room
+            *   - join it
+            *   - invite the chat partner to join it
+            */
+            if(firstInLine){
+                const chat_partner_id = firstInLine;
 
                 console.log(chat_partner_id + ' is next on the waitlist');
                 waitlist.shift(); // removes the item from the beginning of the array 
                 console.log('pairing with ' + chat_partner_id);
 
-                const roomName = getRoomName(socket.id, chat_partner_id);
 
+                /* Make unique room name */
+                const newRoomName = getRoomName(socket.id, chat_partner_id);
+
+                /* Create room invitation for the chat partner */
                 const roominvitation = {
                     recipient: chat_partner_id,
-                    roomname: NEW_ROOM_NAME
+                    roomname: newRoomName
                 }
 
-                //client joins the room for them and their chat partner
-                socket.join(NEW_ROOM_NAME);
-                console.log(socket.id + ' joined room ' + NEW_ROOM_NAME);
+                console.log(socket.id + ' joined room ' + newRoomName);
 
-                //sends invitation to other sockets w/ recipient details for chat partner to check
+                /* 
+                * Invite the chat partner to the room
+                * 
+                * Note: socket.broadcast.emit(<EVENT>) emits the <EVENT> to everyone in the root namespace except the sender socket itself.
+                * We include a 'recipient' field in the 'roominvitation' event object and fill it with the 'chat_partner_id' so that 
+                * when client sockets recieve and handle this roominvitation event, they can check whether their ID matches the invitation ID 
+                * - if it does they accept the invitation and join the specified room, if it doesn't they ignore the invitation.
+                */
                 socket.broadcast.emit('roominvitation', roominvitation);
 
+                /* Join the room */ 
+                socket.join(newRoomName);
+
+                /*
+                * Send 'roleupdate' event to client to designate their role as HOST 
+                * (the implication of this is when the clients have recieved events confirming that both clients are in the room,
+                * the designated client role will determine which client creates the RTCPeerConnection offer )
+                */
                 const roleupdate = {
                     role: 'HOST'
                 }
 
-                socket.emit('roleupdate', roleupdate);
-                console.log('room invitation sent');
-                console.log(roominvitation);
-
-
-            // if there's no one else waiting for a chat partner, join the waitlist
-            } else {
+                socket.emit('role-update', roleupdate);
+ 
+            } 
+            /* 
+            * If there's no one else waiting for a chat partner, join the waitlist
+            */
+            else {
                 console.log('Waitlist is empty');
                 console.log('Adding ' + socket.id + ' to the waitlist');
                 waitlist.push(socket.id);
@@ -73,6 +99,14 @@ io.on('connection', function(socket){
             }            
         }
 
+        /*
+        * If the socket joins with a specific roomname 
+        *   - check how many clients are in the room specified by roomname
+        *   - if 0, join (this shouldn't happen though - if a socket has a specific roomname to join they should be the 2nd to join the room bc the client who created the roominvitation should already be in that room)
+        *   - if 1, join
+        *   - if 2, reject join (room is full)
+        * (note: This socket was the recipient of a roominvitation - that's why they have a specific roomname to join) 
+        */ 
         if(roomname){
 
             /* Get list of socket clients in room 'roomname'*/
@@ -83,22 +117,21 @@ io.on('connection', function(socket){
 
             /* if there are 0 clients currently in the room */
             if(numClients == 0){
-                console.log('First person joining room');
+                console.log('First client joining room');
                 socket.room = roomname;
                 socket.join(socket.room);
-                io.sockets.in(socket.room).emit("message", {
-                    title: 'text-message',
-                    content: 'hello roommates'
-                });
             }
             /* if there is 1 client currently in the room */
             else if (numClients == 1){
-                console.log('Second person joining room');
+                console.log('Second client joining room');
                 socket.room = roomname;
                 socket.join(socket.room);
-                io.sockets.in(socket.room).emit("message", {
-                    title: 'text-message',
-                    content: 'hello roommates'
+                //io.sockets.in()
+                socket.in(socket.room).broadcast.emit("message", {
+                    title: 'room-ready',
+                    content: {
+                        room_population: 2
+                    }
                 });
                 
                 /* TO-DO: emit event here that instructs
@@ -113,6 +146,12 @@ io.on('connection', function(socket){
         }
     });
 
+    /*
+    * Handles TOKEN event from client sockets
+    * - requests token from Twilio, 
+        - if Twilio returns a token, the server passes it back to the client in a server-emitted 'token' event
+        - if Twilio fails to return a token, the server console.logs the err returned instead
+    */
     socket.on('token', function(){
         twilio.tokens.create(function(err, response){
             if(err) {
@@ -124,19 +163,28 @@ io.on('connection', function(socket){
         });
     });
 
+    /*
+    * Handles CANDIDATE event from client sockets
+    * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
+    */
     socket.on('candidate', function(candidate){
-        socket.to(socket.rooms[0]).emit('candidate', candidate);
-        //socket.broadcast.emit('candidate', candidate);
+        socket.in(socket.room).broadcast.emit('candidate', candidate);
     });
 
+    /*
+    * Handles OFFER event from client sockets
+    * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
+    */
     socket.on('offer', function(offer){
-        socket.to(socket.rooms[0]).emit('offer', offer);
-        //socket.broadcast.emit('offer', offer);
+        socket.in(socket.room).broadcast.emit('offer', offer);
     });
 
+    /*
+    * Handles ANSWER event from client sockets
+    * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
+    */
     socket.on('answer', function(answer){
-        socket.to(socket.rooms[0]).emit('answer', answer);
-        //socket.broadcast.emit('answer', answer);
+        socket.in(socket.room).broadcast.emit('answer', answer);
     });
 
 });

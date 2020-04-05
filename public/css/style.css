@@ -1,3 +1,18 @@
+/* CSS Variables
+ * 
+ * usage example: #div1 { background-color: var(--main-background-color) }
+ */
+
+:root {
+    --background-color: #f7eae1; 
+    --accent-color-1: #01122b;
+    --accent-color-2: #005571;
+    --accent-color-3: #c1335e;
+    --accent-color-4: #cc5168;
+
+
+}
+
 html, body {
     height: 100%;
     min-height: 600px;
