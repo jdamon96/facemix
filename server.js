@@ -182,6 +182,8 @@ io.on('connection', function(socket){
     */
     socket.on('offer', function(offer){
         console.log('SERVER: sending offer to client');
+        console.log('Room: ' + socket.room);
+        console.log('Offer: ' + offer);
         socket.broadcast.to(socket.room).emit('offer', offer);
     });
 
