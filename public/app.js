@@ -71,7 +71,10 @@ var ChatInstance = {
             ChatInstance.peerConnection.createAnswer(
                 function(answer){
                     ChatInstance.peerConnection.setLocalDescription(answer);
-                    socket.emit('answer', JSON.stringify(answer));
+                    socket.emit('answer', {
+                        room: current_room, 
+                        answer: JSON.stringify(answer)
+                    });
                 },
                 function(err){
                     console.log(err);
@@ -169,7 +172,10 @@ var ChatInstance = {
         * Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
         */ 
         ChatInstance.localICECandidates.forEach(candidate => {
-            socket.emit('candidate', JSON.stringify(candidate));
+            socket.emit('candidate', {
+                room: current_room, 
+                candidate: JSON.stringify(candidate)
+            });
         });
 
         /*
@@ -325,10 +331,7 @@ function handleRoomInvitation(roomInvitation){
 socket.on('message', handleMessage);
 
 /* Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
-socket.on('offer', offer => {
-    console.log('Client recieved offer: ');
-    console.log(offer)
-});
+socket.on('offer', ChatInstance.onOffer);
 
 /**********************************/
 /* Button handlers and event listeners */

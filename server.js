@@ -190,9 +190,9 @@ io.on('connection', function(socket){
     * Handles CANDIDATE event from client sockets
     * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
     */
-    socket.on('candidate', function(candidate){    
+    socket.on('candidate', function(msg){    
         console.log('SERVER: sending candidate to client');
-        socket.broadcast.to(socket.room).emit('candidate', candidate);
+        socket.broadcast.to(msg.room).emit('candidate', msg.candidate);
     });
 
     /*
@@ -201,8 +201,6 @@ io.on('connection', function(socket){
     */
     socket.on('offer', function(msg){
         console.log('SERVER: sending offer to client');
-        console.log('Room: ' + msg.room);
-        console.log('Offer: ' + msg.offer);
         socket.broadcast.to(msg.room).emit('offer', msg.offer);
     });
 
@@ -210,9 +208,9 @@ io.on('connection', function(socket){
     * Handles ANSWER event from client sockets
     * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
     */
-    socket.on('answer', function(answer){
+    socket.on('answer', function(msg){
         console.log('SERVER: sending answer to client');
-        socket.broadcast.to(socket.room).emit('answer', answer);
+        socket.broadcast.to(msg.room).emit('answer', msg.answer);
     });
 
 });
