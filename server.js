@@ -127,7 +127,7 @@ io.on('connection', function(socket){
                 socket.room = roomname;
                 socket.join(socket.room);
                 //io.sockets.in()
-                io.sockets.in(socket.room).broadcast.emit("message", {
+                socket.broadcast.to(socket.room).emit("message", {
                     title: 'room-ready',
                     content: {
                         room_population: 2
@@ -167,8 +167,8 @@ io.on('connection', function(socket){
     * Handles CANDIDATE event from client sockets
     * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
     */
-    socket.on('candidate', function(candidate){
-        socket.in(socket.room).broadcast.emit('candidate', candidate);
+    socket.on('candidate', function(candidate){    
+        socket.broadcast.to(socket.room).emit('candidate', candidate);
     });
 
     /*
@@ -176,7 +176,7 @@ io.on('connection', function(socket){
     * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
     */
     socket.on('offer', function(offer){
-        socket.in(socket.room).broadcast.emit('offer', offer);
+        socket.broadcast.to(socket.room).emit('offer', offer);
     });
 
     /*
@@ -184,7 +184,7 @@ io.on('connection', function(socket){
     * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
     */
     socket.on('answer', function(answer){
-        socket.in(socket.room).broadcast.emit('answer', answer);
+        socket.broadcast.to(socket.room).emit('answer', answer);
     });
 
 });
