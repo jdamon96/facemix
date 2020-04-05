@@ -127,7 +127,7 @@ io.on('connection', function(socket){
                 socket.room = roomname;
                 socket.join(socket.room);
                 //io.sockets.in()
-                socket.in(socket.room).broadcast.emit("message", {
+                io.sockets.in(socket.room).broadcast.emit("message", {
                     title: 'room-ready',
                     content: {
                         room_population: 2
