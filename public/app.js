@@ -167,6 +167,7 @@ var ChatInstance = {
         * Update 'connected' boolean to True
         */
         ChatInstance.connected = true;
+        console.log(ChatInstance);
 
         /*
         * Take buffer of localICECandidates we've been saving and emit them now that connected to remote client

@@ -41,7 +41,7 @@ io.on('connection', function(socket){
 
                 console.log('SERVER: ' + chat_partner_id + ' is next on the waitlist');
                 waitlist.shift(); // removes the item from the beginning of the array 
-                console.log('SERVER: pairing with ' + chat_partner_id);
+                console.log('SERVER: pairing ' + socket.id + ' with ' + chat_partner_id);
 
 
                 /* Make unique room name */
