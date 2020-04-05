@@ -294,6 +294,7 @@ function handleMessage(message){
             console.log('Socket joined room');
             var roomname = message.content.roomname;
             current_room = roomname;
+            console.log('CLLIENT: current room: ' + current_room);
             break;
 
         case 'room-ready':
@@ -325,7 +326,8 @@ socket.on('message', handleMessage);
 
 /* Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
 socket.on('offer', offer => {
-    console.log(offer);
+    console.log('Client recieved offer: ');
+    console.log(offer)
 });
 
 /**********************************/

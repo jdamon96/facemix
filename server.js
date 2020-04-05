@@ -68,6 +68,13 @@ io.on('connection', function(socket){
                 /* Join the room */ 
                 socket.join(newRoomName);
 
+                socket.emit('message', {
+                    title: 'room-join',
+                    content: {
+                        roomname: newRoomName
+                    }
+                });
+
                 /*
                 * Send 'roleupdate' event to client to designate their role as HOST 
                 * (the implication of this is when the clients have recieved events confirming that both clients are in the room,
