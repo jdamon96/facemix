@@ -162,6 +162,7 @@ io.on('connection', function(socket){
                 console.log(err);
             }
             else {
+                console.log('SERVER: returning token to client');
                 socket.emit('token', response);
             }
         });
@@ -172,6 +173,7 @@ io.on('connection', function(socket){
     * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
     */
     socket.on('candidate', function(candidate){    
+        console.log('SERVER: sending candidate to client');
         socket.broadcast.to(socket.room).emit('candidate', candidate);
     });
 
@@ -180,6 +182,7 @@ io.on('connection', function(socket){
     * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
     */
     socket.on('offer', function(offer){
+        console.log('SERVER: sending offer to client');
         socket.broadcast.to(socket.room).emit('offer', offer);
     });
 
@@ -188,6 +191,7 @@ io.on('connection', function(socket){
     * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
     */
     socket.on('answer', function(answer){
+        console.log('SERVER: sending answer to client');
         socket.broadcast.to(socket.room).emit('answer', answer);
     });
 
