@@ -124,16 +124,22 @@ io.on('connection', function(socket){
                     content: {
                         roomname: roomname
                     }
-                })
+                });
                 socket.join(socket.room);
             }
             /* if there is 1 client currently in the room */
             else if (numClients == 1){
                 console.log('SERVER: second client joining room');
-                socket.room = roomname;
-                socket.join(socket.room);
+                socket.join(roomname);
                 //io.sockets.in()
-                socket.broadcast.to(socket.room).emit("message", {
+                socket.emit('message', {
+                    title: 'room-join',
+                    content: {
+                        roomname: roomname
+                    }
+                });
+
+                socket.broadcast.to(roomname).emit("message", {
                     title: 'room-ready',
                     content: {
                         room_population: 2
