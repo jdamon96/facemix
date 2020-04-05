@@ -77,11 +77,15 @@ io.on('connection', function(socket){
                 * (the implication of this is when the clients have recieved events confirming that both clients are in the room,
                 * the designated client role will determine which client creates the RTCPeerConnection offer )
                 */
-                const roleupdate = {
-                    role: 'HOST'
+                const roleupdate_message = {
+                    title: 'role-update',
+                    content: {
+                        role: 'HOST'
+                    }
                 }
 
-                socket.emit('role-update', roleupdate);
+
+                socket.emit('message', roleupdate_message);
  
             } 
             /* 
