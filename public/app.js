@@ -124,7 +124,7 @@ function handleRoomInvitation(roomInvitation){
 socket.on('message', handleMessage);
 
 /* Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
-socket.on('offer' ChatInstance.onOffer);
+socket.on('offer', ChatInstance.onOffer);
 
 /**********************************/
 /*        WebRTC Setup Code       */
