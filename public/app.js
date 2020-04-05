@@ -28,112 +28,13 @@ var sessionPartners = [];
 //initializing the socket.io handle
 var socket = io();
 
-/********************************/
-/******* Facemesh set-up ********/
-/********************************/
-
-/*
-* initializing variable that will hold the facemesh model
-*/
-var model;
-
-
-/*
-* Defining required functions for handling facemodel
-*/
-async function loadModelInternal() {
-    model = await facemesh.load();
-}
-
-async function getScaledMesh(localVideo) {
-    const video = localVideo;
-    //console.log('estimating faces...');
-    const faces = await model.estimateFaces(video);
-    //console.log('done estimating faces');
-    return faces[0].scaledMesh;
-}
-
-async function logScaledMesh(localVideo) {
-    setInterval(async () => {
-        var scaledMesh = await getScaledMesh(localVideo);
-        //console.log(scaledMesh);
-        /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
-    }, 100);
-}
-
-
-/*
-* Load the facemesh model
-*/
-loadModelInternal();
-
-/********************************/
-/* Define required functions */
-/********************************/
-
-
-/*
-* Handler function for recieving 'message' events emitted by other sockets
-*/
-function handleMessage(message){
-
-    switch(message.title){
-
-        /** if the message title is 'waiting'... **/
-        case 'waiting':
-            //set waitingForChat variable to the message's content
-            waitingForChat = message.content;
-            console.log('Waiting for chat partner: ' + waitingForChat);
-            break;
-
-        case 'role-update':
-            var role_update = message.content;
-            role = role_update.role;
-            break;
-
-        case 'text-message':
-            console.log('New text message:');
-            console.log(message.content)
-            break;
-
-        case 'room-ready':
-            console.log('Room is ready for initiating RTCPeerConnection between clients');
-            if(role == 'HOST'){
-                ChatInstance.startCall();
-            }
-            break;
-    }
-}
-
-/*
-* Handler function for recieving 'roomInvitation' events emitted by other sockets
-*/
-function handleRoomInvitation(roomInvitation){
-    if(socket.id === roomInvitation.recipient){
-        role = 'GUEST';
-        console.log('Found chat partner');
-        socket.emit('join', roomInvitation.roomname);
-    }
-}
-
-/********************************/
-/* Add initial event listeners required for the socket*/
-/********************************/
-
-/* Add message event handler for client socket*/
-socket.on('message', handleMessage);
-
-/* Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
-socket.on('offer', ChatInstance.onOffer);
-
 /**********************************/
 /*        WebRTC Setup Code       */
 /**********************************/
 
 /*
-* This 'ChatInstance' object is responsible for setting up and managing the RTCPeer Connections
+* Note: this 'ChatInstance' object is responsible for setting up and managing the RTCPeerConnection
 */ 
-
 
 var ChatInstance = {
     connected: false,
@@ -312,9 +213,106 @@ var ChatInstance = {
         socket.on('token', ChatInstance.onToken(ChatInstance.createOffer));
         socket.emit('token');
     }
-
 };
 
+
+/********************************/
+/******* Facemesh set-up ********/
+/********************************/
+
+/*
+* initializing variable that will hold the facemesh model
+*/
+var model;
+
+
+/*
+* Defining required functions for handling facemodel
+*/
+async function loadModelInternal() {
+    model = await facemesh.load();
+}
+
+async function getScaledMesh(localVideo) {
+    const video = localVideo;
+    //console.log('estimating faces...');
+    const faces = await model.estimateFaces(video);
+    //console.log('done estimating faces');
+    return faces[0].scaledMesh;
+}
+
+async function logScaledMesh(localVideo) {
+    setInterval(async () => {
+        var scaledMesh = await getScaledMesh(localVideo);
+        //console.log(scaledMesh);
+        /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
+    }, 100);
+}
+
+
+/*
+* Load the facemesh model
+*/
+loadModelInternal();
+
+/********************************/
+/* Define required functions */
+/********************************/
+
+
+/*
+* Handler function for recieving 'message' events emitted by other sockets
+*/
+function handleMessage(message){
+
+    switch(message.title){
+
+        /** if the message title is 'waiting'... **/
+        case 'waiting':
+            //set waitingForChat variable to the message's content
+            waitingForChat = message.content;
+            console.log('Waiting for chat partner: ' + waitingForChat);
+            break;
+
+        case 'role-update':
+            var role_update = message.content;
+            role = role_update.role;
+            break;
+
+        case 'text-message':
+            console.log('New text message:');
+            console.log(message.content)
+            break;
+
+        case 'room-ready':
+            console.log('Room is ready for initiating RTCPeerConnection between clients');
+            if(role == 'HOST'){
+                ChatInstance.startCall();
+            }
+            break;
+    }
+}
+
+/*
+* Handler function for recieving 'roomInvitation' events emitted by other sockets
+*/
+function handleRoomInvitation(roomInvitation){
+    if(socket.id === roomInvitation.recipient){
+        role = 'GUEST';
+        console.log('Found chat partner');
+        socket.emit('join', roomInvitation.roomname);
+    }
+}
+
+/********************************/
+/* Add initial event listeners required for the socket*/
+/********************************/
+
+/* Add message event handler for client socket*/
+socket.on('message', handleMessage);
+
+/* Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
+socket.on('offer', ChatInstance.onOffer);
 
 /**********************************/
 /* Button handlers and event listeners */
