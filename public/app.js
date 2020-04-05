@@ -64,7 +64,7 @@ function handleMessage(message){
             console.log('Room is ready for initiating RTCPeerConnection between clients');
             console.log(role);
             if(role == 'HOST'){
-                chatInstance.startCall();
+                ChatInstance.startCall();
             }
             break;
     }
