@@ -51,7 +51,8 @@ function handleMessage(message){
             break;
 
         case 'role-update':
-            role = message.role
+            var role_update = message.content;
+            role = role_update.role;
             break;
 
         case 'text-message':
