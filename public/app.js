@@ -41,6 +41,7 @@ var ChatInstance = {
     localICECandidates: [],
 
     onOffer: function(offer){
+        console.log('CLIENT: recieved offer');
         socket.on('token', ChatInstance.onToken(ChatInstance.createAnswer(offer)));
         socket.emit('token');
     },
