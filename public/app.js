@@ -20,7 +20,9 @@ var chatPartner = null;
 // client role can be HOST or GUEST. 
 //      HOST creates rooms and initiates RTC Peer Connection (sends offer)
 //      GUEST recieves room invitations and responds to RTCPeerConnection offer (sends answer)
-var role = '';
+var current_role = '';
+
+var current_room = '';
 
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
@@ -50,7 +52,10 @@ var ChatInstance = {
         ChatInstance.peerConnection.createOffer(
             function(offer){
                 ChatInstance.peerConnection.setLocalDescription(offer);
-                socket.emit('offer', JSON.stringify(offer));
+                socket.emit('offer', {
+                    room: current_room,
+                    offer: JSON.stringify(offer)
+                });
             },
             function(err){
                 console.log(err);
@@ -277,7 +282,7 @@ function handleMessage(message){
 
         case 'role-update':
             var role_update = message.content;
-            role = role_update.role;
+            current_role = role_update.role;
             break;
 
         case 'text-message':
@@ -285,9 +290,15 @@ function handleMessage(message){
             console.log(message.content)
             break;
 
+        case 'room-join':
+            console.log('Socket joined room');
+            var roomname = message.content.roomname;
+            current_room = roomname;
+            break;
+
         case 'room-ready':
             console.log('Room is ready for initiating RTCPeerConnection between clients');
-            if(role == 'HOST'){
+            if(current_role == 'HOST'){
                 ChatInstance.startCall();
             }
             break;
@@ -299,7 +310,7 @@ function handleMessage(message){
 */
 function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
-        role = 'GUEST';
+        current_role = 'GUEST';
         console.log('Found chat partner');
         socket.emit('join', roomInvitation.roomname);
     }

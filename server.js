@@ -119,6 +119,12 @@ io.on('connection', function(socket){
             if(numClients == 0){
                 console.log('SERVER: first client joining room');
                 socket.room = roomname;
+                socket.emit('message', {
+                    title: 'room-join',
+                    content: {
+                        roomname: roomname
+                    }
+                })
                 socket.join(socket.room);
             }
             /* if there is 1 client currently in the room */
@@ -180,11 +186,11 @@ io.on('connection', function(socket){
     * Handles OFFER event from client sockets
     * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
     */
-    socket.on('offer', function(offer){
+    socket.on('offer', function(msg){
         console.log('SERVER: sending offer to client');
-        console.log('Room: ' + socket.room);
-        console.log('Offer: ' + offer);
-        socket.broadcast.to(socket.room).emit('offer', offer);
+        console.log('Room: ' + msg.room);
+        console.log('Offer: ' + msg.offer);
+        socket.broadcast.to(msg.room).emit('offer', msg.offer);
     });
 
     /*
