@@ -16,14 +16,10 @@ app.use(express.static('public'));
 let waitlist = [];
 
 io.on('connection', function(socket){
-    console.log('init rooms log: ');
-    console.log(socket.rooms);
 
     function getRoomName(id1, id2){
         var roomName = id1 + id2;
-        console.log('new room name: ');
-        console.log(roomName);
-        return (roomName);
+        return(roomName);
     }
 
     socket.on('join', function(roomname){
@@ -43,9 +39,9 @@ io.on('connection', function(socket){
             if(firstInLine){
                 const chat_partner_id = firstInLine;
 
-                console.log(chat_partner_id + ' is next on the waitlist');
+                console.log('SERVER: ' + chat_partner_id + ' is next on the waitlist');
                 waitlist.shift(); // removes the item from the beginning of the array 
-                console.log('pairing with ' + chat_partner_id);
+                console.log('SERVER: pairing with ' + chat_partner_id);
 
 
                 /* Make unique room name */
@@ -57,7 +53,7 @@ io.on('connection', function(socket){
                     roomname: newRoomName
                 }
 
-                console.log(socket.id + ' joined room ' + newRoomName);
+                console.log('SERVER: ' + socket.id + ' joined room ' + newRoomName);
 
                 /* 
                 * Invite the chat partner to the room
@@ -92,8 +88,8 @@ io.on('connection', function(socket){
             * If there's no one else waiting for a chat partner, join the waitlist
             */
             else {
-                console.log('Waitlist is empty');
-                console.log('Adding ' + socket.id + ' to the waitlist');
+                console.log('SERVER: waitlist is empty');
+                console.log('SERVER: adding ' + socket.id + ' to the waitlist');
                 waitlist.push(socket.id);
                 // tell the client it's now waiting
                 socket.emit('message', {
@@ -121,13 +117,13 @@ io.on('connection', function(socket){
 
             /* if there are 0 clients currently in the room */
             if(numClients == 0){
-                console.log('First client joining room');
+                console.log('SERVER: first client joining room');
                 socket.room = roomname;
                 socket.join(socket.room);
             }
             /* if there is 1 client currently in the room */
             else if (numClients == 1){
-                console.log('Second client joining room');
+                console.log('SERVER: second client joining room');
                 socket.room = roomname;
                 socket.join(socket.room);
                 //io.sockets.in()
@@ -144,8 +140,11 @@ io.on('connection', function(socket){
             }
             /* if there are 2+ clients currently in the room*/
             else {
-                socket.emit('full', room);
-                console.log('Room is full   ');
+                socket.emit('message', {
+                    title: 'room-full',
+                    content: socket.room
+                });
+                console.log('SERVER: room "' + socket.room + '" is full');
             }
         }
     });
