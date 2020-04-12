@@ -338,10 +338,11 @@ socket.on('offer', ChatInstance.onOffer);
 /* Button handlers and event listeners */
 /**********************************/
 
-var findChatButton = document.getElementById('find-chat');
-var cameraToggleButton = document.getElementById('camera-toggle');
+const faceScanButton = document.getElementById('camera-access');
+const findChatButton = document.getElementById('find-a-chat');
 
-var localVideo = document.getElementById('videoElement');
+/* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
+const localVideo = document.getElementById('videoElement');
 
 
 /*
@@ -395,7 +396,7 @@ findChatButton.addEventListener(
 /*
 * Handler function for the camera button
 */
-function handleCameraToggle(){
+function handleMediaAccess(){
 
     // get access to client media streams
     navigator.mediaDevices
@@ -414,7 +415,4 @@ function handleCameraToggle(){
 
 }
 
-cameraToggleButton.addEventListener(
-    'click',
-    handleCameraToggle
-);
+faceScanButton.addEventListener('click', handleMediaAccess);
