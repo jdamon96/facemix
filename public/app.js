@@ -158,6 +158,10 @@ var ChatInstance = {
         */
         var rtcAnswer = new RTCSessionDescription(JSON.parse(answer));
 
+
+        console.log('recieved answer');
+        console.log(answer);
+
         /*
         * Set the remote description of our RTCPeerConnection to the RTCSessionDescription of the remote clinet
         */
