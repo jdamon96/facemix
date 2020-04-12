@@ -126,6 +126,18 @@ findChatButton.addEventListener('mouseleave', onButtonLeaveHandler);
 header.addEventListener('click', headerClickHandler);
 
 
+/* Function to handle any keyboard functinality */
+
+function dealWithKeyboard(event){
+    const keyPressed = event.keyCode;
+
+    if(keyPressed == 27){
+        if(state.about_active == true){
+            hideAboutWindow();
+        }
+    }
+}
+
 
 document.getElementById('mini-face-scan').addEventListener('mouseenter', function(event){
     this.src = "./assets/BLUE-mini-face-scan-button.png"
@@ -142,3 +154,5 @@ document.getElementById('mini-find-chat').addEventListener('mouseenter', functio
 document.getElementById('mini-find-chat').addEventListener('mouseleave', function(event){
     this.src = "./assets/mini-find-chat-button.png"
 });
+
+document.addEventListener("keydown", dealWithKeyboard);
