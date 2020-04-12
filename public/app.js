@@ -339,8 +339,8 @@ socket.on('offer', ChatInstance.onOffer);
 /**********************************/
 
 /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
-// const faceScanButton = document.getElementById('camera-access');
-// const findChatButton = document.getElementById('find-a-chat');
+const faceScanButton = document.getElementById('camera-access');
+const findChatButton = document.getElementById('find-a-chat');
 
 /* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
 const localVideo = document.getElementById('videoElement');
