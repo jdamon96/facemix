@@ -4,36 +4,63 @@
   <head>
     <meta charset="UTF-8">
     <title>Test</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="styles.css">
   </head>
 
   <body>
 
-    <div class="left-container">
-      <div class="button-container">
-        <button id="find-chat" onclick="">Find a chat</button>
-        <button id="camera-toggle" onclick="">
-          <img id="camera-toggle-icon" src="./assets/face-scan.png">
-        </button>
-        
-        
-      
+    <div id="overlay">
+
+      <div id="about-message">
+
+        <p id="about-message-header">Anonymously meet and talk with people across the world</p>
+
+        <hr noshade>
+
+        <div id="about-line-one" class="about-message-line">
+
+          <img id="mini-face-scan" class="inline-img" src="./assets/mini-face-scan-button.png">
+          
+          <span> to enable camera access and display a 3D, anonymous model of your face</span>
+
+        </div>
+
+        <div id="about-line-two" class="about-message-line">
+
+          <img id="mini-find-chat" class="inline-img" src="./assets/mini-find-chat-button.png"> 
+
+          <span> to pair and chat with another person</span>
+
+        </div>
+
       </div>
+
     </div>
 
-    <div class="canvas-container">
-      <canvas id="self-preview-canvas">
-      </canvas>
+    <div id="app-container">
+        
+        <div id="header">
+            <h1 id= "title" class="disable-select"> Facemix </h1>
+          	
+          	<button class="header-button" id="find-a-chat" class="disable-select">
+              <span class="disable-select">Find a Chat</span>
+            </button>
+
+            <button class="header-button" id="camera-access" class="disable-select"></button>
+
+            <button class="header-button" id="about" class="disable-select"> 
+              <span class="disable-select" id="about-span">About</span> 
+            </button>
+
+            <div id="header-border-line"></div>
+        </div>
+
+        <div id="page-content">
+          <canvas id="my-canvas" class="disable-select"></canvas>
+        </div>
     </div>
 
-    <video autoplay="true" id="videoElement" style="visibility: hidden"></video>
-
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="./bundle.js"></script>
-
+    <script src="index.js"></script>
   </body>
 
 </html>
