@@ -261,7 +261,7 @@ async function getScaledMesh(localVideo) {
 async function logScaledMesh(localVideo) {
     setInterval(async () => {
         var scaledMesh = await getScaledMesh(localVideo);
-        //console.log(scaledMesh);
+        console.log(scaledMesh);
         /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
     }, 100);
 }
@@ -356,17 +356,14 @@ const localVideo = document.getElementById('videoElement');
 function handleLoadedVideoData(event){
     console.log('video data loaded');
     
-    //var video = event.target;
-    //logScaledMesh(video);
+    var video = event.target;
+    logScaledMesh(video);
 }
 
 /*
 * Adding the event listner and attaching the handler function
 */
-localVideo.addEventListener(
-    'loadeddata',
-    handleLoadedVideoData
-)
+localVideo.addEventListener('loadeddata', handleLoadedVideoData);
 
 /* disable 'find chat' button if no access to client media feed 
 * ( can't join chat if you don't have your camera on )*/
