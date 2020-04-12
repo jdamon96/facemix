@@ -6,7 +6,7 @@ var state = {
 }
 
 /* Get access to HTML elements */
-const overlay = document.getElementById('overlay')
+const overlay = document.getElementById('overlay');
 const aboutButton = document.getElementById('about');
 const faceScanButton = document.getElementById('camera-access');
 const findChatButton = document.getElementById('find-a-chat');
@@ -104,13 +104,13 @@ function containerClickHandler(event){
     } 
     */
     console.log('container click');
-    if(state.about_active && event.target.id != 'about'){
+    if(state.about_active && event.target.id != 'about' && event.target.id != 'about-message'){
         hideAboutWindow();
     }
 }
 
 /* Define event listeners and attach handler functions */
-overlay.addEventListener('click', containerClickHandler)
+overlay.addEventListener('click', containerClickHandler);
 
 aboutButton.addEventListener('click', aboutHandler);
 

@@ -150,6 +150,7 @@ hr {
     vertical-align: baseline;
     position: relative;
     top: 6px;
+    margin-left: 0;
 }
 
 #mini-face-scan {
