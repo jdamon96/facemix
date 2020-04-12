@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "browserify ./public/app.js ./public/index.js -o ./public/bundle.js"
+    "build": "browserify ./public/index.js ./public/app.js -o ./public/bundle.js"
   },
   "author": "",
   "license": "ISC",
