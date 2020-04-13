@@ -105,7 +105,7 @@ var ChatInstance = {
                 iceServers: token.iceServers
             });
 
-            peerConnection.addEventListener('datachannel', event => {
+            ChatInstance.peerConnection.addEventListener('datachannel', event => {
                 ChatInstance.initiateDataChannel(event.channel);
             });
 
