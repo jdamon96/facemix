@@ -281,8 +281,8 @@ async function getScaledMesh(localVideo) {
 async function logScaledMesh(localVideo) {
     setInterval(async () => {
         var scaledMesh = await getScaledMesh(localVideo);
-        console.log('Local facemesh data:')
-        console.log(scaledMesh);
+        //console.log('Local facemesh data:')
+        //console.log(scaledMesh);
         if(chatMode == true){
             socket.emit('facemesh', {
                 room: current_room, 
