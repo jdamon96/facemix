@@ -106,6 +106,7 @@ var ChatInstance = {
             });
 
             ChatInstance.peerConnection.addEventListener('datachannel', event => {
+                console.log('data channel event!');
                 ChatInstance.initiateDataChannel(event.channel);
             });
 
@@ -138,6 +139,7 @@ var ChatInstance = {
             */
             socket.on('candidate', ChatInstance.onCandidate);
             socket.on('answer', ChatInstance.onAnswer);
+
 
             /*
             * Call the supplied callback function
