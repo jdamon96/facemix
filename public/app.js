@@ -93,7 +93,7 @@ var ChatInstance = {
         ChatInstance.dataChannel.addEventListener('close', event => {
             console.log('data channel is closed');
         });
-    }
+    },
 
     onToken: function(callback){
         return function(token){
