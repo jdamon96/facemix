@@ -168,6 +168,10 @@ io.on('connection', function(socket){
         }
     });
 
+    socket.on('facemesh', function(msg){
+        socket.broadcast.to(msg.room).emit('facemesh', msg.facemesh)
+    });
+
     /*
     * Handles TOKEN event from client sockets
     * - requests token from Twilio, 

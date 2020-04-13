@@ -66,7 +66,7 @@ var ChatInstance = {
     createAnswer: function(offer){
         return function(){
             ChatInstance.connected = true;
-            rtcOffer = new RTCSessionDescription(JSON.parse(offer));
+            var rtcOffer = new RTCSessionDescription(JSON.parse(offer));
             ChatInstance.peerConnection.setRemoteDescription(rtcOffer);
             ChatInstance.peerConnection.createAnswer(
                 function(answer){
@@ -83,6 +83,18 @@ var ChatInstance = {
         }
     },
 
+    initiateDataChannel: function(channel){
+        ChatInstance.dataChannel = channel;
+
+        ChatInstance.dataChannel.addEventListener('open', event => {
+            console.log('data channel is open');
+        });
+
+        ChatInstance.dataChannel.addEventListener('close', event => {
+            console.log('data channel is closed');
+        });
+    }
+
     onToken: function(callback){
         return function(token){
             /*
@@ -91,6 +103,10 @@ var ChatInstance = {
 
             ChatInstance.peerConnection = new RTCPeerConnection({
                 iceServers: token.iceServers
+            });
+
+            peerConnection.addEventListener('datachannel', event => {
+                ChatInstance.initiateDataChannel(event.channel);
             });
 
             /*
@@ -187,6 +203,10 @@ var ChatInstance = {
         *  Clear the buffer now that we've offloaded the candidates to the remote client
         */
         ChatInstance.localICECandidates = [];
+
+        const newDataChannel = ChatInstance.peerConnection.createDataChannel();
+
+        ChatInstance.initiateDataChannel(newDataChannel);
     },
 
     
@@ -261,7 +281,14 @@ async function getScaledMesh(localVideo) {
 async function logScaledMesh(localVideo) {
     setInterval(async () => {
         var scaledMesh = await getScaledMesh(localVideo);
+        console.log('Local facemesh data:')
         console.log(scaledMesh);
+        if(chatMode == true){
+            socket.emit('facemesh', {
+                room: current_room, 
+                facemesh: scaledMesh
+            });
+        }
         /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
     }, 100);
 }
