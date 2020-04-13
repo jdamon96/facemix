@@ -204,7 +204,7 @@ var ChatInstance = {
         */
         ChatInstance.localICECandidates = [];
 
-        const newDataChannel = ChatInstance.peerConnection.createDataChannel();
+        const newDataChannel = ChatInstance.peerConnection.createDataChannel('facemesh');
 
         ChatInstance.initiateDataChannel(newDataChannel);
     },
