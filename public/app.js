@@ -66,8 +66,11 @@ var ChatInstance = {
     createAnswer: function(offer){
         return function(){
             ChatInstance.connected = true;
+
             var rtcOffer = new RTCSessionDescription(JSON.parse(offer));
+
             ChatInstance.peerConnection.setRemoteDescription(rtcOffer);
+
             ChatInstance.peerConnection.createAnswer(
                 function(answer){
                     ChatInstance.peerConnection.setLocalDescription(answer);
@@ -80,6 +83,12 @@ var ChatInstance = {
                     console.log(err);
                 }
             );
+
+            ChatInstance.peerConnection.ondatachannel = function(event){
+                console.log('Data channel is created!');
+                initiateDataChannel(event.channel);
+            }
+
         }
     },
 
@@ -103,11 +112,6 @@ var ChatInstance = {
 
             ChatInstance.peerConnection = new RTCPeerConnection({
                 iceServers: token.iceServers
-            });
-
-            ChatInstance.peerConnection.addEventListener('datachannel', event => {
-                console.log('data channel event!');
-                ChatInstance.initiateDataChannel(event.channel);
             });
 
             /*
