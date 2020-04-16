@@ -206,9 +206,13 @@ var ChatInstance = {
         */
         ChatInstance.localICECandidates = [];
 
-        const newDataChannel = ChatInstance.peerConnection.createDataChannel('facemesh');
+        let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel');
 
-        ChatInstance.initiateDataChannel(newDataChannel);
+        dataChannel.addEventListener("open", (event) => {
+            console.log(event);
+        });
+
+        //ChatInstance.initiateDataChannel(newDataChannel);
     },
 
     
