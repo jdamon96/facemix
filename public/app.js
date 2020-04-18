@@ -125,7 +125,7 @@ var ChatInstance = {
             ChatInstance.peerConnection.ondatachannel = (event) => {
                 console.log('Peer client created a data channel');
                 ChatInstance.initiateDataChannel(event.channel);
-            });
+            };
 
             /*
             * Add handler for disconnection
