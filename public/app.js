@@ -20,7 +20,7 @@ var chatPartner = null;
 // client role can be HOST or GUEST. 
 //      HOST creates rooms and initiates RTC Peer Connection (sends offer)
 //      GUEST recieves room invitations and responds to RTCPeerConnection offer (sends answer)
-var current_role = '';
+var initiator = false;
 
 var current_room = '';
 
@@ -93,110 +93,56 @@ var ChatInstance = {
         ChatInstance.dataChannel = channel;
         console.log(ChatInstance.dataChannel);
 
+        ChatInstance.dataChannel.addEventListener('open', event => {
+            console.log('Channel opened');
+            setInterval(function(){
+                ChatInstance.dataChannel.send(current_facemesh);
+            }, 10);           
+        });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
             console.log(event);
         });
 
-        ChatInstance.dataChannel.addEventListener('open', event => {
-
-            setInterval(function(){
-                ChatInstance.dataChannel.send(current_facemesh);
-            }, 10);
-            //const arrayBuffer = await file.arrayBuffer;
-            
-        });
-
         ChatInstance.dataChannel.addEventListener('close', (event) => {
-            // handle close
+            console.log('Channel closed');
         });
     },
 
+    createPeerConnection: function(){
+        socket.on('token', ChatInstance.onToken(token));
+        socket.emit('token');
+    },
 
+    onToken: function(token){
+        //Create the peer connection
+        ChatInstance.peerConnection = new RTCPeerConnection({
+            iceServers: token.iceServers
+        });
 
-    onToken: function(callback){
-        return function(token){
-            /*
-            * Initialize a new RTCPeerConnection using iceServers supplied from Twilio token
-            */
+        // send any ice candidates to the other peer
+        ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
 
-            ChatInstance.peerConnection = new RTCPeerConnection({
-                iceServers: token.iceServers
+        if(initiator){
+            // create the data channel
+            console.log('Creating a data channel')
+            let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel', {maxRetransmits: 0, ordered: false});
+            ChatInstance.initiateDataChannel(dataChannel);     
+
+            //create an offer
+            console.log('Creating an offer')
+            ChatInstance.createOffer();
+        } else {
+            ChatInstance.peerConnection.addEventListener('datachannel', event => {
+                console.log('datachannel:', event.channel);
+                ChatInstance.initiateDataChannel(event.channel);
             });
-
-
-            /*
-            * Create data channel and add it to ChatInstance('HOST')
-            */
-            if(current_role == 'HOST'){
-                console.log('HOST creating datachannel');
-                let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel');
-                ChatInstance.initiateDataChannel(dataChannel);
-            } else {
-                console.log('GUEST adding datachannel event listener');
-                ChatInstance.peerConnection.addEventListener('datachannel', event => {
-                    console.log('GUEST recieved data channel');
-                    ChatInstance.initiateDataChannel(event.channel);
-                });   
-            }
-
-            /*
-            * Recieve data channel and add it to ChatInstance('GUEST')
-            */
-            
-
-            /*
-            * ChatInstance.peerConnection.addStream(ChatInstance.localStream);
-            */
-            
-            /*
-            * Attach handler for peerConnection onIceCandidate event
-            */
-            ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
-
-            /*
-            * ChatInstance.peerConnection.onaddstream = ChatInstance.onAddStream;
-            */
-
-            /*
-            * We set up the socket listener for the 'candidate' event within this onToken function 
-            * because this is when we create the peerConnection and will be ready to deal with 
-            * candidates
-            */ 
-
-            /*
-            * Set up socket event-listeners and attach event-handler for CANDIDATE and ANSWER events
-            *
-            * Note: we set up these event listener/handlers within this onToken function
-            * because we create the RTCPeerConnection inside this function and we are not ready
-            * to listen for / handle the CANDIDATE and ANSWER events until we have created the 
-            * RTCPeerConnection
-            */
-            socket.on('candidate', ChatInstance.onCandidate);
-            socket.on('answer', ChatInstance.onAnswer);
-
-
-            /*
-            * Call the supplied callback function
-            *
-            * NOTE: 
-            *   - The reason we're using this design pattern of passing a callback to the onToken function
-            *   and calling this callback at the end of the function is that clients need to use the onToken function both when they're
-            *   creating an RTCPeerConnection Offer _and_ Answer
-            *  
-            *   - We enable this flexible use of the onToken function by accepting a callback function, and then when we call onToken we either pass
-            *   a createOffer callback or createAnswer callback depending on the context 
-            */ 
-            callback();
         }
+
+        socket.on('candidate', ChatInstance.onCandidate);
+        socket.on('answer', ChatInstance.onAnswer);
     },
 
-    /*
-    onAddStream: function(event){
-        ChatInstance.remoteVideo = document.getElementById('remote-video');
-        ChatInstance.remoteVideo.srcObject = event.stream;
-    },
-    */
 
     /*
     * Handler function for recieving an ANSWER 
@@ -282,11 +228,9 @@ var ChatInstance = {
     },
 
     startCall: function(event){  
-        socket.on('token', ChatInstance.onToken(ChatInstance.createOffer));
-        socket.emit('token');
+
     }
 };
-
 
 /********************************/
 /******* Facemesh set-up ********/
@@ -296,7 +240,6 @@ var ChatInstance = {
 * initializing variable that will hold the facemesh model
 */
 var model;
-
 
 /*
 * Defining required functions for handling facemodel
@@ -354,9 +297,8 @@ function handleMessage(message){
             console.log('Waiting for chat partner: ' + waitingForChat);
             break;
 
-        case 'role-update':
-            var role_update = message.content;
-            current_role = role_update.role;
+        case 'initiator-status':
+            initiator = message.content.initiator;
             break;
 
         case 'text-message':
@@ -365,15 +307,13 @@ function handleMessage(message){
             break;
 
         case 'room-joined':
-            console.log('Socket joined room');
-            var roomname = message.content.roomname;
-            current_room = roomname;
-            console.log('CLLIENT: current room: ' + current_room);
+            current_room = message.content.roomname;
+            ChatInstance.createPeerConnection();
             break;
 
         case 'room-ready':
             console.log('Room is ready for initiating RTCPeerConnection between clients');
-            if(current_role == 'HOST'){
+            if(initiator){
                 ChatInstance.startCall();
             }
             break;
@@ -385,7 +325,6 @@ function handleMessage(message){
 */
 function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
-        current_role = 'GUEST';
         console.log('Found chat partner');
         socket.emit('joinroom', roomInvitation.roomname);
     }

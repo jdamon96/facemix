@@ -17,18 +17,11 @@ let waitlist = [];
 
 io.on('connection', function(socket){
 
+    // find a chat partner
     socket.on('join', function(roomname){
-        
-    
-        /*
-        * Get first person in line waiting to chat
-        */
+         
+        // Get the first person in line
         const firstInLine = waitlist[0];
-
-
-        /*
-        * Helper functions
-        */
 
         function getRoomName(client_id, chat_partner_id){
             var roomName = client_id + chat_partner_id;
@@ -47,31 +40,22 @@ io.on('connection', function(socket){
             }
 
             return roominvitation;
+        };
 
-        }
-
-
-
-
-        /*
-        * If there is someone waiting to chat in line:
-        
-        *   - invite the chat partner to join it
-
-        *   - join it
-        
-        */
+        // If there was someone in line
         if(firstInLine){
-            waitlist.shift(); // removes firstInLine from the beginning of the array 
+            // removes firstInLine from the beginning of the array 
+            waitlist.shift(); 
 
-            /* Invite the chat partner to a room*/ 
+            // Invite the chat partner to a room
             const roominvitation = createRoomInvitation(socket.id, firstInLine);
             
             socket.broadcast.emit('roominvitation', roominvitation);            
 
-            /* Join the room */ 
+            //this client joins the room
             socket.join(roominvitation.roomname);
 
+            //send message to this client telling it that it has joined a room
             socket.emit('message', {
                 title: 'room-joined',
                 content: {
@@ -79,23 +63,16 @@ io.on('connection', function(socket){
                 }
             });
 
-            /*
-            * Send 'roleupdate' event to client to designate their role as HOST 
-            * (the implication of this is when the clients have recieved events confirming that both clients are in the room,
-            * the designated client role will determine which client creates the RTCPeerConnection offer )
-            */
-
+            //send message to this client telling it that it is the initiator
             socket.emit('message', {
-                title: 'role-update',
+                title: 'initiator-status',
                 content: {
-                    role: 'HOST'
+                    initiator: true
                 }
             });
-
         } 
-        /* 
-        * If there's no one else waiting for a chat partner, join the waitlist
-        */
+
+        // if there isn't a chat partner inline, join the line
         else {
             waitlist.push(socket.id);
             // tell the client it's now waiting
@@ -104,30 +81,18 @@ io.on('connection', function(socket){
                 content: true
             });
         }            
-    
-
-    
-
     });
 
-
-    /*
-    * If the socket joins with a specific roomname 
-    *   - check how many clients are in the room specified by roomname
-    *   - if 0, join (this shouldn't happen though - if a socket has a specific roomname to join they should be the 2nd to join the room bc the client who created the roominvitation should already be in that room)
-    *   - if 1, join
-    *   - if 2, reject join (room is full)
-    * (note: This socket was the recipient of a roominvitation - that's why they have a specific roomname to join) 
-    */ 
+    // join a specific room
     socket.on('joinroom', function(roomname){
     
-        /* Get list of socket clients in room 'roomname'*/
+        // Get list of clients in the specified room
         var clients = io.sockets.adapter.rooms[roomname];
 
-        /* Get number of clients in room 'roomname'*/
+        // get number of clients
         var numClients = typeof clients !=='undefined' ? clients.length: 0;
 
-        /* if there are 0 clients currently in the room */
+        // if there are no clients in the room
         if(numClients == 0){
             console.log('SERVER: first client joining room');
             socket.room = roomname;
@@ -139,18 +104,21 @@ io.on('connection', function(socket){
             });
             socket.join(socket.room);
         }
-        /* if there is 1 client currently in the room */
+        // if there is another client in the room
         else if (numClients == 1){
             console.log('SERVER: second client joining room');
+            //join the room
             socket.join(roomname);
-            //io.sockets.in()
+
+            //tell this client it joined a room
             socket.emit('message', {
-                title: 'room-join',
+                title: 'room-joined',
                 content: {
                     roomname: roomname
                 }
             });
 
+            // tell the other client in the room that the room is ready
             socket.broadcast.to(roomname).emit("message", {
                 title: 'room-ready',
                 content: {
@@ -158,31 +126,19 @@ io.on('connection', function(socket){
                 }
             });
             
-            /* TO-DO: emit event here that instructs
-             * the clients to set up an RTC connection 
-             * between themselves */ 
         }
-        /* if there are 2+ clients currently in the room*/
+        // if there are 2 clients in the room, tell this client the room is full
         else {
             socket.emit('message', {
                 title: 'room-full',
                 content: socket.room
             });
             console.log('SERVER: room "' + socket.room + '" is full');
-        }
-    
+        } 
     });
 
-    socket.on('facemesh', function(msg){
-        socket.broadcast.to(msg.room).emit('facemesh', msg.facemesh)
-    });
-
-    /*
-    * Handles TOKEN event from client sockets
-    * - requests token from Twilio, 
-        - if Twilio returns a token, the server passes it back to the client in a server-emitted 'token' event
-        - if Twilio fails to return a token, the server console.logs the err returned instead
-    */
+    // Provide client with a Network Traversal Service Token from Twilio 
+    // "Twilio’s Network Traversal Service is a globally distributed STUN/TURN service that helps you deploy more reliable peer-to-peer communications applications."
     socket.on('token', function(){
         twilio.tokens.create(function(err, response){
             if(err) {
@@ -190,33 +146,25 @@ io.on('connection', function(socket){
             }
             else {
                 console.log('SERVER: returning token to client');
+                //send the token to the requesting client
                 socket.emit('token', response);
             }
         });
     });
 
-    /*
-    * Handles CANDIDATE event from client sockets
-    * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
-    */
+    // recieve 'candidate' from client and relay to the other client in the room
     socket.on('candidate', function(msg){    
         console.log('SERVER: sending candidate to client');
         socket.broadcast.to(msg.room).emit('candidate', msg.candidate);
     });
 
-    /*
-    * Handles OFFER event from client sockets
-    * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
-    */
+    // recieve 'offer' from client and relay to the other client in the room
     socket.on('offer', function(msg){
         console.log('SERVER: sending offer to client');
         socket.broadcast.to(msg.room).emit('offer', msg.offer);
     });
 
-    /*
-    * Handles ANSWER event from client sockets
-    * - The servers relays the CANDIDATE event and data to other sockets in the same room as the original emitting socket
-    */
+    // recieve 'answer' from client and relay to the other client in the room
     socket.on('answer', function(msg){
         console.log('SERVER: sending answer to client');
         socket.broadcast.to(msg.room).emit('answer', msg.answer);
