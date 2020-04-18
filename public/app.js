@@ -45,9 +45,9 @@ var ChatInstance = {
     localICECandidates: [],
 
     onOffer: function(offer){
-        console.log('CLIENT: recieved offer');
-        socket.on('token', ChatInstance.onToken(ChatInstance.createAnswer(offer)));
-        socket.emit('token');
+        console.log('Recieved offer. Sending answer to peer.');
+        ChatInstance.peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(offer)))
+        ChatInstance.createAnswer();
     },
 
     createOffer: function(){
@@ -65,27 +65,20 @@ var ChatInstance = {
         );
     },
 
-    createAnswer: function(offer){
-        return function(){
-            ChatInstance.connected = true;
-
-            var rtcOffer = new RTCSessionDescription(JSON.parse(offer));
-
-            ChatInstance.peerConnection.setRemoteDescription(rtcOffer);
-
-            ChatInstance.peerConnection.createAnswer(
-                function(answer){
-                    ChatInstance.peerConnection.setLocalDescription(answer);
-                    socket.emit('answer', {
-                        room: current_room, 
-                        answer: JSON.stringify(answer)
-                    });
-                },
-                function(err){
-                    console.log(err);
-                }
-            );
-        }
+    createAnswer: function(){  
+        ChatInstance.connected = true;  
+        ChatInstance.peerConnection.createAnswer(
+            function(answer){
+                ChatInstance.peerConnection.setLocalDescription(answer);
+                socket.emit('answer', {
+                    room: current_room, 
+                    answer: JSON.stringify(answer)
+                });
+            },
+            function(err){
+                console.log(err);
+            }
+        );
     },
 
     initiateDataChannel: function(channel){  
@@ -152,61 +145,31 @@ var ChatInstance = {
     * - clear localIceCandidate buffer
     */ 
     onAnswer: function(answer){
-        /*
-        * Create an RTCSessionDescription of the remote client using the answer
-        */
-        var rtcAnswer = new RTCSessionDescription(JSON.parse(answer));
+        ChatInstance.peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
 
-
-        console.log('recieved answer');
-        console.log(answer);
-
-        /*
-        * Set the remote description of our RTCPeerConnection to the RTCSessionDescription of the remote clinet
-        */
-        ChatInstance.peerConnection.setRemoteDescription(rtcAnswer);
-
-        /*
-        * Update 'connected' boolean to True
-        */
         ChatInstance.connected = true;
-        console.log('connected to peer client');
-        ChatInstance.transferFacemeshData();
-
-
-        /*
-        * Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
-        */ 
+        
+        // Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
         ChatInstance.localICECandidates.forEach(candidate => {
             socket.emit('candidate', {
                 room: current_room, 
                 candidate: JSON.stringify(candidate)
             });
         });
-
-        /*
-        *  Clear the buffer now that we've offloaded the candidates to the remote client
-        */
+        
+        //Clear the buffer now that we've offloaded the candidates to the remote client
         ChatInstance.localICECandidates = [];
     },
 
-    
-    // Here we check if the ChatInstance is connected before sending the candidate to the server.
-    // If the ChatInstance is not connected, then we add them to a local buffer (the array localICECandidates)
-    
-    /*
-    * Handle recieving potential ICECandidates
-    * - If chatInstance is connected
-        - Send candidate directly to server which will relay to peer client
-    * - If chatInstance is NOT connected
-        - Add candidate to localICECandidates buffer which be offloaded and relayed to client 
-        when chatInstance becomes connected
-    */
+
     onIceCandidate: function(event){
         if(event.candidate){
             if(ChatInstance.connected){
                 console.log('Generated candidate');  
-                socket.emit('candidate', JSON.stringify(event.candidate));
+                socket.emit('candidate', {
+                    room: current_room,
+                    candidate: JSON.stringify(event.candidate)
+                });
             } else {
                 ChatInstance.localICECandidates.push(event.candidate)
             }
@@ -314,7 +277,7 @@ function handleMessage(message){
         case 'room-ready':
             console.log('Room is ready for initiating RTCPeerConnection between clients');
             if(initiator){
-                ChatInstance.startCall();
+                ChatInstance.createPeerConnection();
             }
             break;
     }
