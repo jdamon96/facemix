@@ -24,6 +24,8 @@ var current_role = '';
 
 var current_room = '';
 
+var current_facemesh = null;
+
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
 
@@ -89,12 +91,21 @@ var ChatInstance = {
     initiateDataChannel: function(channel){   
         ChatInstance.dataChannel = channel;
 
-        ChatInstance.dataChannel.addEventListener("open", (event) => {
+        ChatInstance.dataChannel.onmessage = (event) => {
             console.log(event);
-        });
+        }
+
+        ChatInstance.dataChannel.onopen = async () => {
+
+            setInterval(async () => {
+                ChatInstance.dataChannel.send(current_facemesh);
+            }, 10);
+            //const arrayBuffer = await file.arrayBuffer;
+            
+        }
 
         ChatInstance.dataChannel.addEventListener("close", (event) => {
-            console.log(event);
+            // handle close
         });
     },
 
@@ -127,13 +138,6 @@ var ChatInstance = {
                 ChatInstance.initiateDataChannel(event.channel);
             };
 
-            /*
-            * Add handler for disconnection
-            */
-            ChatInstance.peerConnection.onconnectionstatechange = (event) => {
-                console.log('RTCPeerConnection state change:');
-                console.log(event);
-            };
 
             /*
             * ChatInstance.peerConnection.addStream(ChatInstance.localStream);
@@ -215,15 +219,8 @@ var ChatInstance = {
         */
         ChatInstance.connected = true;
         console.log('connected to peer client');
-        console.log(ChatInstance);
+        ChatInstance.transferFacemeshData();
 
-        /*
-        * Add handler for disconnection
-        */
-        ChatInstance.peerConnection.onconnectionstatechange = (event) => {
-            console.log('RTCPeerConnection state change:');
-            console.log(event);
-        };
 
         /*
         * Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
@@ -312,15 +309,10 @@ async function getScaledMesh(localVideo) {
 
 async function logScaledMesh(localVideo) {
     setInterval(async () => {
-        var scaledMesh = await getScaledMesh(localVideo);
+        current_facemesh = await getScaledMesh(localVideo);
         //console.log('Local facemesh data:')
         //console.log(scaledMesh);
-        if(chatMode == true){
-            socket.emit('facemesh', {
-                room: current_room, 
-                facemesh: scaledMesh
-            });
-        }
+        
         /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
     }, 100);
 }
