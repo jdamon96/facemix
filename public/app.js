@@ -107,7 +107,7 @@ var ChatInstance = {
             
         });
 
-        ChatInstance.dataChannel.addEventListener("close", (event) => {
+        ChatInstance.dataChannel.addEventListener('close', (event) => {
             // handle close
         });
     },
@@ -127,19 +127,22 @@ var ChatInstance = {
             * Create data channel and add it to ChatInstance('HOST')
             */
             if(current_role == 'HOST'){
+                console.log('HOST creating datachannel');
                 let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel');
-                console.log('Creating a data channel');
                 ChatInstance.initiateDataChannel(dataChannel);
+            } else {
+                console.log('GUEST adding datachannel event listener');
+                ChatInstance.peerConnection.addEventListener('datachannel', event => {
+                    console.log('GUEST recieved data channel');
+                    ChatInstance.initiateDataChannel(event.channel);
+                });   
             }
 
             /*
             * Recieve data channel and add it to ChatInstance('GUEST')
             */
-            console.log('adding datachannel event listener');
-            ChatInstance.peerConnection.addEventListener('datachannel', event => {
-                console.log('Peer client created a data channel');
-                ChatInstance.initiateDataChannel(event.channel);
-            });
+            
+            
 
 
             /*
