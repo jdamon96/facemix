@@ -30,7 +30,7 @@ io.on('connection', function(socket){
         * Helper functions
         */
 
-        function createRoomName(client_id, chat_partner_id){
+        function getRoomName(client_id, chat_partner_id){
             var roomName = client_id + chat_partner_id;
             return(roomName);
         };
