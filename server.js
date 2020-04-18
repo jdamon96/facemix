@@ -75,7 +75,7 @@ io.on('connection', function(socket){
             socket.emit('message', {
                 title: 'room-joined',
                 content: {
-                    roomname: newRoomName
+                    roomname: roominvitation.roomname
                 }
             });
 
