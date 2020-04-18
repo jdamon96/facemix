@@ -103,37 +103,39 @@ var ChatInstance = {
     },
 
     createPeerConnection: function(){
-        socket.on('token', ChatInstance.onToken(token));
+        socket.on('token', ChatInstance.onToken());
         socket.emit('token');
     },
 
-    onToken: function(token){
-        //Create the peer connection
-        ChatInstance.peerConnection = new RTCPeerConnection({
-            iceServers: token.iceServers
-        });
-
-        // send any ice candidates to the other peer
-        ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
-
-        if(initiator){
-            // create the data channel
-            console.log('Creating a data channel')
-            let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel', {maxRetransmits: 0, ordered: false});
-            ChatInstance.initiateDataChannel(dataChannel);     
-
-            //create an offer
-            console.log('Creating an offer')
-            ChatInstance.createOffer();
-        } else {
-            ChatInstance.peerConnection.addEventListener('datachannel', event => {
-                console.log('datachannel:', event.channel);
-                ChatInstance.initiateDataChannel(event.channel);
+    onToken: function(){
+        return function(token)
+            //Create the peer connection
+            ChatInstance.peerConnection = new RTCPeerConnection({
+                iceServers: token.iceServers
             });
-        }
 
-        socket.on('candidate', ChatInstance.onCandidate);
-        socket.on('answer', ChatInstance.onAnswer);
+            // send any ice candidates to the other peer
+            ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
+
+            if(initiator){
+                // create the data channel
+                console.log('Creating a data channel')
+                let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel', {maxRetransmits: 0, ordered: false});
+                ChatInstance.initiateDataChannel(dataChannel);     
+
+                //create an offer
+                console.log('Creating an offer')
+                ChatInstance.createOffer();
+            } else {
+                ChatInstance.peerConnection.addEventListener('datachannel', event => {
+                    console.log('datachannel:', event.channel);
+                    ChatInstance.initiateDataChannel(event.channel);
+                });
+            }
+
+            socket.on('candidate', ChatInstance.onCandidate);
+            socket.on('answer', ChatInstance.onAnswer);
+        }
     },
 
 
