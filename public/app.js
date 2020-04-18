@@ -108,7 +108,7 @@ var ChatInstance = {
     },
 
     onToken: function(){
-        return function(token)
+        return function(token){
             //Create the peer connection
             ChatInstance.peerConnection = new RTCPeerConnection({
                 iceServers: token.iceServers
