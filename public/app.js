@@ -89,11 +89,11 @@ var ChatInstance = {
     initiateDataChannel: function(channel){   
         ChatInstance.dataChannel = channel;
 
-        dataChannel.addEventListener("open", (event) => {
+        ChatInstance.dataChannel.addEventListener("open", (event) => {
             console.log(event);
         });
 
-        dataChannel.addEventListener("close", (event) => {
+        ChatInstance.dataChannel.addEventListener("close", (event) => {
             console.log(event);
         });
     },
