@@ -112,6 +112,8 @@ var ChatInstance = {
         });
     },
 
+
+
     onToken: function(callback){
         return function(token){
             /*
@@ -142,8 +144,6 @@ var ChatInstance = {
             * Recieve data channel and add it to ChatInstance('GUEST')
             */
             
-            
-
 
             /*
             * ChatInstance.peerConnection.addStream(ChatInstance.localStream);
