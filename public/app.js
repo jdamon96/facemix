@@ -441,7 +441,7 @@ function handleMediaAccess(){
 
     // get access to client media streams
     navigator.mediaDevices
-        .getUserMedia({video: true, audio: true})
+        .getUserMedia({video: true, audio: false})
         .then(stream => {
             console.log('Media stream acquired');
             localVideo.srcObject = stream;        
