@@ -114,7 +114,7 @@ var ChatInstance = {
             */
             if(current_role == 'HOST'){
                 let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel');
-                console.log('created data channel');
+                console.log('Creating a data channel');
                 ChatInstance.initiateDataChannel(dataChannel);
             }
 
@@ -122,10 +122,18 @@ var ChatInstance = {
             * Recieve data channel and add it to ChatInstance('GUEST')
             */
 
-            ChatInstance.peerConnection.addEventListener('datachannel', (event) => {
-                console.log('recieved data channel');
+            ChatInstance.peerConnection.ondatachannel = (event) => {
+                console.log('Peer client created a data channel');
                 ChatInstance.initiateDataChannel(event.channel);
             });
+
+            /*
+            * Add handler for disconnection
+            */
+            ChatInstance.peerConnection.onconnectionstatechange = (event) => {
+                console.log('RTCPeerConnection state change:');
+                console.log(event);
+            };
 
             /*
             * ChatInstance.peerConnection.addStream(ChatInstance.localStream);
@@ -206,7 +214,16 @@ var ChatInstance = {
         * Update 'connected' boolean to True
         */
         ChatInstance.connected = true;
+        console.log('connected to peer client');
         console.log(ChatInstance);
+
+        /*
+        * Add handler for disconnection
+        */
+        ChatInstance.peerConnection.onconnectionstatechange = (event) => {
+            console.log('RTCPeerConnection state change:');
+            console.log(event);
+        };
 
         /*
         * Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
