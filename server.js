@@ -17,11 +17,6 @@ let waitlist = [];
 
 io.on('connection', function(socket){
 
-    function getRoomName(id1, id2){
-        var roomName = id1 + id2;
-        return(roomName);
-    };
-
     socket.on('join', function(roomname){
         
     
@@ -30,19 +25,17 @@ io.on('connection', function(socket){
         */
         const firstInLine = waitlist[0];
 
+
         /*
-        * If there is someone waiting to chat in line:
-        *   - make a unique room
-        *   - join it
-        *   - invite the chat partner to join it
+        * Helper functions
         */
-        if(firstInLine){
-            const chat_partner_id = firstInLine;
 
-            console.log('SERVER: ' + chat_partner_id + ' is next on the waitlist');
-            waitlist.shift(); // removes the item from the beginning of the array 
-            console.log('SERVER: pairing ' + socket.id + ' with ' + chat_partner_id);
+        function createRoomName(client_id, chat_partner_id){
+            var roomName = client_id + chat_partner_id;
+            return(roomName);
+        };
 
+        function createRoomInvitation(client_id, chat_partner_id){
 
             /* Make unique room name */
             const newRoomName = getRoomName(socket.id, chat_partner_id);
@@ -53,23 +46,34 @@ io.on('connection', function(socket){
                 roomname: newRoomName
             }
 
-            console.log('SERVER: ' + socket.id + ' joined room ' + newRoomName);
+            return roominvitation;
 
-            /* 
-            * Invite the chat partner to the room
-            * 
-            * Note: socket.broadcast.emit(<EVENT>) emits the <EVENT> to everyone in the root namespace except the sender socket itself.
-            * We include a 'recipient' field in the 'roominvitation' event object and fill it with the 'chat_partner_id' so that 
-            * when client sockets recieve and handle this roominvitation event, they can check whether their ID matches the invitation ID 
-            * - if it does they accept the invitation and join the specified room, if it doesn't they ignore the invitation.
-            */
-            socket.broadcast.emit('roominvitation', roominvitation);
+        }
+
+
+
+
+        /*
+        * If there is someone waiting to chat in line:
+        
+        *   - invite the chat partner to join it
+
+        *   - join it
+        
+        */
+        if(firstInLine){
+            waitlist.shift(); // removes firstInLine from the beginning of the array 
+
+            /* Invite the chat partner to a room*/ 
+            const roominvitation = createRoomInvitation(socket.id, firstInLine);
+            
+            socket.broadcast.emit('roominvitation', roominvitation);            
 
             /* Join the room */ 
-            socket.join(newRoomName);
+            socket.join(roominvitation.roomname);
 
             socket.emit('message', {
-                title: 'room-join',
+                title: 'room-joined',
                 content: {
                     roomname: newRoomName
                 }
@@ -80,23 +84,19 @@ io.on('connection', function(socket){
             * (the implication of this is when the clients have recieved events confirming that both clients are in the room,
             * the designated client role will determine which client creates the RTCPeerConnection offer )
             */
-            const roleupdate_message = {
+
+            socket.emit('message', {
                 title: 'role-update',
                 content: {
                     role: 'HOST'
                 }
-            }
-
-
-            socket.emit('message', roleupdate_message);
+            });
 
         } 
         /* 
         * If there's no one else waiting for a chat partner, join the waitlist
         */
         else {
-            console.log('SERVER: waitlist is empty');
-            console.log('SERVER: adding ' + socket.id + ' to the waitlist');
             waitlist.push(socket.id);
             // tell the client it's now waiting
             socket.emit('message', {

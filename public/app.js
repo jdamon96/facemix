@@ -343,7 +343,7 @@ function handleMessage(message){
             console.log(message.content)
             break;
 
-        case 'room-join':
+        case 'room-joined':
             console.log('Socket joined room');
             var roomname = message.content.roomname;
             current_room = roomname;
