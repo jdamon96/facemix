@@ -94,18 +94,18 @@ var ChatInstance = {
         console.log(ChatInstance.dataChannel);
 
 
-        ChatInstance.dataChannel.onmessage = (event) => {
+        ChatInstance.dataChannel.addEventListener('message', event => {
             console.log(event);
-        }
+        });
 
-        ChatInstance.dataChannel.onopen = () => {
-            
+        ChatInstance.dataChannel.addEventListener('open', event => {
+
             setInterval(function(){
                 ChatInstance.dataChannel.send(current_facemesh);
             }, 10);
             //const arrayBuffer = await file.arrayBuffer;
             
-        }
+        });
 
         ChatInstance.dataChannel.addEventListener("close", (event) => {
             // handle close
@@ -136,10 +136,10 @@ var ChatInstance = {
             * Recieve data channel and add it to ChatInstance('GUEST')
             */
 
-            ChatInstance.peerConnection.ondatachannel = (event) => {
+            ChatInstance.peerConnection.addEventListener('datachannel', event => {
                 console.log('Peer client created a data channel');
                 ChatInstance.initiateDataChannel(event.channel);
-            };
+            });
 
 
             /*
