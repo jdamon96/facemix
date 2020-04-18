@@ -135,7 +135,7 @@ var ChatInstance = {
             /*
             * Recieve data channel and add it to ChatInstance('GUEST')
             */
-
+            console.log('adding datachannel event listener');
             ChatInstance.peerConnection.addEventListener('datachannel', event => {
                 console.log('Peer client created a data channel');
                 ChatInstance.initiateDataChannel(event.channel);
