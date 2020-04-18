@@ -88,16 +88,19 @@ var ChatInstance = {
         }
     },
 
-    initiateDataChannel: function(channel){   
+    initiateDataChannel: function(channel){  
+        console.log('Initiating data channel');
         ChatInstance.dataChannel = channel;
+        console.log(ChatInstance.dataChannel);
+
 
         ChatInstance.dataChannel.onmessage = (event) => {
             console.log(event);
         }
 
-        ChatInstance.dataChannel.onopen = async () => {
-
-            setInterval(async () => {
+        ChatInstance.dataChannel.onopen = () => {
+            
+            setInterval(function(){
                 ChatInstance.dataChannel.send(current_facemesh);
             }, 10);
             //const arrayBuffer = await file.arrayBuffer;
@@ -304,7 +307,13 @@ async function getScaledMesh(localVideo) {
     //console.log('estimating faces...');
     const faces = await model.estimateFaces(video);
     //console.log('done estimating faces');
-    return faces[0].scaledMesh;
+    if(faces[0]){
+        return faces[0].scaledMesh;    
+    }
+    else {
+        console.log('Program does not detect a face');
+    }
+    
 }
 
 async function logScaledMesh(localVideo) {
