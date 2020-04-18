@@ -86,9 +86,9 @@ var ChatInstance = {
         }
     },
 
-    initiateDataChannel: function(){
-        ChatInstance.dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel');
-        
+    initiateDataChannel: function(channel){   
+        ChatInstance.dataChannel = channel;
+
         dataChannel.addEventListener("open", (event) => {
             console.log(event);
         });
@@ -108,12 +108,21 @@ var ChatInstance = {
                 iceServers: token.iceServers
             });
 
+
             /*
-            * add an event listener for the data channel event
+            * Create data channel and add it to ChatInstance('HOST')
+            */
+            if(current_role == 'HOST'){
+                let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel');
+                ChatInstance.initiateDataChannel(dataChannel);
+            }
+
+            /*
+            * Recieve data channel and add it to ChatInstance('GUEST')
             */
 
-            ChatInstance.peerConnection.addEventListener('datachannel', (event)=> {
-                ChatInstance.dataChannel = event.channel;
+            ChatInstance.peerConnection.addEventListener('datachannel', (event) => {
+                ChatInstance.initiateDataChannel(event.channel);
             });
 
             /*
