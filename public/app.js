@@ -114,6 +114,7 @@ var ChatInstance = {
             */
             if(current_role == 'HOST'){
                 let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel');
+                console.log('created data channel');
                 ChatInstance.initiateDataChannel(dataChannel);
             }
 
@@ -122,6 +123,7 @@ var ChatInstance = {
             */
 
             ChatInstance.peerConnection.addEventListener('datachannel', (event) => {
+                console.log('recieved data channel');
                 ChatInstance.initiateDataChannel(event.channel);
             });
 
