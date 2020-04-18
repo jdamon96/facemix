@@ -366,7 +366,7 @@ function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
         current_role = 'GUEST';
         console.log('Found chat partner');
-        socket.emit('join', roomInvitation.roomname);
+        socket.emit('joinroom', roomInvitation.roomname);
     }
 }
 
@@ -432,10 +432,7 @@ function handleFindChat(){
 * Adding the 'click' event listener to the button and attaching the handler function
 */
 
-findChatButton.addEventListener(
-    'click',
-    handleFindChat
-);
+findChatButton.addEventListener('click', handleFindChat);
 
 /*
 * Handler function for the camera button
