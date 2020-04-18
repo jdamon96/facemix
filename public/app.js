@@ -83,24 +83,18 @@ var ChatInstance = {
                     console.log(err);
                 }
             );
-
-            ChatInstance.peerConnection.ondatachannel = function(event){
-                console.log('Data channel is created!');
-                initiateDataChannel(event.channel);
-            }
-
         }
     },
 
-    initiateDataChannel: function(channel){
-        ChatInstance.dataChannel = channel;
-
-        ChatInstance.dataChannel.addEventListener('open', event => {
-            console.log('data channel is open');
+    initiateDataChannel: function(){
+        ChatInstance.dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel');
+        
+        dataChannel.addEventListener("open", (event) => {
+            console.log(event);
         });
 
-        ChatInstance.dataChannel.addEventListener('close', event => {
-            console.log('data channel is closed');
+        dataChannel.addEventListener("close", (event) => {
+            console.log(event);
         });
     },
 
@@ -112,6 +106,14 @@ var ChatInstance = {
 
             ChatInstance.peerConnection = new RTCPeerConnection({
                 iceServers: token.iceServers
+            });
+
+            /*
+            * add an event listener for the data channel event
+            */
+
+            ChatInstance.peerConnection.addEventListener('datachannel', (event)=> {
+                ChatInstance.dataChannel = event.channel;
             });
 
             /*
@@ -209,14 +211,6 @@ var ChatInstance = {
         *  Clear the buffer now that we've offloaded the candidates to the remote client
         */
         ChatInstance.localICECandidates = [];
-
-        let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel');
-
-        dataChannel.addEventListener("open", (event) => {
-            console.log(event);
-        });
-
-        //ChatInstance.initiateDataChannel(newDataChannel);
     },
 
     
@@ -256,7 +250,7 @@ var ChatInstance = {
         console.log('No media stream available');
     },
 
-    startCall: function(event){
+    startCall: function(event){  
         socket.on('token', ChatInstance.onToken(ChatInstance.createOffer));
         socket.emit('token');
     }
