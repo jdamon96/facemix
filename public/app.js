@@ -118,16 +118,8 @@ var ChatInstance = {
                       ChatInstance.dataChannel.addEventListener('bufferedamountlow', listener);
                     }
                     return;
-                }
-                // add next 
-                if(ChatInstance.facemeshBuffer[0]){
-                    ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
-                    ChatInstance.facemeshBuffer.shift();    
-                }
-                else {
-                    console.log(ChatInstance.facemeshBuffer[0]);
-                    console.log('no data in the facemesh buffer');
-                }
+                }                
+                ChatInstance.dataChannel.send(current_facemesh);       
             }
         };     
         
@@ -147,13 +139,13 @@ var ChatInstance = {
             console.log('Channel opened');
 
             //push an initial piece of data to the buffer so the sendFacemeshData call below doesn't draw on empty
-            ChatInstance.facemeshBuffer.push(current_facemesh);
+            //ChatInstance.facemeshBuffer.push(current_facemesh);
 
             // add the current facemesh to the buffer every 100milliseconds
             //setInterval(ChatInstance.bufferFacemeshData, 100);
-            for(var i=0; i < 1024; i++){
-                ChatInstance.facemeshBuffer.push(current_facemesh);
-            }
+            //for(var i=0; i < 1024; i++){
+             //   ChatInstance.facemeshBuffer.push(current_facemesh);
+            //}
 
             ChatInstance.sendFacemeshData();
         });
