@@ -43,6 +43,7 @@ var socket = io();
 var ChatInstance = {
     connected: false,
     localICECandidates: [],
+    facemeshBuffer: [],
 
     onOffer: function(offer){
         console.log('Recieved offer. Sending answer to peer.');
@@ -88,9 +89,29 @@ var ChatInstance = {
 
         ChatInstance.dataChannel.addEventListener('open', event => {
             console.log('Channel opened');
-            setInterval(function(){
-                ChatInstance.dataChannel.send(current_facemesh);
-            }, 10);           
+
+            // rate at which to add data to the buffer (milliseconds)
+            const dataSendRate = 100; 
+
+            // getting the ID allows us to use clearInterval();
+            const facemeshToBufferIntervalID = setInterval(function(){
+                ChatInstance.facemeshBuffer.push(current_facemesh);
+            }, dataSendRate); 
+
+        });
+
+        ChatInstance.dataChannel.addEventListener('bufferedamountlow', event => {
+            // dataChannel buffer limit is 16mb
+            //const BUFFER_LIMIT = 100;
+            
+            // offload data from our buffer to the data channel send buffer 
+           // while(ChatInstance.dataChannel.bufferedAmount < BUFFER_LIMIT){
+            while(true){
+                ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
+                ChatInstance.facemeshBuffer.shift();
+                console.log(ChatInstance.dataChannel.bufferedAmount);
+            }
+            console.log()
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {

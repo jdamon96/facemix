@@ -26,7 +26,6 @@ function onAboutLeaveHandler(event){
 }
 
 function onButtonEnterHandler(event){
-    console.log('enter');
     if(!state.about_active){
         event.target.style.color = 'blue';
         event.target.style.border = '1px solid blue';
@@ -34,14 +33,12 @@ function onButtonEnterHandler(event){
 }
 
 function onButtonLeaveHandler(event){
-    console.log('leave');
     event.target.style.color = 'black';
     event.target.style.border = '1px solid black';
 }
 
 
 function onFaceScanEnterHandler(event){
-    console.log('enter');
     if(!state.about_active){
         event.target.style.border = '1px solid blue';
         event.target.style.backgroundImage = 'url(\'./assets/BLUE-face-scan-icon.png\')';
@@ -49,7 +46,6 @@ function onFaceScanEnterHandler(event){
 }
 
 function onFaceScanLeaveHandler(event){
-    console.log('leave');
     event.target.style.border = '1px solid black';
     event.target.style.backgroundImage = 'url(\'./assets/face-scan-icon.png\')';
 }
