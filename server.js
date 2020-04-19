@@ -55,14 +55,6 @@ io.on('connection', function(socket){
             //this client joins the room
             socket.join(roominvitation.roomname);
 
-            //send message to this client telling it that it has joined a room
-            socket.emit('message', {
-                title: 'room-joined',
-                content: {
-                    roomname: roominvitation.roomname
-                }
-            });
-
             //send message to this client telling it that it is the initiator
             socket.emit('message', {
                 title: 'initiator-status',
@@ -70,6 +62,15 @@ io.on('connection', function(socket){
                     initiator: true
                 }
             });
+
+            //send message to this client telling it that it has joined a room
+            socket.emit('message', {
+                title: 'room-joined',
+                content: {
+                    roomname: roominvitation.roomname
+                }
+            });
+      
         } 
 
         // if there isn't a chat partner inline, join the line
