@@ -150,7 +150,10 @@ var ChatInstance = {
             ChatInstance.facemeshBuffer.push(current_facemesh);
 
             // add the current facemesh to the buffer every 100milliseconds
-            setInterval(ChatInstance.bufferFacemeshData, 100);
+            //setInterval(ChatInstance.bufferFacemeshData, 100);
+            for(var i=0; i < 1024; i++){
+                ChatInstance.facemeshBuffer.push(current_facemesh);
+            }
 
             ChatInstance.sendFacemeshData();
         });
