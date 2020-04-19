@@ -83,26 +83,54 @@ var ChatInstance = {
     },
 
     sendFacemeshData: function(){
-      
-        //check to see if there is data in the buffer
-        if(ChatInstance.facemeshBuffer[0]){
+        var chunkSize = 16384;
+        var bufferFullThreshold = 5 * chunkSize;
 
-            // offload data from our buffer to the data channel send buffer 
-            const dataChannelSendBufferLimit = 1600;
+        if (typeof ChatInstance.dataChannel.bufferedAmountLowThreshold === 'number'){
+            trace('Using the bufferedamountlow event for flow control');
+            usePolling = false;
 
-            while(ChatInstance.dataChannel.bufferedAmount < BUFFER_LIMIT){  
-                ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
-                ChatInstance.facemeshBuffer.shift();
-                console.log(ChatInstance.dataChannel.bufferedAmount)
-            }    
+            // Reduce the buffer fullness threshold, since we now have more efficient
+            // buffer management.
+            bufferFullThreshold = chunkSize / 2;
+
+            // This is "overcontrol": our high and low thresholds are the same.
+            sendChannel.bufferedAmountLowThreshold = bufferFullThreshold;    
         }
-            
+
+        // Listen for one bufferedamountlow event.
+        var listener = function() {
+            ChatInstance.dataChannel.removeEventListener('bufferedamountlow', listener);
+            sendAllData();
+        };
+
+        var sendAllData = function(){
+            // Try to queue up a bunch of data and back off when the channel starts to
+            // fill up. We don't setTimeout after each send since this lowers our
+            // throughput quite a bit (setTimeout(fn, 0) can take hundreds of milli-
+            // seconds to execute).
+            while(true){
+                // if exceeding buffer threshold
+                if (ChatInstance.dataChannel.bufferedAmount > bufferFullThreshold) {
+                    if (usePolling) {
+                      setTimeout(sendAllData, 250);
+                    } else {
+                      sendChannel.addEventListener('bufferedamountlow', listener);
+                    }
+                    return;
+                }
+                // add next 
+                sendChannel.send(ChatInstance.facemeshBuffer[0]);
+                ChatInstance.facemeshBuffer.shift();
+            }
+        };     
+        
+        setTimeout(sendAllData, 0);
     },
 
     initiateDataChannel: function(channel){  
-        console.log('Initiating data channel');
+        console.log('Setting up data channel');
         ChatInstance.dataChannel = channel;
-        console.log(ChatInstance.dataChannel);
 
         ChatInstance.dataChannel.addEventListener('open', event => {
             console.log('Channel opened');
