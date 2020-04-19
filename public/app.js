@@ -149,11 +149,6 @@ var ChatInstance = {
             ChatInstance.sendFacemeshData();
         });
 
-        ChatInstance.dataChannel.addEventListener('bufferedamountlow', event => {
-            console.log('Adding more data to the send buffer');
-            ChatInstance.sendFacemeshData();
-        });
-
         ChatInstance.dataChannel.addEventListener('message', event => {
             console.log(event);
         });
