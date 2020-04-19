@@ -110,6 +110,7 @@ var ChatInstance = {
             // throughput quite a bit (setTimeout(fn, 0) can take hundreds of milli-
             // seconds to execute).
             while(true){
+                console.log('x');
                 // if exceeding buffer threshold
                 if (ChatInstance.dataChannel.bufferedAmount > bufferFullThreshold) {
                     if (usePolling) {
@@ -143,6 +144,7 @@ var ChatInstance = {
 
             // getting the ID allows us to use clearInterval();
             const facemeshToBufferIntervalID = setInterval(function(){
+                console.log('adding to buffer');
                 ChatInstance.facemeshBuffer.push(current_facemesh);
             }, dataSendRate); 
 
