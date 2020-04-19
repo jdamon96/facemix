@@ -95,7 +95,7 @@ var ChatInstance = {
             bufferFullThreshold = chunkSize / 2;
 
             // This is "overcontrol": our high and low thresholds are the same.
-            sendChannel.bufferedAmountLowThreshold = bufferFullThreshold;    
+            ChatInstance.dataChannel.bufferedAmountLowThreshold = bufferFullThreshold;    
         }
 
         // Listen for one bufferedamountlow event.
@@ -115,12 +115,12 @@ var ChatInstance = {
                     if (usePolling) {
                       setTimeout(sendAllData, 250);
                     } else {
-                      sendChannel.addEventListener('bufferedamountlow', listener);
+                      ChatInstance.dataChannel.addEventListener('bufferedamountlow', listener);
                     }
                     return;
                 }
                 // add next 
-                sendChannel.send(ChatInstance.facemeshBuffer[0]);
+                ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
                 ChatInstance.facemeshBuffer.shift();
             }
         };     
