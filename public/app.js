@@ -126,6 +126,7 @@ var ChatInstance = {
                     ChatInstance.facemeshBuffer.shift();    
                 }
                 else {
+                    console.log(ChatInstance.facemeshBuffer[0]);
                     console.log('no data in the facemesh buffer');
                 }
             }
