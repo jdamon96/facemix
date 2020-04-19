@@ -83,13 +83,20 @@ var ChatInstance = {
     },
 
     sendFacemeshData: function(){
-        const BUFFER_LIMIT = 1600;
-        // offload data from our buffer to the data channel send buffer 
-        while(ChatInstance.dataChannel.bufferedAmount < BUFFER_LIMIT){  
-            ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
-            ChatInstance.facemeshBuffer.shift();
-            console.log(ChatInstance.dataChannel.bufferedAmount)
-        }    
+      
+        //check to see if there is data in the buffer
+        if(ChatInstance.facemeshBuffer[0]){
+
+            // offload data from our buffer to the data channel send buffer 
+            const dataChannelSendBufferLimit = 1600;
+
+            while(ChatInstance.dataChannel.bufferedAmount < BUFFER_LIMIT){  
+                ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
+                ChatInstance.facemeshBuffer.shift();
+                console.log(ChatInstance.dataChannel.bufferedAmount)
+            }    
+        }
+            
     },
 
     initiateDataChannel: function(channel){  
@@ -103,14 +110,19 @@ var ChatInstance = {
             // rate at which to add data to the buffer (milliseconds)
             const dataSendRate = 100; 
 
+            //push an initial piece of data to the buffer so the sendFacemeshData call below doesn't draw on empty
+            ChatInstance.facemeshBuffer.push(current_facemesh);
+
             // getting the ID allows us to use clearInterval();
             const facemeshToBufferIntervalID = setInterval(function(){
                 ChatInstance.facemeshBuffer.push(current_facemesh);
             }, dataSendRate); 
+
             ChatInstance.sendFacemeshData();
         });
 
         ChatInstance.dataChannel.addEventListener('bufferedamountlow', event => {
+            console.log('Adding more data to the send buffer');
             ChatInstance.sendFacemeshData();
         });
 
