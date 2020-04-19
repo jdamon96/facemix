@@ -121,8 +121,10 @@ var ChatInstance = {
                     return;
                 }
                 // add next 
-                ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
-                ChatInstance.facemeshBuffer.shift();
+                if(ChatInstance.facemeshBuffer[0]){
+                    ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
+                    ChatInstance.facemeshBuffer.shift();    
+                }
             }
         };     
         
