@@ -108,6 +108,7 @@ var ChatInstance = {
     },
 
     onToken: function(){
+        console.log('firing onToken function');
         return function(token){
             //Create the peer connection
             ChatInstance.peerConnection = new RTCPeerConnection({
@@ -116,7 +117,7 @@ var ChatInstance = {
 
             // send any ice candidates to the other peer
             ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
-
+            console.log('Initiator: ' + initiator);
             if(initiator){
                 // create the data channel
                 console.log('Creating a data channel')
