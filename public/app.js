@@ -99,6 +99,7 @@ var ChatInstance = {
 
         ChatInstance.dataChannel.addEventListener('close', (event) => {
             console.log('Channel closed');
+            console.log(event);
         });
     },
 
