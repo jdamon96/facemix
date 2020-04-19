@@ -107,11 +107,11 @@ var ChatInstance = {
             const facemeshToBufferIntervalID = setInterval(function(){
                 ChatInstance.facemeshBuffer.push(current_facemesh);
             }, dataSendRate); 
-            sendFacemeshData();
+            ChatInstance.sendFacemeshData();
         });
 
         ChatInstance.dataChannel.addEventListener('bufferedamountlow', event => {
-            sendFacemeshData();
+            ChatInstance.sendFacemeshData();
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
