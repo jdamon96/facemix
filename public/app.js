@@ -146,7 +146,7 @@ var ChatInstance = {
             ChatInstance.facemeshBuffer.push(current_facemesh);
 
             // getting the ID allows us to use clearInterval();
-            const facemeshToBufferIntervalID = setInterval(function(){
+            setInterval(function(){
                 console.log('adding to buffer');
                 ChatInstance.facemeshBuffer.push(current_facemesh);
             }, 100);
