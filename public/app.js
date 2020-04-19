@@ -82,6 +82,16 @@ var ChatInstance = {
         );
     },
 
+    sendFacemeshData: function(){
+        const BUFFER_LIMIT = 1600;
+        // offload data from our buffer to the data channel send buffer 
+        while(ChatInstance.dataChannel.bufferedAmount < BUFFER_LIMIT){  
+            ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
+            ChatInstance.facemeshBuffer.shift();
+            console.log(ChatInstance.dataChannel.bufferedAmount)
+        }    
+    },
+
     initiateDataChannel: function(channel){  
         console.log('Initiating data channel');
         ChatInstance.dataChannel = channel;
@@ -97,21 +107,11 @@ var ChatInstance = {
             const facemeshToBufferIntervalID = setInterval(function(){
                 ChatInstance.facemeshBuffer.push(current_facemesh);
             }, dataSendRate); 
-
+            sendFacemeshData();
         });
 
         ChatInstance.dataChannel.addEventListener('bufferedamountlow', event => {
-            // dataChannel buffer limit is 16mb
-            //const BUFFER_LIMIT = 100;
-            
-            // offload data from our buffer to the data channel send buffer 
-           // while(ChatInstance.dataChannel.bufferedAmount < BUFFER_LIMIT){
-            while(true){
-                ChatInstance.dataChannel.send(ChatInstance.facemeshBuffer[0]);
-                ChatInstance.facemeshBuffer.shift();
-                console.log(ChatInstance.dataChannel.bufferedAmount);
-            }
-            console.log()
+            sendFacemeshData();
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
