@@ -110,7 +110,6 @@ var ChatInstance = {
             // throughput quite a bit (setTimeout(fn, 0) can take hundreds of milli-
             // seconds to execute).
             while(true){
-                console.log('x');
                 // if exceeding buffer threshold
                 if (ChatInstance.dataChannel.bufferedAmount > bufferFullThreshold) {
                     if (usePolling) {
@@ -135,6 +134,11 @@ var ChatInstance = {
         setTimeout(sendAllData, 0);
     },
 
+    bufferFacemeshData: function(){
+        console.log('Adding facemesh data to buffer')
+        ChatInstance.facemeshBuffer.push(current_facemesh);
+    },
+
     initiateDataChannel: function(channel){  
         console.log('Setting up data channel');
         ChatInstance.dataChannel = channel;
@@ -145,11 +149,8 @@ var ChatInstance = {
             //push an initial piece of data to the buffer so the sendFacemeshData call below doesn't draw on empty
             ChatInstance.facemeshBuffer.push(current_facemesh);
 
-            // getting the ID allows us to use clearInterval();
-            setInterval(function(){
-                console.log('adding to buffer');
-                ChatInstance.facemeshBuffer.push(current_facemesh);
-            }, 100);
+            // add the current facemesh to the buffer every 100milliseconds
+            setInterval(ChatInstance.bufferFacemeshData, 100);
 
             ChatInstance.sendFacemeshData();
         });
