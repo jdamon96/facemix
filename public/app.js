@@ -87,7 +87,7 @@ var ChatInstance = {
         var bufferFullThreshold = 5 * chunkSize;
 
         if (typeof ChatInstance.dataChannel.bufferedAmountLowThreshold === 'number'){
-            trace('Using the bufferedamountlow event for flow control');
+            console.log('Using the bufferedamountlow event for flow control');
             usePolling = false;
 
             // Reduce the buffer fullness threshold, since we now have more efficient
