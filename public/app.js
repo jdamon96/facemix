@@ -273,7 +273,9 @@ function handleMessage(message){
 
         case 'room-joined':
             current_room = message.content.roomname;
-            ChatInstance.createPeerConnection();
+            if(!initiator){
+                ChatInstance.createPeerConnection();    
+            }
             break;
 
         case 'room-ready':

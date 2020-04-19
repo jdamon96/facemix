@@ -94,10 +94,10 @@ io.on('connection', function(socket){
 
         // if there are no clients in the room
         if(numClients == 0){
-            console.log('SERVER: first client joining room');
+            console.log('No one in room');
             socket.room = roomname;
             socket.emit('message', {
-                title: 'room-join',
+                title: 'room-joined',
                 content: {
                     roomname: roomname
                 }
