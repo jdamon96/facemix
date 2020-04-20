@@ -1,19 +1,19 @@
 /* This script is responsible for interacting with the model and rendering the results of the model*/
 "use strict"
 
-var video;
-let delta = 0.0;
-var model;
+var canvasName = "canvas";
+let delta = 0.0; //WebGL Refresh Rate
 var shaderProgram;
+var glInitialized = false;
+var canvas;
+var gl;
 
-let canvasNames = {
-    clientCanvas: "client_canvas",
-    peerCanvas: "peer_canvas",
-}
-var canvases = {
-    "client_canvas" : {canvas: "", gl: ""},
-    "peer_canvas" : {canvas: "", gl: ""}
-}
+const numFaceVertices = 468
+const numFaceCoordinates = numFaceVertices * 3;
+const blueColor = [0.678, 0.847, .90]
+const pinkColor = [1, .752, .796]
+var vertices = [] //Represents all points currently being displayed on the canvas
+var colors = []   //Corresponding colors of each point being displayed
 
 /**********************************************************************/
 /**********************************************************************/
@@ -21,25 +21,44 @@ var canvases = {
 /**********************************************************************/
 /**********************************************************************/
 
-function loadModel() {
-    loadModelInternal();
-    setVideo();
-    startWebGL(canvasNames.clientCanvas);
-    video = document.querySelector("video");
+exports.updateOutgoingMesh = function updateOutgoingMesh(mesh) {
+    let points = translateMesh(mesh, true)
+
+    if (vertices.length > numFaceCoordinates) {
+        for (let i = numFaceCoordinates; i < vertices.length; i++) {
+            points[i] = vertices[i]
+        }
+    }
+    vertices = points
 }
 
-async function getScaledMesh() {
-    const faces = await model.estimateFaces(video);
-    return faces[0].scaledMesh;
-}
-async function renderScaledMeshOutgoing() {
-    setInterval(async () => {
-        var scaledMesh = await getScaledMesh();
-        await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);
-    }, 100);
+exports.updateIncomingMesh = function updateIncomingMesh(flattenedMesh) {
+    var unflattenedMesh = []
+    var coordinatePair = []
+    var j = 0
+    for (let i = 0; i<flattenedMesh.length; i++) {
+        coordinatePair[j] = flattenedMesh[i]
+        j++;
+        if (j == 3) {
+            j = 0;
+            unflattenedMesh.push(coordinatePair)
+            coordinatePair = []
+        }
+    }
+
+    let points = []
+    for (let i = 0; i < numFaceCoordinates; i++) {
+        points[i] = vertices[i]
+    }
+    vertices = points
+    vertices.push(...translateMesh(unflattenedMesh, false))
 }
 
-function renderScaledMeshIncoming() {
+exports.render = function render(){
+    if (!glInitialized) {
+        startWebGL();
+    }
+    drawObjects();
 }
 
 /**********************************************************************/
@@ -47,28 +66,17 @@ function renderScaledMeshIncoming() {
 /***********************INTERNAL FUNCTIONS*****************************/
 /**********************************************************************/
 /**********************************************************************/
-
-
-function setVideo() {
-    if (navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function (stream) {
-                video.srcObject = stream;
-            })
-            .catch(function (error) {
-                console.log("Not able to stream from your camera");
-            });
+function populateColorsWithColor(color) {
+    for (var i = 0; i < numFaceVertices; i++) {
+        colors.push(...color)
     }
 }
 
-async function loadModelInternal() {
-    model = await facemesh.load();
-}
-
-function startWebGL(canvasName){
-    let canvas = document.getElementById(canvasName);
-    var gl = canvas.getContext('experimental-webgl');
-    canvases[canvasName].canvas = canvas
+function startWebGL(){
+    canvas = document.getElementById(canvasName);
+    gl = canvas.getContext('experimental-webgl');
+    populateColorsWithColor(blueColor);
+    populateColorsWithColor(pinkColor);
 
     // vertex shader source code
     var vertCode =
@@ -84,7 +92,7 @@ function startWebGL(canvasName){
         'gl_Position = vec4(a_Position, 1.0); ' +    //Cast a_Position to a vec4
         'gl_Position.x = a_Position.x + delta_x; ' + //Update the xcomponent with delta_x
         'outColor = vec4(a_Color, 1.0); ' +
-        'gl_PointSize = 2.0;' +
+        'gl_PointSize = 4.0;' +
 
         '}';
 
@@ -121,8 +129,7 @@ function startWebGL(canvasName){
     gl.attachShader(shaderProgram, fragShader);  // Attach a fragment shader
     gl.linkProgram(shaderProgram); // Link both programs
     gl.useProgram(shaderProgram);
-
-    canvases[canvasName].gl = gl
+    glInitialized = true
 }
 
 function getCoordinateDivisors(scaledMesh) {
@@ -130,7 +137,7 @@ function getCoordinateDivisors(scaledMesh) {
         minX: 10000000, minY: 10000000, minZ: 10000000,
         rangeX: 0, rangeY:0, rangeZ: 0}
 
-    for (let i = 0; i < 468; i++) {
+    for (let i = 0; i < numFaceVertices; i++) {
         let x = scaledMesh[i][0]
         let y = scaledMesh[i][1]
         let z = scaledMesh[i][2]
@@ -163,18 +170,13 @@ function getCoordinateDivisors(scaledMesh) {
 //      Understand why 0.5 needs to be subtracted from each dimension to center it
 //      Remove uneeded shader Code
 //      Research best way to send new objects down to the vertex buffer
-function drawObjects(scaledMesh, gl){
-    var meshPoints = getMeshPoints(scaledMesh, true)
-    var colors = getColorPoints([0.678, 0.847, .90])
-    meshPoints.push(...getMeshPoints(scaledMesh, false))
-    colors.push(...getColorPoints([1, .752, .796]))
-
+function drawObjects(){
     //For EVERY attribute
     //create buffer, bind buffer, buffer data, vertAttribPointer(), enableVertAttribPointer()
     let vertex_buffer = gl.createBuffer(); // Create an empty buffer object to store the vertex buffer
     let coord = gl.getAttribLocation(shaderProgram, "a_Position"); // Get the attribute location
     gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer); //Bind appropriate array buffer to it
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(meshPoints), gl.STATIC_DRAW);// Pass the vertex data to the buffer
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);// Pass the vertex data to the buffer
     gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0); // Point an attribute to the currently bound VBO
     gl.enableVertexAttribArray(coord); // Enable the attribute
 
@@ -191,18 +193,18 @@ function drawObjects(scaledMesh, gl){
 
     gl.useProgram(shaderProgram);          // Use the program I created/compiled and Linked
     gl.uniform1f(gl.getUniformLocation(shaderProgram, 'delta_x'), delta); // stores value of delta into delta_x on GPU
-    gl.drawArrays(gl.POINTS, 0, 468 * 2); // execute the vertex/fragment shader on the bounded buffer, using the
+    gl.drawArrays(gl.POINTS, 0, vertices.length/3); // execute the vertex/fragment shader on the bounded buffer, using the
     // using the shaders compiled/linked and attached to gpuProgram
 }
 
-function getMeshPoints(scaledMesh, isLeft) {
+function translateMesh(scaledMesh, isLeft) {
     var meshPoints = []
     let divisors = getCoordinateDivisors(scaledMesh);
 
     var biggestRange = Math.max(divisors.rangeX, divisors.rangeY, divisors.rangeZ)
     var leftAdjuster = isLeft ? -0.1 : 0.9
 
-    for (var i = 0; i < 468; i++) {
+    for (var i = 0; i < numFaceVertices; i++) {
         var pointsRow = [-(scaledMesh[i][0] - divisors.minX) / biggestRange + leftAdjuster,
             -(scaledMesh[i][1] - divisors.minY) / biggestRange + 0.5,
             -(scaledMesh[i][2] - divisors.minZ) / biggestRange]
@@ -211,11 +213,3 @@ function getMeshPoints(scaledMesh, isLeft) {
     return meshPoints
 }
 
-function getColorPoints(color){
-    var colors = []
-    for (var i = 0; i < 468; i++) {
-        //var colorRow = pointsRow.map(value => Math.abs(0.6 - (value * -1)))
-        colors.push(...color)
-    }
-    return colors
-}

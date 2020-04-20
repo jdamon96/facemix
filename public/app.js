@@ -3,7 +3,7 @@
 /********************************/
 
 const adapter = require('webrtc-adapter');
-
+const meshHandler = require('./meshHandler.js')
 /********************************/
 /* Declare required global variables */
 /********************************/
@@ -23,8 +23,6 @@ var chatPartner = null;
 var initiator = false;
 
 var current_room = '';
-
-var current_facemesh = null;
 
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
@@ -151,7 +149,17 @@ var ChatInstance = {
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
-            console.log(event);
+            console.log("raw: ")
+            console.log(event["data"])
+
+            var lol = event["data"].split(',')
+            for (let i = 0; i < lol.length; i++) {
+                lol[i] = parseFloat(lol[i])
+            }
+            console.log("After parse: ")
+            console.log(lol)
+
+            meshHandler.updateIncomingMesh(lol)
         });
 
         ChatInstance.dataChannel.addEventListener('close', (event) => {
@@ -291,8 +299,8 @@ async function logScaledMesh(localVideo) {
         current_facemesh = await getScaledMesh(localVideo);
         //console.log('Local facemesh data:')
         //console.log(scaledMesh);
-        
-        /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
+        meshHandler.updateOutgoingMesh(current_facemesh);
+        meshHandler.render();
     }, 100);
 }
 

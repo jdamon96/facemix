@@ -5580,14 +5580,287 @@ var waitingForChat = false;
 // if in a chat, this holds the current chat partner
 var chatPartner = null;
 
+// client role can be HOST or GUEST. 
+//      HOST creates rooms and initiates RTC Peer Connection (sends offer)
+//      GUEST recieves room invitations and responds to RTCPeerConnection offer (sends answer)
+var initiator = false;
+
+var current_room = '';
+
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
 
-//initializing variable that will hold the facemesh model
-var model;
-
 //initializing the socket.io handle
 var socket = io();
+
+/**********************************/
+/*        WebRTC Setup Code       */
+/**********************************/
+
+/*
+* Note: this 'ChatInstance' object is responsible for setting up and managing the RTCPeerConnection
+*/ 
+
+var ChatInstance = {
+    connected: false,
+    localICECandidates: [],
+    facemeshBuffer: [],
+
+    onOffer: function(offer){
+        console.log('Recieved offer. Sending answer to peer.');
+        ChatInstance.peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(offer)))
+        ChatInstance.createAnswer();
+    },
+
+    createOffer: function(){
+        ChatInstance.peerConnection.createOffer(
+            function(offer){
+                ChatInstance.peerConnection.setLocalDescription(offer);
+                socket.emit('offer', {
+                    room: current_room,
+                    offer: JSON.stringify(offer)
+                });
+            },
+            function(err){
+                console.log(err);
+            }
+        );
+    },
+
+    createAnswer: function(){  
+        ChatInstance.connected = true;  
+        ChatInstance.peerConnection.createAnswer(
+            function(answer){
+                ChatInstance.peerConnection.setLocalDescription(answer);
+                socket.emit('answer', {
+                    room: current_room, 
+                    answer: JSON.stringify(answer)
+                });
+            },
+            function(err){
+                console.log(err);
+            }
+        );
+    },
+
+    sendFacemeshData: function(){
+        var chunkSize = 16384;
+        var bufferFullThreshold = 5 * chunkSize;
+
+        if (typeof ChatInstance.dataChannel.bufferedAmountLowThreshold === 'number'){
+            console.log('Using the bufferedamountlow event for flow control');
+            usePolling = false;
+
+            // Reduce the buffer fullness threshold, since we now have more efficient
+            // buffer management.
+            bufferFullThreshold = chunkSize / 2;
+
+            // This is "overcontrol": our high and low thresholds are the same.
+            ChatInstance.dataChannel.bufferedAmountLowThreshold = bufferFullThreshold;    
+        }
+
+        // Listen for one bufferedamountlow event.
+        var listener = function() {
+            ChatInstance.dataChannel.removeEventListener('bufferedamountlow', listener);
+            sendAllData();
+        };
+
+        var sendAllData = function(){
+            // Try to queue up a bunch of data and back off when the channel starts to
+            // fill up. We don't setTimeout after each send since this lowers our
+            // throughput quite a bit (setTimeout(fn, 0) can take hundreds of milli-
+            // seconds to execute).
+            while(true){
+                // if exceeding buffer threshold
+                if (ChatInstance.dataChannel.bufferedAmount > bufferFullThreshold) {
+                    if (usePolling) {
+                      setTimeout(sendAllData, 250);
+                    } else {
+                      ChatInstance.dataChannel.addEventListener('bufferedamountlow', listener);
+                    }
+                    return;
+                }                
+                ChatInstance.dataChannel.send(current_facemesh);       
+            }
+        };     
+        
+        setTimeout(sendAllData, 0);
+    },
+
+    bufferFacemeshData: function(){
+        console.log('Adding facemesh data to buffer')
+        ChatInstance.facemeshBuffer.push(current_facemesh);
+    },
+
+    initiateDataChannel: function(channel){  
+        console.log('Setting up data channel');
+        ChatInstance.dataChannel = channel;
+
+        ChatInstance.dataChannel.addEventListener('open', event => {
+            console.log('Channel opened');
+
+            //push an initial piece of data to the buffer so the sendFacemeshData call below doesn't draw on empty
+            //ChatInstance.facemeshBuffer.push(current_facemesh);
+
+            // add the current facemesh to the buffer every 100milliseconds
+            //setInterval(ChatInstance.bufferFacemeshData, 100);
+            //for(var i=0; i < 1024; i++){
+             //   ChatInstance.facemeshBuffer.push(current_facemesh);
+            //}
+
+            ChatInstance.sendFacemeshData();
+        });
+
+        ChatInstance.dataChannel.addEventListener('message', event => {
+            console.log(event);
+        });
+
+        ChatInstance.dataChannel.addEventListener('close', (event) => {
+            console.log('Channel closed');
+            console.log(event);
+        });
+    },
+
+    createPeerConnection: function(){
+        socket.on('token', ChatInstance.onToken());
+        socket.emit('token');
+    },
+
+    onToken: function(){
+        console.log('firing onToken function');
+        return function(token){
+            //Create the peer connection
+            ChatInstance.peerConnection = new RTCPeerConnection({
+                iceServers: token.iceServers
+            });
+
+            // send any ice candidates to the other peer
+            ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
+            console.log('Initiator: ' + initiator);
+            if(initiator){
+                // create the data channel
+                console.log('Creating a data channel')
+                let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel', {maxRetransmits: 0, ordered: false});
+                ChatInstance.initiateDataChannel(dataChannel);     
+
+                //create an offer
+                console.log('Creating an offer')
+                ChatInstance.createOffer();
+            } else {
+                ChatInstance.peerConnection.addEventListener('datachannel', event => {
+                    console.log('datachannel:', event.channel);
+                    ChatInstance.initiateDataChannel(event.channel);
+                });
+            }
+
+            socket.on('candidate', ChatInstance.onCandidate);
+            socket.on('answer', ChatInstance.onAnswer);
+        }
+    },
+
+
+    /*
+    * Handler function for recieving an ANSWER 
+    * - Sets remote client session description of RTCPeerConnection 
+    * - Update 'connected' to true
+    * - Send ICECandidates to remote client from localICeCandidate buffer
+    * - clear localIceCandidate buffer
+    */ 
+    onAnswer: function(answer){
+        ChatInstance.peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
+
+        ChatInstance.connected = true;
+        
+        // Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
+        ChatInstance.localICECandidates.forEach(candidate => {
+            socket.emit('candidate', {
+                room: current_room, 
+                candidate: JSON.stringify(candidate)
+            });
+        });
+        
+        //Clear the buffer now that we've offloaded the candidates to the remote client
+        ChatInstance.localICECandidates = [];
+    },
+
+
+    onIceCandidate: function(event){
+        if(event.candidate){
+            if(ChatInstance.connected){
+                console.log('Generated candidate');  
+                socket.emit('candidate', {
+                    room: current_room,
+                    candidate: JSON.stringify(event.candidate)
+                });
+            } else {
+                ChatInstance.localICECandidates.push(event.candidate)
+            }
+        }
+    },
+
+    /*
+    * Handle recieving ICECandidates from the other client
+    *   - create new IceCandidate from data sent
+    *   - add IceCandidate to our Chat Instance's RTCPeerConnection
+    */
+    onCandidate: function(candidate){
+        rtcCandidate = new RTCIceCandidate(JSON.parse(candidate));
+        ChatInstance.peerConnection.addIceCandidate(rtcCandidate);
+    },
+
+    noMediaStream: function(){
+        console.log('No media stream available');
+    },
+
+    startCall: function(event){  
+
+    }
+};
+
+/********************************/
+/******* Facemesh set-up ********/
+/********************************/
+
+/*
+* initializing variable that will hold the facemesh model
+*/
+var model;
+
+/*
+* Defining required functions for handling facemodel
+*/
+async function loadModelInternal() {
+    model = await facemesh.load();
+}
+
+async function getScaledMesh(localVideo) {
+    const video = localVideo;
+    //console.log('estimating faces...');
+    const faces = await model.estimateFaces(video);
+    //console.log('done estimating faces');
+    if(faces[0]){
+        return faces[0].scaledMesh;    
+    }
+    else {
+        console.log('Program does not detect a face');
+    }
+    
+}
+
+async function logScaledMesh(localVideo) {
+    setInterval(async () => {
+        current_facemesh = await getScaledMesh(localVideo);
+        //console.log('Local facemesh data:')
+        //console.log(scaledMesh);
+        await renderMeshOutgoing(current_facemesh);
+    }, 100);
+}
+
+
+/*
+* Load the facemesh model
+*/
+loadModelInternal();
 
 /********************************/
 /* Define required functions */
@@ -5608,9 +5881,27 @@ function handleMessage(message){
             console.log('Waiting for chat partner: ' + waitingForChat);
             break;
 
-        /** if the message title is 'room_count'... **/
-        case 'room_count':
-            console.log('room count: ' + message.contents);
+        case 'initiator-status':
+            initiator = message.content.initiator;
+            break;
+
+        case 'text-message':
+            console.log('New text message:');
+            console.log(message.content)
+            break;
+
+        case 'room-joined':
+            current_room = message.content.roomname;
+            if(!initiator){
+                ChatInstance.createPeerConnection();    
+            }
+            break;
+
+        case 'room-ready':
+            console.log('Room is ready for initiating RTCPeerConnection between clients');
+            if(initiator){
+                ChatInstance.createPeerConnection();
+            }
             break;
     }
 }
@@ -5621,167 +5912,30 @@ function handleMessage(message){
 function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
         console.log('Found chat partner');
-        socket.emit('join', roomInvitation.room_name);
+        socket.emit('joinroom', roomInvitation.roomname);
     }
 }
 
 /********************************/
-/* Facemesh model related functions*/
-/********************************/
-async function loadModelInternal() {
-    model = await facemesh.load();
-}
-
-async function getScaledMesh(localVideo) {
-    const video = localVideo;
-    //console.log('estimating faces...');
-    const faces = await model.estimateFaces(video);
-    //console.log('done estimating faces');
-    return faces[0].scaledMesh;
-}
-async function logScaledMesh(localVideo) {
-    setInterval(async () => {
-        var scaledMesh = await getScaledMesh(localVideo);
-        //console.log(scaledMesh);
-        /*await drawObjects(scaledMesh, canvases[canvasNames.clientCanvas].gl);*/
-    }, 100);
-}
-
-
-
-/********************************/
-/* Initial code run upon website load */
+/* Add initial event listeners required for the socket*/
 /********************************/
 
 /* Add message event handler for client socket*/
 socket.on('message', handleMessage);
 
-/* Load facemesh model */
-loadModelInternal();
-
-
-
-/**********************************/
-/*        WebRTC Setup Code       */
-/**********************************/
-
-/*
-* This 'ChatInstance' object is responsible for setting up and managing the RTCPeer Connections
-*/ 
-
-/*
-var ChatInstance = {
-    connected: false,
-    localICECandidates: [],
-
-    onOffer: function(offer){
-        ChatInstance.socket.on('token', ChatInstance.onToken(ChatInstance.createAnswer(offer)));
-        ChatInstance.socket.emit('token');
-    },
-
-    createOffer: function(){
-        ChatInstance.peerConnection.createOffer(
-            function(offer){
-                ChatInstance.peerConnection.setLocalDescription(offer);
-                ChatInstance.socket.emit('offer', JSON.stringify(offer));
-            },
-            function(err){
-                console.log(err);
-            }
-        );
-    },
-
-    createAnswer: function(offer){
-        return function(){
-            ChatInstance.connected = true;
-            rtcOffer = new RTCSessionDescription(JSON.parse(offer));
-            ChatInstance.peerConnection.setRemoteDescription(rtcOffer);
-            ChatInstance.peerConnection.createAnswer(
-                function(answer){
-                    ChatInstance.peerConnection.setLocalDescription(answer);
-                    ChatInstance.socket.emit('answer', JSON.stringify(answer));
-                },
-                function(err){
-                    console.log(err);
-                }
-            );
-        }
-    },
-
-    onToken: function(callback){
-        return function(token){
-            ChatInstance.peerConnection = new RTCPeerConnection({
-                iceServers: token.iceServers
-            });
-
-            ChatInstance.peerConnection.addStream(ChatInstance.localStream);
-            ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
-            ChatInstance.peerConnection.onaddstream = ChatInstance.onAddStream;
-            // We set up the socket listener for the 'candidate' event within this onToken function because this is when we create the peerConnection and will be ready to deal with candidates
-            ChatInstance.socket.on('candidate', ChatInstance.onCandidate);
-            ChatInstance.socket.on('answer', ChatInstance.onAnswer);
-            callback();
-        }
-    },
-
-    onAddStream: function(event){
-        ChatInstance.remoteVideo = document.getElementById('remote-video');
-        ChatInstance.remoteVideo.srcObject = event.stream;
-    },
-
-    onAnswer: function(answer){
-        var rtcAnswer = new RTCSessionDescription(JSON.parse(answer));
-        ChatInstance.peerConnection.setRemoteDescription(rtcAnswer);
-        // Set connected to true
-        ChatInstance.connected = true;
-        // Take buffer of localICECandidates and emit now that connected
-        ChatInstance.localICECandidates.forEach(candidate => {
-            ChatInstance.socket.emit('candidate', JSON.stringify(candidate));
-        });
-        // Re-initialize buffer to empty
-        ChatInstance.localICECandidates = [];
-    },
-
-    
-    // Here we check if the ChatInstance is connected before sending the candidate to the server.
-    // If the ChatInstance is not connected, then we add them to a local buffer (the array localICECandidates)
-    
-    onIceCandidate: function(event){
-        if(event.candidate){
-            if(ChatInstance.connected){
-                console.log('Generated candidate');  
-                ChatInstance.socket.emit('candidate', JSON.stringify(event.candidate));
-            } else {
-                ChatInstance.localICECandidates.push(event.candidate)
-            }
-        }
-    },
-
-    onCandidate: function(candidate){
-        rtcCandidate = new RTCIceCandidate(JSON.parse(candidate));
-        ChatInstance.peerConnection.addIceCandidate(rtcCandidate);
-    },
-
-    noMediaStream: function(){
-        console.log('No media stream available');
-    },
-
-    startCall: function(event){
-        ChatInstance.socket.on('token', ChatInstance.onToken(ChatInstance.createOffer));
-        ChatInstance.socket.emit('token');
-    }
-
-};
-*/
+/* Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
+socket.on('offer', ChatInstance.onOffer);
 
 /**********************************/
 /* Button handlers and event listeners */
 /**********************************/
 
-var findChatButton = document.getElementById('find-chat');
-var cameraToggleButton = document.getElementById('camera-toggle');
+/* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
+const faceScanButton = document.getElementById('camera-access');
+const findChatButton = document.getElementById('find-a-chat');
 
-var localVideo = document.getElementById('videoElement');
+/* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
+const localVideo = document.getElementById('videoElement');
 
 
 /*
@@ -5790,17 +5944,14 @@ var localVideo = document.getElementById('videoElement');
 function handleLoadedVideoData(event){
     console.log('video data loaded');
     
-    //var video = event.target;
-    //logScaledMesh(video);
+    var video = event.target;
+    logScaledMesh(video);
 }
 
 /*
 * Adding the event listner and attaching the handler function
 */
-localVideo.addEventListener(
-    'loadeddata',
-    handleLoadedVideoData
-)
+localVideo.addEventListener('loadeddata', handleLoadedVideoData);
 
 /* disable 'find chat' button if no access to client media feed 
 * ( can't join chat if you don't have your camera on )*/
@@ -5809,6 +5960,10 @@ if(localVideo.srcObject == null){
 }
 
 
+function handleRoomJoin(data){
+    console.log(data);
+}
+
 
 /*
 * Handler function for clicking the 'Find-Chat' button
@@ -5816,26 +5971,23 @@ if(localVideo.srcObject == null){
 function handleFindChat(){
     socket.emit('join');
     socket.on('roominvitation', handleRoomInvitation);
-    //socket.on('roomjoined', handleRoomJoin)
+    socket.on('roomjoined', handleRoomJoin);
 }
 
 /*
 * Adding the 'click' event listener to the button and attaching the handler function
 */
 
-findChatButton.addEventListener(
-    'click',
-    handleFindChat
-);
+findChatButton.addEventListener('click', handleFindChat);
 
 /*
 * Handler function for the camera button
 */
-function handleCameraToggle(){
+function handleMediaAccess(){
 
     // get access to client media streams
     navigator.mediaDevices
-        .getUserMedia({video: true, audio: true})
+        .getUserMedia({video: true, audio: false})
         .then(stream => {
             console.log('Media stream acquired');
             localVideo.srcObject = stream;        
@@ -5850,8 +6002,352 @@ function handleCameraToggle(){
 
 }
 
-cameraToggleButton.addEventListener(
-    'click',
-    handleCameraToggle
-);
-},{"webrtc-adapter":3}]},{},[18]);
+faceScanButton.addEventListener('click', handleMediaAccess);
+},{"webrtc-adapter":3}],19:[function(require,module,exports){
+var state = {
+    media_access: false,
+    about_active: false,
+    chat_mode: false,
+    chat_room: ''
+}
+
+/* Get access to HTML elements */
+const overlay = document.getElementById('overlay');
+const aboutButton = document.getElementById('about');
+const faceScanButton = document.getElementById('camera-access');
+const findChatButton = document.getElementById('find-a-chat');
+const header = document.getElementById('header');
+const aboutMessage = document.getElementById('about-message')
+
+/* Helper functions */ 
+
+function onAboutEnterHandler(event){
+    if(!state.about_active){
+        event.target.style.color = 'blue';
+    }
+}
+
+function onAboutLeaveHandler(event){
+    event.target.style.color = 'black';
+}
+
+function onButtonEnterHandler(event){
+    if(!state.about_active){
+        event.target.style.color = 'blue';
+        event.target.style.border = '1px solid blue';
+    }
+}
+
+function onButtonLeaveHandler(event){
+    event.target.style.color = 'black';
+    event.target.style.border = '1px solid black';
+}
+
+
+function onFaceScanEnterHandler(event){
+    if(!state.about_active){
+        event.target.style.border = '1px solid blue';
+        event.target.style.backgroundImage = 'url(\'./assets/BLUE-face-scan-icon.png\')';
+    }
+}
+
+function onFaceScanLeaveHandler(event){
+    event.target.style.border = '1px solid black';
+    event.target.style.backgroundImage = 'url(\'./assets/face-scan-icon.png\')';
+}
+
+
+
+function showAboutWindow(){
+    /* darken the window background */
+    console.log('showing about');
+    state.about_active = true;
+    overlay.style.display = 'inline';  
+    /* display the about message */ 
+}
+
+function hideAboutWindow(){
+    /* un-darken the window background */
+    overlay.style.display = 'none';
+    state.about_active = false; 
+    
+    /* display the about message */ 
+
+}
+
+/* Define button onClick handler functions */
+
+function headerClickHandler(event){
+    const target_id = event.target.getAttribute('id');
+    
+    if(target_id == 'about-span'|| target_id == 'about'){
+        
+    } else {
+        hideAboutWindow();
+    }
+}
+
+function aboutHandler(event){
+    if(state.about_active){
+        /* if about is already active */ 
+        console.log('already active')  ;
+    }
+    else {
+        //event.target.style.backgroundColor = 'transparent';  
+        showAboutWindow();
+    }
+}
+
+function containerClickHandler(event){
+    // Handle case where the about window itself is clicked
+    /*
+    if(event.target == 'aboutWindow'){
+        // do nothing
+    } 
+    */
+    console.log('container click');
+    if(state.about_active && event.target.id != 'about' && event.target.id != 'about-message'){
+        hideAboutWindow();
+    }
+}
+
+/* Define event listeners and attach handler functions */
+overlay.addEventListener('click', containerClickHandler);
+
+aboutButton.addEventListener('click', aboutHandler);
+
+aboutButton.addEventListener('mouseenter', onAboutEnterHandler);
+aboutButton.addEventListener('mouseleave', onAboutLeaveHandler);
+
+faceScanButton.addEventListener('mouseenter', onFaceScanEnterHandler);
+faceScanButton.addEventListener('mouseleave', onFaceScanLeaveHandler);
+
+findChatButton.addEventListener('mouseenter', onButtonEnterHandler);
+findChatButton.addEventListener('mouseleave', onButtonLeaveHandler);
+
+header.addEventListener('click', headerClickHandler);
+
+
+/* Function to handle any keyboard functinality */
+
+function dealWithKeyboard(event){
+    const keyPressed = event.keyCode;
+
+    if(keyPressed == 27){
+        if(state.about_active == true){
+            hideAboutWindow();
+        }
+    }
+}
+
+
+document.getElementById('mini-face-scan').addEventListener('mouseenter', function(event){
+    this.src = "./assets/BLUE-mini-face-scan-button.png"
+});
+
+document.getElementById('mini-face-scan').addEventListener('mouseleave', function(event){
+    this.src = "./assets/mini-face-scan-button.png"
+});
+
+document.getElementById('mini-find-chat').addEventListener('mouseenter', function(event){
+    this.src = "./assets/BLUE-mini-find-chat-button.png"
+});
+
+document.getElementById('mini-find-chat').addEventListener('mouseleave', function(event){
+    this.src = "./assets/mini-find-chat-button.png"
+});
+
+document.addEventListener("keydown", dealWithKeyboard);
+
+},{}],20:[function(require,module,exports){
+/* This script is responsible for interacting with the model and rendering the results of the model*/
+"use strict"
+
+var canvasName = "canvas";
+let delta = 0.0; //WebGL Refresh Rate
+var shaderProgram;
+var glInitialized = false;
+var canvas;
+var gl;
+
+/**********************************************************************/
+/**********************************************************************/
+/*************************PUBLIC FUNCTIONS*****************************/
+/**********************************************************************/
+/**********************************************************************/
+
+async function renderMeshOutgoing(mesh) {
+    if (!glInitialized) {
+        startWebGL();
+    }
+    drawObjects(mesh);
+}
+
+function renderScaledMeshIncoming(mesh) {
+    if (!glInitialized) {
+        startWebGL();
+    }
+    drawObjects(mesh)
+}
+
+/**********************************************************************/
+/**********************************************************************/
+/***********************INTERNAL FUNCTIONS*****************************/
+/**********************************************************************/
+/**********************************************************************/
+
+
+function startWebGL(){
+    canvas = document.getElementById(canvasName);
+    gl = canvas.getContext('experimental-webgl');
+
+    // vertex shader source code
+    var vertCode =
+        'precision mediump float; ' +
+        'attribute vec3 a_Position; ' +
+        'attribute vec3 a_Color; ' +
+        'varying vec4 outColor; ' +
+        'uniform float delta_x; ' +
+        'uniform float angle; ' +
+
+
+        'void main(void) { ' +
+        'gl_Position = vec4(a_Position, 1.0); ' +    //Cast a_Position to a vec4
+        'gl_Position.x = a_Position.x + delta_x; ' + //Update the xcomponent with delta_x
+        'outColor = vec4(a_Color, 1.0); ' +
+        'gl_PointSize = 2.0;' +
+
+        '}';
+
+    // fragment shader source code
+    var fragCode =
+        'precision mediump float; ' +
+        'varying vec4 outColor; ' +
+
+        'void main(void) { ' +
+        'gl_FragColor = outColor; ' +
+        '}';
+
+    var vertShader = gl.createShader(gl.VERTEX_SHADER); // Create a vertex shader object
+    gl.shaderSource(vertShader, vertCode); // Attach vertex shader source code
+    gl.compileShader(vertShader);// Compile the vertex shader
+
+    // Check for any compilation error
+    if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+        alert(gl.getShaderInfoLog(vertShader));
+        return null;
+    }
+
+    var fragShader = gl.createShader(gl.FRAGMENT_SHADER);// Create fragment shader object
+    gl.shaderSource(fragShader, fragCode); // Attach fragment shader source code
+    gl.compileShader(fragShader); // Compile the fragmentt shader
+
+    if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+        alert(gl.getShaderInfoLog(fragShader));
+        return null;
+    }
+
+    shaderProgram = gl.createProgram(); // Shader program object to store the combined shader program
+    gl.attachShader(shaderProgram, vertShader);  // Attach a vertex shader
+    gl.attachShader(shaderProgram, fragShader);  // Attach a fragment shader
+    gl.linkProgram(shaderProgram); // Link both programs
+    gl.useProgram(shaderProgram);
+    glInitialized = true
+}
+
+function getCoordinateDivisors(scaledMesh) {
+    var divisors = {maxX: -10000000, maxY: -10000000, maxZ:-10000000,
+        minX: 10000000, minY: 10000000, minZ: 10000000,
+        rangeX: 0, rangeY:0, rangeZ: 0}
+
+    for (let i = 0; i < 468; i++) {
+        let x = scaledMesh[i][0]
+        let y = scaledMesh[i][1]
+        let z = scaledMesh[i][2]
+        if (x > divisors.maxX) {
+            divisors.maxX = x
+        }
+        if (x < divisors.minX) {
+            divisors.minX = x
+        }
+        if (y > divisors.maxY) {
+            divisors.maxY = y
+        }
+        if (y < divisors.minY) {
+            divisors.minY = y
+        }
+        if (z > divisors.maxZ) {
+            divisors.maxZ = z
+        }
+        if (z < divisors.maxZ) {
+            divisors.minZ = z
+        }
+    }
+    divisors.rangeX = divisors.maxX - divisors.minX
+    divisors.rangeY = divisors.maxY - divisors.minY
+    divisors.rangeZ = divisors.maxZ - divisors.minZ
+    return divisors
+}
+
+//TODO: Understand why points need to be negated to avoid inverting the mesh
+//      Understand why 0.5 needs to be subtracted from each dimension to center it
+//      Remove uneeded shader Code
+//      Research best way to send new objects down to the vertex buffer
+function drawObjects(rawMesh){
+    var meshPoints = translateMesh(rawMesh, true)
+    var colors = getColorPoints([0.678, 0.847, .90])
+    meshPoints.push(...translateMesh(rawMesh, false))
+    colors.push(...getColorPoints([1, .752, .796]))
+
+    //For EVERY attribute
+    //create buffer, bind buffer, buffer data, vertAttribPointer(), enableVertAttribPointer()
+    let vertex_buffer = gl.createBuffer(); // Create an empty buffer object to store the vertex buffer
+    let coord = gl.getAttribLocation(shaderProgram, "a_Position"); // Get the attribute location
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer); //Bind appropriate array buffer to it
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(meshPoints), gl.STATIC_DRAW);// Pass the vertex data to the buffer
+    gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0); // Point an attribute to the currently bound VBO
+    gl.enableVertexAttribArray(coord); // Enable the attribute
+
+    let color_buffer = gl.createBuffer();
+    let color = gl.getAttribLocation(shaderProgram, "a_Color");
+    gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl. STATIC_DRAW);
+    gl.vertexAttribPointer(color, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(color);
+
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);     // Clear the canvas
+    gl.enable(gl.DEPTH_TEST);              // Enable the depth test
+    gl.clear(gl.COLOR_BUFFER_BIT);         // Clear the color buffer bit
+
+    gl.useProgram(shaderProgram);          // Use the program I created/compiled and Linked
+    gl.uniform1f(gl.getUniformLocation(shaderProgram, 'delta_x'), delta); // stores value of delta into delta_x on GPU
+    gl.drawArrays(gl.POINTS, 0, 468 * 2); // execute the vertex/fragment shader on the bounded buffer, using the
+    // using the shaders compiled/linked and attached to gpuProgram
+}
+
+function translateMesh(scaledMesh, isLeft) {
+    var meshPoints = []
+    let divisors = getCoordinateDivisors(scaledMesh);
+
+    var biggestRange = Math.max(divisors.rangeX, divisors.rangeY, divisors.rangeZ)
+    var leftAdjuster = isLeft ? -0.1 : 0.9
+
+    for (var i = 0; i < 468; i++) {
+        var pointsRow = [-(scaledMesh[i][0] - divisors.minX) / biggestRange + leftAdjuster,
+            -(scaledMesh[i][1] - divisors.minY) / biggestRange + 0.5,
+            -(scaledMesh[i][2] - divisors.minZ) / biggestRange]
+        meshPoints.push(...pointsRow)
+    }
+    return meshPoints
+}
+
+function getColorPoints(color){
+    var colors = []
+    for (var i = 0; i < 468; i++) {
+        //var colorRow = pointsRow.map(value => Math.abs(0.6 - (value * -1)))
+        colors.push(...color)
+    }
+    return colors
+}
+
+},{}]},{},[20,19,18]);
