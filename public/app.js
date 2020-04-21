@@ -308,7 +308,7 @@ async function logScaledMesh(localVideo) {
         for (let i = 0; i < profiler.length; i++) {
             let diff = 0
             if (i != 0) {
-                diff = profiler[i] - profiler[i-1]
+                diff = profiler[i][1] - profiler[i-1][1]
             }
             console.log(profiler[i][0], diff)
         }
