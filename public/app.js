@@ -17,9 +17,9 @@ var waitingForChat = false;
 // if in a chat, this holds the current chat partner
 var chatPartner = null;
 
-// client role can be HOST or GUEST. 
-//      HOST creates rooms and initiates RTC Peer Connection (sends offer)
-//      GUEST recieves room invitations and responds to RTCPeerConnection offer (sends answer)
+// client role can be INITIATOR or not
+//      INITIATOR creates rooms and initiates RTC Peer Connection (sends offer)
+//      non-INITIATOR recieves room invitations and responds to RTCPeerConnection offer (sends answer)
 var initiator = false;
 
 var current_room = '';
@@ -29,6 +29,10 @@ var sessionPartners = [];
 
 //initializing the socket.io handle
 var socket = io();
+
+// initializing variables to hold user's audio and video media streams
+var audioStream;
+var videoStream;
 
 /**********************************/
 /*        WebRTC Setup Code       */
@@ -124,27 +128,12 @@ var ChatInstance = {
         setTimeout(sendAllData, 0);
     },
 
-    bufferFacemeshData: function(){
-        console.log('Adding facemesh data to buffer')
-        ChatInstance.facemeshBuffer.push(current_facemesh);
-    },
-
     initiateDataChannel: function(channel){  
         console.log('Setting up data channel');
         ChatInstance.dataChannel = channel;
 
         ChatInstance.dataChannel.addEventListener('open', event => {
             console.log('Channel opened');
-
-            //push an initial piece of data to the buffer so the sendFacemeshData call below doesn't draw on empty
-            //ChatInstance.facemeshBuffer.push(current_facemesh);
-
-            // add the current facemesh to the buffer every 100milliseconds
-            //setInterval(ChatInstance.bufferFacemeshData, 100);
-            //for(var i=0; i < 1024; i++){
-             //   ChatInstance.facemeshBuffer.push(current_facemesh);
-            //}
-
             ChatInstance.sendFacemeshData();
         });
 
@@ -176,10 +165,13 @@ var ChatInstance = {
     onToken: function(){
         console.log('firing onToken function');
         return function(token){
-            //Create the peer connection
+            // Create the peer connection
             ChatInstance.peerConnection = new RTCPeerConnection({
                 iceServers: token.iceServers
             });
+
+            // Add user's audio to the peer connection
+            ChatInstance.peerConnection.addStream(audioStream);
 
             // send any ice candidates to the other peer
             ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
@@ -297,8 +289,6 @@ async function getScaledMesh(localVideo) {
 async function logScaledMesh(localVideo) {
     setInterval(async () => {
         current_facemesh = await getScaledMesh(localVideo);
-        //console.log('Local facemesh data:')
-        //console.log(scaledMesh);
         meshHandler.updateOutgoingMesh(current_facemesh);
         meshHandler.render();
     }, 100);
@@ -435,13 +425,15 @@ function handleMediaAccess(){
 
     // get access to client media streams
     navigator.mediaDevices
-        .getUserMedia({video: true, audio: false})
+        .getUserMedia({video: true, audio: true})
         .then(stream => {
-            console.log('Media stream acquired');
-            localVideo.srcObject = stream;        
+            console.log('Accessed audio and video media');
+            audioStream = new MediaStream(stream.getAudioTracks());
+            videoStream = new MediaStream(stream.getVideoTracks());
+            localVideo.srcObject = videoStream;        
         })
         .catch(error => {
-            console.log('No media stream');
+            console.log('Failed to access user media');
             console.log(error);
         });
 
