@@ -5680,7 +5680,7 @@ var ChatInstance = {
                     }
                     return;
                 }                
-                ChatInstance.dataChannel.send(current_facemesh);       
+                ChatInstance.dataChannel.send(currentFacemesh);
             }
         };     
         
@@ -5689,7 +5689,7 @@ var ChatInstance = {
 
     bufferFacemeshData: function(){
         console.log('Adding facemesh data to buffer')
-        ChatInstance.facemeshBuffer.push(current_facemesh);
+        ChatInstance.facemeshBuffer.push(currentFacemesh);
     },
 
     initiateDataChannel: function(channel){  
