@@ -171,7 +171,7 @@ var ChatInstance = {
             });
 
             // attach handler for when a new track is added to the peer connection
-            ChatInstance.peerConnection.ontrack = ChatInstance.onTrack;
+            ChatInstance.peerConnection.ontrack = ChatInstance.onTrackHandler;
 
             // Add user's local audio track to the peer connection
             let audioTracks = audioStream.getAudioTracks();
@@ -254,7 +254,7 @@ var ChatInstance = {
     },
 
     // handle new track being added to the rtcPeerConnection
-    onTrack: function(track){
+    onTrackHandler: function(track){
         remoteAudio.src = track;
     }
 };
