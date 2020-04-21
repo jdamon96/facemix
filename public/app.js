@@ -7,6 +7,7 @@ const meshHandler = require('./meshHandler.js')
 /********************************/
 /* Declare required global variables */
 /********************************/
+const decimalPrecision = 2 //Number of places to round decimals in model output to
 
 /* true if currently in chat*/ 
 var chatMode = false;
@@ -22,7 +23,8 @@ var chatPartner = null;
 //      non-INITIATOR recieves room invitations and responds to RTCPeerConnection offer (sends answer)
 var initiator = false;
 
-var current_room = '';
+var currentRoom = '';
+var currentFacemesh;
 
 //list of all partners that this client has chatted with during session
 var sessionPartners = [];
@@ -58,7 +60,7 @@ var ChatInstance = {
             function(offer){
                 ChatInstance.peerConnection.setLocalDescription(offer);
                 socket.emit('offer', {
-                    room: current_room,
+                    room: currentRoom,
                     offer: JSON.stringify(offer)
                 });
             },
@@ -74,7 +76,7 @@ var ChatInstance = {
             function(answer){
                 ChatInstance.peerConnection.setLocalDescription(answer);
                 socket.emit('answer', {
-                    room: current_room, 
+                    room: currentRoom,
                     answer: JSON.stringify(answer)
                 });
             },
@@ -121,7 +123,7 @@ var ChatInstance = {
                     }
                     return;
                 }                
-                ChatInstance.dataChannel.send(current_facemesh);       
+                ChatInstance.dataChannel.send(currentFacemesh);
             }
         };     
         
@@ -138,17 +140,14 @@ var ChatInstance = {
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
-            console.log("raw: ")
-            console.log(event["data"])
-
-            var lol = event["data"].split(',')
-            for (let i = 0; i < lol.length; i++) {
-                lol[i] = parseFloat(lol[i])
+            let incomingMesh = event["data"].split(',')
+            for (let i = 0; i < incomingMesh.length; i++) {
+                incomingMesh[i] = parseFloat(incomingMesh[i])
             }
             console.log("After parse: ")
-            console.log(lol)
+            console.log(incomingMesh)
 
-            meshHandler.updateIncomingMesh(lol)
+            meshHandler.updateIncomingMesh(incomingMesh)
         });
 
         ChatInstance.dataChannel.addEventListener('close', (event) => {
@@ -191,7 +190,6 @@ var ChatInstance = {
                     ChatInstance.initiateDataChannel(event.channel);
                 });
             }
-
             socket.on('candidate', ChatInstance.onCandidate);
             socket.on('answer', ChatInstance.onAnswer);
         }
@@ -213,7 +211,7 @@ var ChatInstance = {
         // Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
         ChatInstance.localICECandidates.forEach(candidate => {
             socket.emit('candidate', {
-                room: current_room, 
+                room: currentRoom,
                 candidate: JSON.stringify(candidate)
             });
         });
@@ -228,7 +226,7 @@ var ChatInstance = {
             if(ChatInstance.connected){
                 console.log('Generated candidate');  
                 socket.emit('candidate', {
-                    room: current_room,
+                    room: currentRoom,
                     candidate: JSON.stringify(event.candidate)
                 });
             } else {
@@ -274,9 +272,7 @@ async function loadModelInternal() {
 
 async function getScaledMesh(localVideo) {
     const video = localVideo;
-    //console.log('estimating faces...');
     const faces = await model.estimateFaces(video);
-    //console.log('done estimating faces');
     if(faces[0]){
         return faces[0].scaledMesh;    
     }
@@ -286,10 +282,24 @@ async function getScaledMesh(localVideo) {
     
 }
 
+function flattenAndTruncateMesh(rawFacemesh) {
+    let flattenedMesh = []
+    const roundConstant = 10 ** decimalPrecision
+    for (let i = 0; i < rawFacemesh.length; i++) {
+        for (let j = 0; j < 3; j++) {
+            flattenedMesh.push(Math.round(rawFacemesh[i][j] * roundConstant) / roundConstant)
+        }
+    }
+    return flattenedMesh
+}
+
 async function logScaledMesh(localVideo) {
     setInterval(async () => {
-        current_facemesh = await getScaledMesh(localVideo);
-        meshHandler.updateOutgoingMesh(current_facemesh);
+        const rawFacemesh = await getScaledMesh(localVideo);
+        console.log(rawFacemesh)
+        currentFacemesh = flattenAndTruncateMesh(rawFacemesh);
+        console.log(currentFacemesh)
+        meshHandler.updateOutgoingMesh(currentFacemesh);
         meshHandler.render();
     }, 100);
 }
@@ -329,7 +339,7 @@ function handleMessage(message){
             break;
 
         case 'room-joined':
-            current_room = message.content.roomname;
+            currentRoom = message.content.roomname;
             if(!initiator){
                 ChatInstance.createPeerConnection();    
             }

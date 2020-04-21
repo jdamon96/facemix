@@ -16,13 +16,11 @@ var vertices = [] //Represents all points currently being displayed on the canva
 var colors = []   //Corresponding colors of each point being displayed
 
 /**********************************************************************/
-/**********************************************************************/
 /*************************PUBLIC FUNCTIONS*****************************/
 /**********************************************************************/
-/**********************************************************************/
 
-exports.updateOutgoingMesh = function updateOutgoingMesh(mesh) {
-    let points = translateMesh(mesh, true)
+exports.updateOutgoingMesh = function updateOutgoingMesh(flattenedMesh) {
+    let points = translateMesh(flattenedMesh, true)
 
     if (vertices.length > numFaceCoordinates) {
         for (let i = numFaceCoordinates; i < vertices.length; i++) {
@@ -33,25 +31,12 @@ exports.updateOutgoingMesh = function updateOutgoingMesh(mesh) {
 }
 
 exports.updateIncomingMesh = function updateIncomingMesh(flattenedMesh) {
-    var unflattenedMesh = []
-    var coordinatePair = []
-    var j = 0
-    for (let i = 0; i<flattenedMesh.length; i++) {
-        coordinatePair[j] = flattenedMesh[i]
-        j++;
-        if (j == 3) {
-            j = 0;
-            unflattenedMesh.push(coordinatePair)
-            coordinatePair = []
-        }
-    }
-
     let points = []
     for (let i = 0; i < numFaceCoordinates; i++) {
         points[i] = vertices[i]
     }
     vertices = points
-    vertices.push(...translateMesh(unflattenedMesh, false))
+    vertices.push(...translateMesh(flattenedMesh, false))
 }
 
 exports.render = function render(){
@@ -62,12 +47,11 @@ exports.render = function render(){
 }
 
 /**********************************************************************/
-/**********************************************************************/
 /***********************INTERNAL FUNCTIONS*****************************/
 /**********************************************************************/
-/**********************************************************************/
+
 function populateColorsWithColor(color) {
-    for (var i = 0; i < numFaceVertices; i++) {
+    for (let i = 0; i < numFaceVertices; i++) {
         colors.push(...color)
     }
 }
@@ -79,7 +63,7 @@ function startWebGL(){
     populateColorsWithColor(pinkColor);
 
     // vertex shader source code
-    var vertCode =
+    const vertCode =
         'precision mediump float; ' +
         'attribute vec3 a_Position; ' +
         'attribute vec3 a_Color; ' +
@@ -97,7 +81,7 @@ function startWebGL(){
         '}';
 
     // fragment shader source code
-    var fragCode =
+    const fragCode =
         'precision mediump float; ' +
         'varying vec4 outColor; ' +
 
@@ -105,7 +89,7 @@ function startWebGL(){
         'gl_FragColor = outColor; ' +
         '}';
 
-    var vertShader = gl.createShader(gl.VERTEX_SHADER); // Create a vertex shader object
+    let vertShader = gl.createShader(gl.VERTEX_SHADER); // Create a vertex shader object
     gl.shaderSource(vertShader, vertCode); // Attach vertex shader source code
     gl.compileShader(vertShader);// Compile the vertex shader
 
@@ -115,7 +99,7 @@ function startWebGL(){
         return null;
     }
 
-    var fragShader = gl.createShader(gl.FRAGMENT_SHADER);// Create fragment shader object
+    let fragShader = gl.createShader(gl.FRAGMENT_SHADER);// Create fragment shader object
     gl.shaderSource(fragShader, fragCode); // Attach fragment shader source code
     gl.compileShader(fragShader); // Compile the fragmentt shader
 
@@ -133,14 +117,14 @@ function startWebGL(){
 }
 
 function getCoordinateDivisors(scaledMesh) {
-    var divisors = {maxX: -10000000, maxY: -10000000, maxZ:-10000000,
+    let divisors = {maxX: -10000000, maxY: -10000000, maxZ:-10000000,
         minX: 10000000, minY: 10000000, minZ: 10000000,
         rangeX: 0, rangeY:0, rangeZ: 0}
 
-    for (let i = 0; i < numFaceVertices; i++) {
-        let x = scaledMesh[i][0]
-        let y = scaledMesh[i][1]
-        let z = scaledMesh[i][2]
+    for (let i = 0; i < numFaceCoordinates; i+=3) {
+        let x = scaledMesh[i]
+        let y = scaledMesh[i+1]
+        let z = scaledMesh[i+2]
         if (x > divisors.maxX) {
             divisors.maxX = x
         }
@@ -168,7 +152,7 @@ function getCoordinateDivisors(scaledMesh) {
 
 //TODO: Understand why points need to be negated to avoid inverting the mesh
 //      Understand why 0.5 needs to be subtracted from each dimension to center it
-//      Remove uneeded shader Code
+//      Remove unneeded shader Code
 //      Research best way to send new objects down to the vertex buffer
 function drawObjects(){
     //For EVERY attribute
@@ -198,16 +182,18 @@ function drawObjects(){
 }
 
 function translateMesh(scaledMesh, isLeft) {
-    var meshPoints = []
+    let meshPoints = []
     let divisors = getCoordinateDivisors(scaledMesh);
 
-    var biggestRange = Math.max(divisors.rangeX, divisors.rangeY, divisors.rangeZ)
-    var leftAdjuster = isLeft ? -0.1 : 0.9
+    const biggestRange = Math.max(divisors.rangeX, divisors.rangeY, divisors.rangeZ)
+    const leftAdjuster = isLeft ? -0.1 : 0.9
 
-    for (var i = 0; i < numFaceVertices; i++) {
-        var pointsRow = [-(scaledMesh[i][0] - divisors.minX) / biggestRange + leftAdjuster,
-            -(scaledMesh[i][1] - divisors.minY) / biggestRange + 0.5,
-            -(scaledMesh[i][2] - divisors.minZ) / biggestRange]
+    for (let i = 0; i < numFaceCoordinates; i+=3) {
+        let pointsRow = [
+            -(scaledMesh[i] - divisors.minX) / biggestRange + leftAdjuster,
+            -(scaledMesh[i+1] - divisors.minY) / biggestRange + 0.5,
+            -(scaledMesh[i+2] - divisors.minZ) / biggestRange
+        ]
         meshPoints.push(...pointsRow)
     }
     return meshPoints
