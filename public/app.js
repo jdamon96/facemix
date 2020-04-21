@@ -11,6 +11,7 @@ const decimalPrecision = 2 //Number of places to round decimals in model output 
 
 /* true if currently in chat*/ 
 var chatMode = false;
+var profiler = []
 
 /* true if in process of finding a chat partner*/
 var waitingForChat = false;
@@ -303,12 +304,24 @@ function flattenAndTruncateMesh(rawFacemesh) {
 
 async function logScaledMesh(localVideo) {
     setInterval(async () => {
+        profiler.push(["Timeout over", Date.now()])
+        for (let i = 0; i < profiler.length; i++) {
+            let diff = 0
+            if (i != 0) {
+                diff = profiler[i] - profiler[i-1]
+            }
+            console.log(profiler[i][0], diff)
+        }
+        profiler = []
+        profiler.push(["Time 0: ", Date.now()])
         const rawFacemesh = await getScaledMesh(localVideo);
-        console.log(rawFacemesh)
+        profiler.push(["Model Responded: ", Date.now()])
         currentFacemesh = flattenAndTruncateMesh(rawFacemesh);
-        console.log(currentFacemesh)
+        profiler.push(["Formatted Mesh: ", Date.now()])
         meshHandler.updateOutgoingMesh(currentFacemesh);
-        meshHandler.render();
+        profiler.push(["Updated Outgoing Mesh: ", Date.now()])
+        meshHandler.render(profiler);
+        profiler.push(["Render finished: ", Date.now()])
     }, 100);
 }
 
