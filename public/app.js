@@ -256,7 +256,7 @@ var ChatInstance = {
     // handle new track being added to the rtcPeerConnection
     onTrackHandler: function(event){
         console.log(event);
-        remoteAudio.src = URL.createObjectURL(event.streams[0]);
+        remoteAudio.srcObject = event.streams[0];
     }
 };
 
