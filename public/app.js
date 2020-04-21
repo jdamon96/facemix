@@ -174,8 +174,11 @@ var ChatInstance = {
             ChatInstance.peerConnection.ontrack = ChatInstance.onTrack;
 
             // Add user's local audio track to the peer connection
-            console.log(audioStream);
-            ChatInstance.peerConnection.addTrack(audioStream.getAudioTracks());
+            let audioTracks = audioStream.getAudioTracks();
+            let audioTrack = audioTracks[0];
+            console.log(audioTracks);
+            console.log(audioTrack);
+            ChatInstance.peerConnection.addTrack(audioTrack);
 
             // send any ice candidates to the other peer
             ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
