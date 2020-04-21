@@ -39,11 +39,11 @@ exports.updateIncomingMesh = function updateIncomingMesh(flattenedMesh) {
     vertices.push(...translateMesh(flattenedMesh, false))
 }
 
-exports.render = function render(profiler){
+exports.render = function render(){
     if (!glInitialized) {
         startWebGL();
     }
-    drawObjects(profiler);
+    drawObjects();
 }
 
 /**********************************************************************/
@@ -154,7 +154,7 @@ function getCoordinateDivisors(scaledMesh) {
 //      Understand why 0.5 needs to be subtracted from each dimension to center it
 //      Remove unneeded shader Code
 //      Research best way to send new objects down to the vertex buffer
-function drawObjects(profiler){
+function drawObjects(){
     //For EVERY attribute
     //create buffer, bind buffer, buffer data, vertAttribPointer(), enableVertAttribPointer()
 
@@ -164,7 +164,6 @@ function drawObjects(profiler){
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);// Pass the vertex data to the buffer
     gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0); // Point an attribute to the currently bound VBO
     gl.enableVertexAttribArray(coord); // Enable the attribute
-    profiler.push(["After vertex block", Date.now()])
 
     let color_buffer = gl.createBuffer();
     let color = gl.getAttribLocation(shaderProgram, "a_Color");
@@ -172,17 +171,14 @@ function drawObjects(profiler){
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl. STATIC_DRAW);
     gl.vertexAttribPointer(color, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(color);
-    profiler.push(["After color block", Date.now()])
 
     gl.clearColor(1.0, 1.0, 1.0, 1.0);     // Clear the canvas
     gl.enable(gl.DEPTH_TEST);              // Enable the depth test
     gl.clear(gl.COLOR_BUFFER_BIT);         // Clear the color buffer bit
-    profiler.push(["Cleared canvas", Date.now()])
 
     gl.useProgram(shaderProgram);          // Use the program I created/compiled and Linked
-    profiler.push(["Use program", Date.now()])
     gl.uniform1f(gl.getUniformLocation(shaderProgram, 'delta_x'), delta); // stores value of delta into delta_x on GPU
-    profiler.push(["Delta x", Date.now()])
+
     gl.drawArrays(gl.POINTS, 0, vertices.length/3); // execute the vertex/fragment shader on the bounded buffer, using the shaders and programs linked and compiled
 }
 

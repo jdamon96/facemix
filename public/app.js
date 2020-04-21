@@ -258,7 +258,10 @@ var model;
 * Defining required functions for handling facemodel
 */
 async function loadModelInternal() {
-    model = await facemesh.load();
+    console.log("Loading model")
+    let beforeModel = Date.now()
+    model = await facemesh.load({maxFaces: 1});
+    console.log("Loaded in ", Date.now()-beforeModel);
 }
 
 async function getScaledMesh(localVideo) {
@@ -283,27 +286,40 @@ function flattenAndTruncateMesh(rawFacemesh) {
     }
     return flattenedMesh
 }
+function updateProfiler(profiler, checkpointIndex, checkpoints) {
+    let checkpointName = checkpoints[checkpointIndex]
+    let lastCheckpointName = checkpointIndex == 0 ? checkpoints[checkpoints.length-1] : checkpoints[checkpointIndex-1]
+    if (checkpointName in profiler && lastCheckpointName in profiler) {
+        let lastCheckpointTime = profiler[lastCheckpointName][0]
+        let totalElapsed = profiler[checkpointName][1]
+        profiler[checkpointName] = [Date.now(), totalElapsed + (Date.now() - lastCheckpointTime)]
+    } else {
+        profiler[checkpointName] = [Date.now(), 0]
+    }
+}
 
-async function logScaledMesh(localVideo) {
+async function callModelAndRenderLoop(localVideo) {
+    let profiler = []
+    let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "]
+    let iterator = 0
     setInterval(async () => {
-        profiler.push(["Timeout over", Date.now()])
-        for (let i = 0; i < profiler.length; i++) {
-            let diff = 0
-            if (i != 0) {
-                diff = profiler[i][1] - profiler[i-1][1]
+        iterator++
+        updateProfiler(profiler,0, checkpoints)
+        if (iterator == 100) {
+            console.log("After 1000")
+            for (let i = 0; i < checkpoints.length; i++) {
+                console.log(checkpoints[i], profiler[checkpoints[i]][1] / 100.0)
             }
-            //console.log(profiler[i][0], diff)
+            profiler = []
+            iterator = 0
         }
-        profiler = []
-        profiler.push(["Time 0: ", Date.now()])
         const rawFacemesh = await getScaledMesh(localVideo);
-        profiler.push(["Model Responded: ", Date.now()])
+        updateProfiler(profiler,1, checkpoints)
         currentFacemesh = flattenAndTruncateMesh(rawFacemesh);
-        profiler.push(["Formatted Mesh: ", Date.now()])
         meshHandler.updateOutgoingMesh(currentFacemesh);
-        profiler.push(["Updated Outgoing Mesh: ", Date.now()])
-        meshHandler.render(profiler);
-        profiler.push(["Render finished: ", Date.now()])
+        updateProfiler(profiler,2, checkpoints)
+        meshHandler.render();
+        updateProfiler(profiler,3, checkpoints)
     }, 50);
 }
 
@@ -397,7 +413,7 @@ const remoteAudio = document.getElementById('remoteAudio');
 function handleLoadedVideoData(event){
     console.log('Processing video data');
     var video = event.target;
-    logScaledMesh(video);
+    callModelAndRenderLoop(video);
 }
 
 /*
@@ -444,7 +460,7 @@ function handleMediaAccess(){
             console.log('Accessed audio and video media');
             audioStream = new MediaStream(stream.getAudioTracks());
             videoStream = new MediaStream(stream.getVideoTracks());
-            localVideo.srcObject = videoStream;        
+            localVideo.srcObject = videoStream;
         })
         .catch(error => {
             console.log('Failed to access user media');
