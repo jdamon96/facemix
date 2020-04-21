@@ -178,7 +178,7 @@ var ChatInstance = {
 
             // send any ice candidates to the other peer
             ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
-            console.log('Initiator: ' + initiator);
+            console.log('Assigning this client to be initiator: ' + initiator);
             if(initiator){
                 // create the data channel
                 console.log('Creating a data channel')
@@ -302,7 +302,7 @@ async function logScaledMesh(localVideo) {
             if (i != 0) {
                 diff = profiler[i][1] - profiler[i-1][1]
             }
-            console.log(profiler[i][0], diff)
+            //console.log(profiler[i][0], diff)
         }
         profiler = []
         profiler.push(["Time 0: ", Date.now()])
@@ -405,8 +405,7 @@ const remoteAudio = document.getElementById('remoteAudio');
 * Event handler for event that occurs when the video element has successfully loaded video data given to it
 */ 
 function handleLoadedVideoData(event){
-    console.log('video data loaded');
-    
+    console.log('Processing video data');
     var video = event.target;
     logScaledMesh(video);
 }
