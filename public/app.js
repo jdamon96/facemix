@@ -322,7 +322,7 @@ async function logScaledMesh(localVideo) {
         profiler.push(["Updated Outgoing Mesh: ", Date.now()])
         meshHandler.render(profiler);
         profiler.push(["Render finished: ", Date.now()])
-    }, 100);
+    }, 250);
 }
 
 
