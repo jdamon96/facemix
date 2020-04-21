@@ -34,8 +34,8 @@ var sessionPartners = [];
 var socket = io();
 
 // initializing variables to hold user's audio and video media streams
-var audioTrack;
-var videoTrack;
+var audioStream;
+var videoStream;
 
 /**********************************/
 /*        WebRTC Setup Code       */
@@ -174,8 +174,8 @@ var ChatInstance = {
             ChatInstance.peerConnection.ontrack = ChatInstance.onTrack;
 
             // Add user's local audio track to the peer connection
-            console.log(audioTrack);
-            ChatInstance.peerConnection.addTrack(audioTrack);
+            console.log(audioStream);
+            ChatInstance.peerConnection.addTrack(audioStream.getAudioTracks());
 
             // send any ice candidates to the other peer
             ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
@@ -453,8 +453,8 @@ function handleMediaAccess(){
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Accessed audio and video media');
-            audioTrack = new MediaStream(stream.getAudioTracks());
-            videoTrack = new MediaStream(stream.getVideoTracks());
+            audioStream = new MediaStream(stream.getAudioTracks());
+            videoStream = new MediaStream(stream.getVideoTracks());
             localVideo.srcObject = videoTrack;        
         })
         .catch(error => {
