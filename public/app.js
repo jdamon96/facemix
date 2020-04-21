@@ -34,8 +34,8 @@ var sessionPartners = [];
 var socket = io();
 
 // initializing variables to hold user's audio and video media streams
-var audioStream;
-var videoStream;
+var audioTrack;
+var videoTrack;
 
 /**********************************/
 /*        WebRTC Setup Code       */
@@ -170,8 +170,11 @@ var ChatInstance = {
                 iceServers: token.iceServers
             });
 
-            // Add user's audio to the peer connection
-            ChatInstance.peerConnection.addStream(audioStream);
+            // attach handler for when a new track is added to the peer connection
+            ChatInstance.peerConnection.ontrack = ChatInstance.onTrack;
+
+            // Add user's local audio track to the peer connection
+            ChatInstance.peerConnection.addTrack(audioTrack);
 
             // send any ice candidates to the other peer
             ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
@@ -246,12 +249,9 @@ var ChatInstance = {
         ChatInstance.peerConnection.addIceCandidate(rtcCandidate);
     },
 
-    noMediaStream: function(){
-        console.log('No media stream available');
-    },
-
-    startCall: function(event){  
-
+    // handle new track being added to the rtcPeerConnection
+    onTrack: function(track){
+        remoteAudio.src = track;
     }
 };
 
@@ -396,7 +396,9 @@ const faceScanButton = document.getElementById('camera-access');
 const findChatButton = document.getElementById('find-a-chat');
 
 /* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
-const localVideo = document.getElementById('videoElement');
+const localVideo = document.getElementById('localVideo');
+// ho
+const remoteAudio = document.getElementById('remoteAudio');
 
 
 /*
@@ -451,8 +453,8 @@ function handleMediaAccess(){
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Accessed audio and video media');
-            audioStream = new MediaStream(stream.getAudioTracks());
-            videoStream = new MediaStream(stream.getVideoTracks());
+            audioTrack = new MediaStream(stream.getAudioTracks());
+            videoTrack = new MediaStream(stream.getVideoTracks());
             localVideo.srcObject = videoStream;        
         })
         .catch(error => {
