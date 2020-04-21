@@ -39,11 +39,11 @@ exports.updateIncomingMesh = function updateIncomingMesh(flattenedMesh) {
     vertices.push(...translateMesh(flattenedMesh, false))
 }
 
-exports.render = function render(){
+exports.render = function render(profiler){
     if (!glInitialized) {
         startWebGL();
     }
-    drawObjects();
+    drawObjects(profiler);
 }
 
 /**********************************************************************/
@@ -154,7 +154,7 @@ function getCoordinateDivisors(scaledMesh) {
 //      Understand why 0.5 needs to be subtracted from each dimension to center it
 //      Remove unneeded shader Code
 //      Research best way to send new objects down to the vertex buffer
-function drawObjects(){
+function drawObjects(profiler){
     //For EVERY attribute
     //create buffer, bind buffer, buffer data, vertAttribPointer(), enableVertAttribPointer()
 
