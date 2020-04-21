@@ -455,7 +455,7 @@ function handleMediaAccess(){
             console.log('Accessed audio and video media');
             audioTrack = new MediaStream(stream.getAudioTracks());
             videoTrack = new MediaStream(stream.getVideoTracks());
-            localVideo.srcObject = videoStream;        
+            localVideo.srcObject = videoTrack;        
         })
         .catch(error => {
             console.log('Failed to access user media');
