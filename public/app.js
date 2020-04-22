@@ -307,7 +307,6 @@ async function callModelAndRenderLoop(localVideo) {
 
         meshHandler.updatePersonalMesh(rawFacemesh);
         currentFacemesh = meshHandler.getPersonalMeshForTransit();
-
         updateProfiler(profiler,2, checkpoints)
         meshHandler.render();
         updateProfiler(profiler,3, checkpoints)

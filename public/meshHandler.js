@@ -29,7 +29,7 @@ exports.getPersonalMeshForTransit = function getPersonalMeshForTransit() {
     let transitMesh = []
     for (let i = 0; i<numFaceCoordinates; i++) {
         if (i % 3 == 0) { //x coordinate
-            transitMesh[i] = vertices[i] + 1 - (2 * buttonOffsets['x'])
+            transitMesh[i] = -vertices[i]
         } else {
             transitMesh[i] = vertices[i]
         }
