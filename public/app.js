@@ -203,14 +203,6 @@ var ChatInstance = {
         }
     },
 
-
-    /*
-    * Handler function for recieving an ANSWER 
-    * - Sets remote client session description of RTCPeerConnection 
-    * - Update 'connected' to true
-    * - Send ICECandidates to remote client from localICeCandidate buffer
-    * - clear localIceCandidate buffer
-    */ 
     onAnswer: function(answer){
         ChatInstance.peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
 
@@ -243,17 +235,11 @@ var ChatInstance = {
         }
     },
 
-    /*
-    * Handle recieving ICECandidates from the other client
-    *   - create new IceCandidate from data sent
-    *   - add IceCandidate to our Chat Instance's RTCPeerConnection
-    */
     onCandidate: function(candidate){
         rtcCandidate = new RTCIceCandidate(JSON.parse(candidate));
         ChatInstance.peerConnection.addIceCandidate(rtcCandidate);
     },
 
-    // handle new track being added to the rtcPeerConnection
     onTrackHandler: function(event){
         console.log(event);
         remoteAudio.srcObject = new MediaStream(event.track);
