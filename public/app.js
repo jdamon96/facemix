@@ -220,7 +220,6 @@ var ChatInstance = {
         ChatInstance.localICECandidates = [];
     },
 
-
     onIceCandidate: function(event){
         if(event.candidate){
             if(ChatInstance.connected){
@@ -242,7 +241,7 @@ var ChatInstance = {
 
     onTrackHandler: function(event){
         console.log(event);
-        remoteAudio.srcObject = new MediaStream(event.track);
+        remoteAudio.srcObject = new MediaStream([event.track]);
     }
 };
 
