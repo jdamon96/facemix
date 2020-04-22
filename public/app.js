@@ -7,7 +7,6 @@ const meshHandler = require('./meshHandler.js')
 /********************************/
 /* Declare required global variables */
 /********************************/
-const decimalPrecision = 2 //Number of places to round decimals in model output to
 
 /* true if currently in chat*/ 
 var chatMode = false;
@@ -148,7 +147,7 @@ var ChatInstance = {
             console.log("After parse: ")
             console.log(incomingMesh)
 
-            meshHandler.updateIncomingMesh(incomingMesh)
+            meshHandler.updatePeerMesh(incomingMesh)
         });
 
         ChatInstance.dataChannel.addEventListener('close', (event) => {
@@ -276,16 +275,6 @@ async function getScaledMesh(localVideo) {
     
 }
 
-function flattenAndTruncateMesh(rawFacemesh) {
-    let flattenedMesh = []
-    const roundConstant = 10 ** decimalPrecision
-    for (let i = 0; i < rawFacemesh.length; i++) {
-        for (let j = 0; j < 3; j++) {
-            flattenedMesh.push(Math.round(rawFacemesh[i][j] * roundConstant) / roundConstant)
-        }
-    }
-    return flattenedMesh
-}
 function updateProfiler(profiler, checkpointIndex, checkpoints) {
     let checkpointName = checkpoints[checkpointIndex]
     let lastCheckpointName = checkpointIndex == 0 ? checkpoints[checkpoints.length-1] : checkpoints[checkpointIndex-1]
@@ -306,7 +295,7 @@ async function callModelAndRenderLoop(localVideo) {
         iterator++
         updateProfiler(profiler,0, checkpoints)
         if (iterator == 100) {
-            console.log("After 1000")
+            console.log("After 100")
             for (let i = 0; i < checkpoints.length; i++) {
                 console.log(checkpoints[i], profiler[checkpoints[i]][1] / 100.0)
             }
@@ -315,14 +304,15 @@ async function callModelAndRenderLoop(localVideo) {
         }
         const rawFacemesh = await getScaledMesh(localVideo);
         updateProfiler(profiler,1, checkpoints)
-        currentFacemesh = flattenAndTruncateMesh(rawFacemesh);
-        meshHandler.updateOutgoingMesh(currentFacemesh);
+
+        meshHandler.updatePersonalMesh(rawFacemesh);
+        currentFacemesh = meshHandler.getPersonalMeshForTransit();
+
         updateProfiler(profiler,2, checkpoints)
         meshHandler.render();
         updateProfiler(profiler,3, checkpoints)
     }, 50);
 }
-
 
 /*
 * Load the facemesh model
@@ -383,6 +373,7 @@ function handleRoomInvitation(roomInvitation){
     }
 }
 
+
 /********************************/
 /* Add initial event listeners required for the socket*/
 /********************************/
@@ -400,7 +391,6 @@ socket.on('offer', ChatInstance.onOffer);
 /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
 const faceScanButton = document.getElementById('camera-access');
 const findChatButton = document.getElementById('find-a-chat');
-
 /* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
 const localVideo = document.getElementById('localVideo');
 // ho

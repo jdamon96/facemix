@@ -8,18 +8,37 @@ var glInitialized = false;
 var canvas;
 var gl;
 
-const numFaceVertices = 468
-const numFaceCoordinates = numFaceVertices * 3;
+const numFacePoints = 468
+const numFaceCoordinates = numFacePoints * 3;
+const decimalPrecision = 2 //Number of places to round decimals in model output to
+
 const blueColor = [0.678, 0.847, .90]
 const pinkColor = [1, .752, .796]
 var vertices = [] //Represents all points currently being displayed on the canvas
 var colors = []   //Corresponding colors of each point being displayed
 
+let buttonOffsets = []  //Scalars to move the rendering based on key position
+const buttonBounds = {x: {max: 1.0, min: -1.0}, y:{max: 1.0, min:-1.0}, z:{max:1.5, min:0.3}}
+const buttonDelta = 0.1 //Amount a key press moves you within the canvas
+
 /**********************************************************************/
 /*************************PUBLIC FUNCTIONS*****************************/
 /**********************************************************************/
 
-exports.updateOutgoingMesh = function updateOutgoingMesh(flattenedMesh) {
+exports.getPersonalMeshForTransit = function getPersonalMeshForTransit() {
+    let transitMesh = []
+    for (let i = 0; i<numFaceCoordinates; i++) {
+        if (i % 3 == 0) { //x coordinate
+            transitMesh[i] = vertices[i] + 1 - (2 * buttonOffsets['x'])
+        } else {
+            transitMesh[i] = vertices[i]
+        }
+    }
+    return transitMesh
+}
+
+exports.updatePersonalMesh = function updatePersonalMesh(rawFacemesh) {
+    const flattenedMesh = flattenAndTruncateMesh(rawFacemesh)
     let points = translateMesh(flattenedMesh, true)
 
     if (vertices.length > numFaceCoordinates) {
@@ -30,13 +49,13 @@ exports.updateOutgoingMesh = function updateOutgoingMesh(flattenedMesh) {
     vertices = points
 }
 
-exports.updateIncomingMesh = function updateIncomingMesh(flattenedMesh) {
+exports.updatePeerMesh = function updatePeerMesh(transitMesh) {
     let points = []
     for (let i = 0; i < numFaceCoordinates; i++) {
         points[i] = vertices[i]
     }
     vertices = points
-    vertices.push(...translateMesh(flattenedMesh, false))
+    vertices.push(...transitMesh)
 }
 
 exports.render = function render(){
@@ -50,14 +69,59 @@ exports.render = function render(){
 /***********************INTERNAL FUNCTIONS*****************************/
 /**********************************************************************/
 
+function handleKeyPress(e) {
+    if (event.keyCode == 68) {
+        console.log("right")
+        updateOffset('x', buttonDelta, buttonBounds.x.max, buttonBounds.x.min)
+    } else if (event.keyCode == 65) {
+        console.log("left")
+        updateOffset('x', -buttonDelta, buttonBounds.x.max, buttonBounds.x.min)
+    } else if (event.keyCode == 87) {
+        console.log("up")
+        updateOffset('y', buttonDelta, buttonBounds.y.max, buttonBounds.y.min)
+    } else if (event.keyCode == 83) {
+        console.log("down")
+        updateOffset('y', -buttonDelta, buttonBounds.y.max, buttonBounds.y.min)
+    } else if (event.keyCode == 73) {
+        console.log("forward");
+        updateOffset('z', buttonDelta, buttonBounds.z.max, buttonBounds.z.min)
+    } else if (event.keyCode == 75) {
+        console.log("back");
+        updateOffset('z', -buttonDelta, buttonBounds.z.max, buttonBounds.z.min)
+    }
+}
+
+function updateOffset(dimension, delta, max, min) {
+    const result = buttonOffsets[dimension] + delta
+    if (result <= max && result >= min) {
+        buttonOffsets[dimension] = result
+    }
+}
+
+function flattenAndTruncateMesh(rawFacemesh) {
+    let flattenedMesh = []
+    const roundConstant = 10 ** decimalPrecision
+    for (let i = 0; i < rawFacemesh.length; i++) {
+        for (let j = 0; j < 3; j++) {
+            flattenedMesh.push(Math.round(rawFacemesh[i][j] * roundConstant) / roundConstant)
+        }
+    }
+    return flattenedMesh
+}
+
+
 function populateColorsWithColor(color) {
-    for (let i = 0; i < numFaceVertices; i++) {
+    for (let i = 0; i < numFacePoints; i++) {
         colors.push(...color)
     }
 }
 
 function startWebGL(){
     canvas = document.getElementById(canvasName);
+    document.onkeydown = handleKeyPress; // We can do this here because key presses don't matter until the model is rendered
+    buttonOffsets['x'] = -0.1
+    buttonOffsets['y'] = 0.5
+    buttonOffsets['z'] = 1
     gl = canvas.getContext('experimental-webgl');
     populateColorsWithColor(blueColor);
     populateColorsWithColor(pinkColor);
@@ -101,7 +165,7 @@ function startWebGL(){
 
     let fragShader = gl.createShader(gl.FRAGMENT_SHADER);// Create fragment shader object
     gl.shaderSource(fragShader, fragCode); // Attach fragment shader source code
-    gl.compileShader(fragShader); // Compile the fragmentt shader
+    gl.compileShader(fragShader); // Compile the fragment shader
 
     if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
         alert(gl.getShaderInfoLog(fragShader));
@@ -182,17 +246,16 @@ function drawObjects(){
     gl.drawArrays(gl.POINTS, 0, vertices.length/3); // execute the vertex/fragment shader on the bounded buffer, using the shaders and programs linked and compiled
 }
 
-function translateMesh(scaledMesh, isLeft) {
+function translateMesh(scaledMesh) {
     let meshPoints = []
     let divisors = getCoordinateDivisors(scaledMesh);
 
     const biggestRange = Math.max(divisors.rangeX, divisors.rangeY, divisors.rangeZ)
-    const leftAdjuster = isLeft ? -0.1 : 0.9
 
     for (let i = 0; i < numFaceCoordinates; i+=3) {
         let pointsRow = [
-            -(scaledMesh[i] - divisors.minX) / biggestRange + leftAdjuster,
-            -(scaledMesh[i+1] - divisors.minY) / biggestRange + 0.5,
+            -((scaledMesh[i] - divisors.minX) * buttonOffsets['z']) / biggestRange + buttonOffsets['x'],
+            -((scaledMesh[i+1] - divisors.minY) * buttonOffsets['z']) / biggestRange + buttonOffsets['y'],
             -(scaledMesh[i+2] - divisors.minZ) / biggestRange
         ]
         meshPoints.push(...pointsRow)
