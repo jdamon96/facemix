@@ -10,7 +10,7 @@ const meshHandler = require('./meshHandler.js')
 
 /* true if currently in chat*/ 
 var chatMode = false;
-var profiler = []
+var profiler = [];
 
 /* true if in process of finding a chat partner*/
 var waitingForChat = false;
@@ -33,6 +33,7 @@ var sessionPartners = [];
 var socket = io();
 
 // initializing variables to hold user's audio and video media streams
+var accessedCamera = false;
 var audioStream;
 var videoStream;
 
@@ -413,7 +414,7 @@ localVideo.addEventListener('loadeddata', handleLoadedVideoData);
 /* disable 'find chat' button if no access to client media feed 
 * ( can't join chat if you don't have your camera on )*/
 if(localVideo.srcObject == null){
-    findChatButton.disabled = true;
+    disableFindChatButton();
 }
 
 
@@ -437,6 +438,23 @@ function handleFindChat(){
 
 findChatButton.addEventListener('click', handleFindChat);
 
+function disableFindChatButton(){
+    findChatButton.disabled = true;
+    //make border light-grey 
+    findChatButton.style.border = "1px solid #D3D3D3";
+    //make text light-grey
+    findChatButton.style.color = "#D3D3D3";
+}
+
+function enableFindChatButton(){
+    // enable the find chat button
+    findChatButton.disabled = false;
+
+    //make border and text black
+    findChatButton.style.border = "1px solid black";
+    findChatButton.style.color = "black";
+}
+
 /*
 * Handler function for the camera button
 */
@@ -447,6 +465,8 @@ function handleMediaAccess(){
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Accessed audio and video media');
+            accessedCamera = true;
+            enableFindChatButton();
             audioStream = new MediaStream(stream.getAudioTracks());
             videoStream = new MediaStream(stream.getVideoTracks());
             localVideo.srcObject = videoStream;
@@ -455,10 +475,6 @@ function handleMediaAccess(){
             console.log('Failed to access user media');
             console.log(error);
         });
-
-    // enable the find chat button
-    findChatButton.disabled = false;
-
 }
 
 faceScanButton.addEventListener('click', handleMediaAccess);

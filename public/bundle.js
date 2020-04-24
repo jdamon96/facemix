@@ -5996,10 +5996,6 @@ function handleMediaAccess(){
             console.log('No media stream');
             console.log(error);
         });
-
-    // enable the find chat button
-    findChatButton.disabled = false;
-
 }
 
 faceScanButton.addEventListener('click', handleMediaAccess);
