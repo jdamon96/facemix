@@ -81,9 +81,30 @@ html, body {
 }
 
 #find-a-chat {
-    border: 1px solid black;
+    border: 1px solid #6CBA51;
+    color: #6CBA51;
     float: right;
     margin-right: 0;
+}
+
+#new-chat {
+    border: 1px solid #6CBA51;
+    color: #6CBA51;
+    float: right;
+    margin-right: 0;
+
+    /* this button appears when user is in chat so init with 'display: none' */
+    display: none;
+}
+
+#end-chat {
+    border: 1px solid #F14C4C;
+    color: #F14C4C;
+    float: left;
+    margin-left: 0; 
+
+    /* this button appears when user is in chat so init with 'display: none' */
+    display: none; 
 }
 
 #header-border-line {

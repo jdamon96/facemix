@@ -3,7 +3,8 @@
 /********************************/
 
 const adapter = require('webrtc-adapter');
-const meshHandler = require('./meshHandler.js')
+const meshHandler = require('./meshHandler.js');
+const userInterface = require('./interface.js');
 /********************************/
 /* Declare required global variables */
 /********************************/
@@ -37,6 +38,8 @@ var accessedCamera = false;
 var audioStream;
 var videoStream;
 
+
+
 /**********************************/
 /*        WebRTC Setup Code       */
 /**********************************/
@@ -49,6 +52,13 @@ var ChatInstance = {
     connected: false,
     localICECandidates: [],
     facemeshBuffer: [],
+
+    endCurrentChat: function(){
+        // close the current peerConnection
+        ChatInstance.peerConnection.close();
+        // remove reference to closed peerConnection
+        ChatInstance.peerConnnection = null;
+    },
 
     onOffer: function(offer){
         console.log('Recieved offer. Sending answer to peer.');
@@ -136,25 +146,28 @@ var ChatInstance = {
         ChatInstance.dataChannel = channel;
 
         ChatInstance.dataChannel.addEventListener('open', event => {
-            console.log('Channel opened');
+            console.log('Data channel opened');
             ChatInstance.sendFacemeshData();
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
+            // switch to chat UI after recieving first data msg from peer client
+            userInterface.switchToChatUI();
+
             let incomingMesh = event["data"].split(',')
             for (let i = 0; i < incomingMesh.length; i++) {
                 incomingMesh[i] = parseFloat(incomingMesh[i])
             }
-            console.log("After parse: ")
-            console.log(incomingMesh)
+            //console.log("After parse: ")
+            //console.log(incomingMesh)
 
-            meshHandler.updatePeerMesh(incomingMesh)
+            meshHandler.updatePeerMesh(incomingMesh);
         });
 
-        ChatInstance.dataChannel.addEventListener('close', (event) => {
-            console.log('Channel closed');
-            console.log(event);
+        ChatInstance.dataChannel.addEventListener('close', event => {
+            console.log('Data channel closed');
         });
+
     },
 
     createPeerConnection: function(){
@@ -176,8 +189,6 @@ var ChatInstance = {
             // Add user's local audio track to the peer connection
             let audioTracks = audioStream.getAudioTracks();
             let audioTrack = audioTracks[0];
-            console.log(audioTracks);
-            console.log(audioTrack);
             ChatInstance.peerConnection.addTrack(audioTrack);
 
             // send any ice candidates to the other peer
@@ -240,7 +251,6 @@ var ChatInstance = {
     },
 
     onTrackHandler: function(event){
-        console.log(event);
         remoteAudio.srcObject = new MediaStream([event.track]);
     }
 };
@@ -293,24 +303,24 @@ async function callModelAndRenderLoop(localVideo) {
     let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "]
     let iterator = 0
     setInterval(async () => {
-        iterator++
-        updateProfiler(profiler,0, checkpoints)
+        iterator++;
+        updateProfiler(profiler,0, checkpoints);
         if (iterator == 100) {
-            console.log("After 100")
+            //console.log("After 100")
             for (let i = 0; i < checkpoints.length; i++) {
-                console.log(checkpoints[i], profiler[checkpoints[i]][1] / 100.0)
+                //console.log(checkpoints[i], profiler[checkpoints[i]][1] / 100.0);
             }
-            profiler = []
-            iterator = 0
+            profiler = [];
+            iterator = 0;
         }
         const rawFacemesh = await getScaledMesh(localVideo);
-        updateProfiler(profiler,1, checkpoints)
+        updateProfiler(profiler,1, checkpoints);
 
         meshHandler.updatePersonalMesh(rawFacemesh);
         currentFacemesh = meshHandler.getPersonalMeshForTransit();
-        updateProfiler(profiler,2, checkpoints)
+        updateProfiler(profiler,2, checkpoints);
         meshHandler.render();
-        updateProfiler(profiler,3, checkpoints)
+        updateProfiler(profiler,3, checkpoints);
     }, 50);
 }
 
@@ -391,6 +401,9 @@ socket.on('offer', ChatInstance.onOffer);
 /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
 const faceScanButton = document.getElementById('camera-access');
 const findChatButton = document.getElementById('find-a-chat');
+const newChatButton = document.getElementById('new-chat');
+const endChatButton = document.getElementById('end-chat');
+
 /* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
 const localVideo = document.getElementById('localVideo');
 // ho
@@ -427,10 +440,17 @@ function handleRoomJoin(data){
 * Handler function for clicking the 'Find-Chat' button
 */
 function handleFindChat(){
+    console.log('Finding chat');
     socket.emit('join');
     socket.on('roominvitation', handleRoomInvitation);
     socket.on('roomjoined', handleRoomJoin);
 }
+
+function handleEndChat(){
+    ChatInstance.endCurrentChat();
+    console.log('Ending chat');
+    userInterface.switchToLobbyUI();
+};
 
 /*
 * Adding the 'click' event listener to the button and attaching the handler function
@@ -438,21 +458,20 @@ function handleFindChat(){
 
 findChatButton.addEventListener('click', handleFindChat);
 
+endChatButton.addEventListener('click', handleEndChat);
+
 function disableFindChatButton(){
     findChatButton.disabled = true;
-    //make border light-grey 
-    findChatButton.style.border = "1px solid #D3D3D3";
-    //make text light-grey
-    findChatButton.style.color = "#D3D3D3";
+
+    findChatButton.style.opacity = 0.5;
 }
 
 function enableFindChatButton(){
     // enable the find chat button
     findChatButton.disabled = false;
 
-    //make border and text black
-    findChatButton.style.border = "1px solid black";
-    findChatButton.style.color = "black";
+    findChatButton.style.opacity = 1;
+
 }
 
 /*

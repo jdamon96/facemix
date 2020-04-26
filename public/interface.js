@@ -1,17 +1,27 @@
 var state = {
     media_access: false,
     about_active: false,
-    chat_mode: false,
-    chat_room: ''
+    chat_mode: false
 }
 
 /* Get access to HTML elements */
-const overlay = document.getElementById('overlay');
+const header = document.getElementById('header');
+
+const title = document.getElementById('title');
 const aboutButton = document.getElementById('about');
 const faceScanButton = document.getElementById('camera-access');
 const findChatButton = document.getElementById('find-a-chat');
-const header = document.getElementById('header');
-const aboutMessage = document.getElementById('about-message')
+
+const endChatButton = document.getElementById('end-chat');
+const newChatButton = document.getElementById('new-chat');
+
+const overlay = document.getElementById('overlay');
+const aboutMessage = document.getElementById('about-message');
+
+
+/* grouping of html elements */
+let lobbyButtons = [title, aboutButton, faceScanButton, findChatButton];
+let chatModeButtons = [endChatButton, newChatButton];
 
 /* Helper functions */ 
 
@@ -25,16 +35,30 @@ function onAboutLeaveHandler(event){
     event.target.style.color = 'black';
 }
 
-function onButtonEnterHandler(event){
+function onFindChatEnterHandler(event){
     if(!state.about_active){
-        event.target.style.color = 'blue';
-        event.target.style.border = '1px solid blue';
+        event.target.style.backgroundColor = '#EFFDEA';
     }
 }
 
-function onButtonLeaveHandler(event){
-    event.target.style.color = 'black';
-    event.target.style.border = '1px solid black';
+function onFindChatLeaveHandler(event){
+    event.target.style.backgroundColor = '#FFFFFF';
+}
+
+function onNewChatEnterHandler(event){
+    event.target.style.backgroundColor = '#EFFDEA';
+}
+
+function onNewChatLeaveHandler(event){
+    event.target.style.backgroundColor = '#FFFFFF';
+}
+
+function onEndChatEnterHandler(event){
+    event.target.style.backgroundColor = '#FFE8E8';
+}
+
+function onEndChatLeaveHandler(event){
+    event.target.style.backgroundColor = '#FFFFFF';
 }
 
 
@@ -105,6 +129,7 @@ function containerClickHandler(event){
     }
 }
 
+
 /* Define event listeners and attach handler functions */
 overlay.addEventListener('click', containerClickHandler);
 
@@ -116,8 +141,14 @@ aboutButton.addEventListener('mouseleave', onAboutLeaveHandler);
 faceScanButton.addEventListener('mouseenter', onFaceScanEnterHandler);
 faceScanButton.addEventListener('mouseleave', onFaceScanLeaveHandler);
 
-findChatButton.addEventListener('mouseenter', onButtonEnterHandler);
-findChatButton.addEventListener('mouseleave', onButtonLeaveHandler);
+findChatButton.addEventListener('mouseenter', onFindChatEnterHandler);
+findChatButton.addEventListener('mouseleave', onFindChatLeaveHandler);
+
+endChatButton.addEventListener('mouseenter', onEndChatEnterHandler);
+endChatButton.addEventListener('mouseleave', onEndChatLeaveHandler);
+
+newChatButton.addEventListener('mouseenter', onNewChatEnterHandler);
+newChatButton.addEventListener('mouseleave', onNewChatLeaveHandler);
 
 header.addEventListener('click', headerClickHandler);
 
@@ -152,3 +183,47 @@ document.getElementById('mini-find-chat').addEventListener('mouseleave', functio
 });
 
 document.addEventListener("keydown", dealWithKeyboard);
+
+
+/**********************************************************************/
+/*************************PUBLIC FUNCTIONS*****************************/
+/**********************************************************************/
+
+/*
+* UI controlling functions
+*/
+
+function removeLobbyButtons(){
+    lobbyButtons.map(function(lobbyButton){
+        lobbyButton.style.display = 'none';
+    })
+}
+
+function addLobbyButtons(){
+    lobbyButtons.map(function(lobbyButton){
+        lobbyButton.style.display = 'inline-block';
+    });
+}
+
+function removeChatButtons(){
+    chatModeButtons.map(function(chatButton){
+        chatButton.style.display = 'none';
+    });   
+}
+
+function addChatButtons(){
+    chatModeButtons.map(function(chatButton){
+        chatButton.style.display = 'inline-block';
+    });   
+}
+
+
+exports.switchToChatUI = function switchToChatUI(){
+    removeLobbyButtons();
+    addChatButtons();
+}
+
+exports.switchToLobbyUI = function switchToLobbyUI(){
+    removeChatButtons();
+    addLobbyButtons();
+}

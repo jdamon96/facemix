@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "browserify ./public/meshHandler.js ./public/index.js ./public/app.js -o ./public/bundle.js"
+    "build": "browserify ./public/meshHandler.js ./public/interface.js ./public/app.js -o ./public/bundle.js"
   },
   "author": "",
   "license": "ISC",
