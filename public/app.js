@@ -12,12 +12,15 @@ const userInterface = require('./interface.js');
 /* true if currently in chat*/ 
 var chatMode = false;
 var profiler = [];
+let lastSendAllTimes = []
+lastSendAllTimes.push(Date.now())
 
 /* true if in process of finding a chat partner*/
 var waitingForChat = false;
 
 // if in a chat, this holds the current chat partner
 var chatPartner = null;
+let isInChat = false;
 
 // client role can be INITIATOR or not
 //      INITIATOR creates rooms and initiates RTC Peer Connection (sends offer)
@@ -98,47 +101,14 @@ var ChatInstance = {
     },
 
     sendFacemeshData: function(){
-        var chunkSize = 16384;
-        var bufferFullThreshold = 5 * chunkSize;
-
-        if (typeof ChatInstance.dataChannel.bufferedAmountLowThreshold === 'number'){
-            console.log('Using the bufferedamountlow event for flow control');
-            usePolling = false;
-
-            // Reduce the buffer fullness threshold, since we now have more efficient
-            // buffer management.
-            bufferFullThreshold = chunkSize / 2;
-
-            // This is "overcontrol": our high and low thresholds are the same.
-            ChatInstance.dataChannel.bufferedAmountLowThreshold = bufferFullThreshold;    
+        console.log("Time since last sendAll: ", Date.now()-lastSendAllTimes[lastSendAllTimes.length-1])
+        let total = 0;
+        lastSendAllTimes.push(Date.now())
+        for (let i = 2; i < lastSendAllTimes.length; i++) {
+            total += (lastSendAllTimes[i] - lastSendAllTimes[i-1])
         }
-
-        // Listen for one bufferedamountlow event.
-        var listener = function() {
-            ChatInstance.dataChannel.removeEventListener('bufferedamountlow', listener);
-            sendAllData();
-        };
-
-        var sendAllData = function(){
-            // Try to queue up a bunch of data and back off when the channel starts to
-            // fill up. We don't setTimeout after each send since this lowers our
-            // throughput quite a bit (setTimeout(fn, 0) can take hundreds of milli-
-            // seconds to execute).
-            while(true){
-                // if exceeding buffer threshold
-                if (ChatInstance.dataChannel.bufferedAmount > bufferFullThreshold) {
-                    if (usePolling) {
-                      setTimeout(sendAllData, 250);
-                    } else {
-                      ChatInstance.dataChannel.addEventListener('bufferedamountlow', listener);
-                    }
-                    return;
-                }                
-                ChatInstance.dataChannel.send(currentFacemesh);
-            }
-        };     
-        
-        setTimeout(sendAllData, 0);
+        console.log("Average time between sendAlls: ", total / (lastSendAllTimes.length-1))
+        ChatInstance.dataChannel.send(currentFacemesh);
     },
 
     initiateDataChannel: function(channel){  
@@ -146,8 +116,7 @@ var ChatInstance = {
         ChatInstance.dataChannel = channel;
 
         ChatInstance.dataChannel.addEventListener('open', event => {
-            console.log('Data channel opened');
-            ChatInstance.sendFacemeshData();
+            isInChat = true
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
@@ -158,6 +127,7 @@ var ChatInstance = {
             for (let i = 0; i < incomingMesh.length; i++) {
                 incomingMesh[i] = parseFloat(incomingMesh[i])
             }
+            meshHandler.updatePeerMesh(incomingMesh)
             //console.log("After parse: ")
             //console.log(incomingMesh)
 
@@ -197,7 +167,12 @@ var ChatInstance = {
             if(initiator){
                 // create the data channel
                 console.log('Creating a data channel')
-                let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel', {maxRetransmits: 0, ordered: false});
+                let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel',
+                    {
+                        maxRetransmits: 0,
+                        reliable: false,
+                        ordered: false
+                    });
                 ChatInstance.initiateDataChannel(dataChannel);     
 
                 //create an offer
@@ -268,7 +243,6 @@ var model;
 * Defining required functions for handling facemodel
 */
 async function loadModelInternal() {
-    console.log("Loading model")
     let beforeModel = Date.now()
     model = await facemesh.load({maxFaces: 1});
     console.log("Loaded in ", Date.now()-beforeModel);
@@ -318,6 +292,9 @@ async function callModelAndRenderLoop(localVideo) {
 
         meshHandler.updatePersonalMesh(rawFacemesh);
         currentFacemesh = meshHandler.getPersonalMeshForTransit();
+        if (isInChat) {
+            ChatInstance.sendFacemeshData();
+        }
         updateProfiler(profiler,2, checkpoints);
         meshHandler.render();
         updateProfiler(profiler,3, checkpoints);
