@@ -18,6 +18,8 @@ const newChatButton = document.getElementById('new-chat');
 const overlay = document.getElementById('overlay');
 const aboutMessage = document.getElementById('about-message');
 
+const loader = document.getElementById('loader');
+
 
 /* grouping of html elements */
 let lobbyButtons = [title, aboutButton, faceScanButton, findChatButton];
@@ -226,4 +228,36 @@ exports.switchToChatUI = function switchToChatUI(){
 exports.switchToLobbyUI = function switchToLobbyUI(){
     removeChatButtons();
     addLobbyButtons();
+}
+
+exports.beginLoader = function beginLoader(){
+    loader.style.display = 'block';
+}
+
+exports.endLoader = function endLoader(){
+    loader.style.display = 'none';
+}
+
+exports.enableFindChatButton = function enableFindChatButton(){
+    // enable the find chat button
+    findChatButton.disabled = false;
+
+    findChatButton.style.opacity = 1;
+}
+
+exports.disableFindChatButton = function disableFindChatButton(){
+    findChatButton.disabled = true;
+    findChatButton.style.opacity = 0.5;
+}
+
+exports.enableNewChatButton = function enableNewChatButton(){
+    // enable the find chat button
+    newChatButton.disabled = false;
+
+    newChatButton.style.opacity = 1;    
+}
+
+exports.disableNewChatButton = function disableNewChatButton(){
+    newChatButton.disabled = true;
+    newChatButton.style.opacity = 0.5;
 }

@@ -15,9 +15,6 @@ var profiler = [];
 let lastSendAllTimes = []
 lastSendAllTimes.push(Date.now())
 
-/* true if in process of finding a chat partner*/
-var waitingForChat = false;
-
 // if in a chat, this holds the current chat partner
 var chatPartner = null;
 let isInChat = false;
@@ -52,15 +49,20 @@ var videoStream;
 */ 
 
 var ChatInstance = {
+    peerConnection: null,
+    searchingForChatPartner: false,
     connected: false,
     localICECandidates: [],
     facemeshBuffer: [],
 
     endCurrentChat: function(){
-        // close the current peerConnection
-        ChatInstance.peerConnection.close();
-        // remove reference to closed peerConnection
-        ChatInstance.peerConnnection = null;
+        //if there is a peerConnection
+        if(ChatInstance.peerConnection != null){
+            // close the current peerConnection
+            ChatInstance.peerConnection.close();
+            // remove reference to closed peerConnection
+            ChatInstance.peerConnnection = null;
+        }     
     },
 
     onOffer: function(offer){
@@ -120,9 +122,8 @@ var ChatInstance = {
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
-            // switch to chat UI after recieving first data msg from peer client
-            userInterface.switchToChatUI();
-
+            ChatInstance.searchingForChatPartner = false;
+            userInterface.enableNewChatButton();
             let incomingMesh = event["data"].split(',')
             for (let i = 0; i < incomingMesh.length; i++) {
                 incomingMesh[i] = parseFloat(incomingMesh[i])
@@ -261,6 +262,7 @@ async function getScaledMesh(localVideo) {
 }
 
 function updateProfiler(profiler, checkpointIndex, checkpoints) {
+
     let checkpointName = checkpoints[checkpointIndex]
     let lastCheckpointName = checkpointIndex == 0 ? checkpoints[checkpoints.length-1] : checkpoints[checkpointIndex-1]
     if (checkpointName in profiler && lastCheckpointName in profiler) {
@@ -270,15 +272,18 @@ function updateProfiler(profiler, checkpointIndex, checkpoints) {
     } else {
         profiler[checkpointName] = [Date.now(), 0]
     }
+
 }
 
 async function callModelAndRenderLoop(localVideo) {
-    let profiler = []
-    let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "]
-    let iterator = 0
+
+    let profiler = [];
+    let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
+    let iterator = 0;
+
     setInterval(async () => {
         iterator++;
-        updateProfiler(profiler,0, checkpoints);
+        updateProfiler(profiler, 0, checkpoints);
         if (iterator == 100) {
             //console.log("After 100")
             for (let i = 0; i < checkpoints.length; i++) {
@@ -288,16 +293,22 @@ async function callModelAndRenderLoop(localVideo) {
             iterator = 0;
         }
         const rawFacemesh = await getScaledMesh(localVideo);
-        updateProfiler(profiler,1, checkpoints);
+        updateProfiler(profiler, 1, checkpoints);
 
         meshHandler.updatePersonalMesh(rawFacemesh);
         currentFacemesh = meshHandler.getPersonalMeshForTransit();
         if (isInChat) {
             ChatInstance.sendFacemeshData();
         }
-        updateProfiler(profiler,2, checkpoints);
+        updateProfiler(profiler, 2, checkpoints);
         meshHandler.render();
-        updateProfiler(profiler,3, checkpoints);
+
+        // if searching for chat partner, don't kill the loader 
+        if(!ChatInstance.searchingForChatPartner){
+            //has chat partner - kill the loader
+            userInterface.endLoader(); 
+        }
+        updateProfiler(profiler, 3, checkpoints);
     }, 50);
 }
 
@@ -317,13 +328,6 @@ loadModelInternal();
 function handleMessage(message){
 
     switch(message.title){
-
-        /** if the message title is 'waiting'... **/
-        case 'waiting':
-            //set waitingForChat variable to the message's content
-            waitingForChat = message.content;
-            console.log('Waiting for chat partner: ' + waitingForChat);
-            break;
 
         case 'initiator-status':
             initiator = message.content.initiator;
@@ -404,7 +408,7 @@ localVideo.addEventListener('loadeddata', handleLoadedVideoData);
 /* disable 'find chat' button if no access to client media feed 
 * ( can't join chat if you don't have your camera on )*/
 if(localVideo.srcObject == null){
-    disableFindChatButton();
+    userInterface.disableFindChatButton();
 }
 
 
@@ -417,7 +421,15 @@ function handleRoomJoin(data){
 * Handler function for clicking the 'Find-Chat' button
 */
 function handleFindChat(){
+    ChatInstance.searchingForChatPartner = true;
     console.log('Finding chat');
+    // switch to chat UI after recieving first data msg from peer client
+    userInterface.switchToChatUI();
+    // disable 'New Chat' button because not in a chat yet
+    userInterface.disableNewChatButton();
+    //display loading spinner
+    userInterface.beginLoader();
+
     socket.emit('join');
     socket.on('roominvitation', handleRoomInvitation);
     socket.on('roomjoined', handleRoomJoin);
@@ -427,6 +439,7 @@ function handleEndChat(){
     ChatInstance.endCurrentChat();
     console.log('Ending chat');
     userInterface.switchToLobbyUI();
+    userInterface.endLoader();
 };
 
 /*
@@ -437,34 +450,24 @@ findChatButton.addEventListener('click', handleFindChat);
 
 endChatButton.addEventListener('click', handleEndChat);
 
-function disableFindChatButton(){
-    findChatButton.disabled = true;
 
-    findChatButton.style.opacity = 0.5;
-}
-
-function enableFindChatButton(){
-    // enable the find chat button
-    findChatButton.disabled = false;
-
-    findChatButton.style.opacity = 1;
-
-}
 
 /*
 * Handler function for the camera button
 */
 function handleMediaAccess(){
-
+    //display loading spinner for facemesh model loading
+    userInterface.beginLoader();
     // get access to client media streams
     navigator.mediaDevices
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Accessed audio and video media');
             accessedCamera = true;
-            enableFindChatButton();
+            userInterface.enableFindChatButton();
             audioStream = new MediaStream(stream.getAudioTracks());
             videoStream = new MediaStream(stream.getVideoTracks());
+            // this will fire the 'loadeddata' event on the localVideo object
             localVideo.srcObject = videoStream;
         })
         .catch(error => {

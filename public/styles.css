@@ -26,6 +26,13 @@ html, body {
 
 
 #app-container {
+    /* 
+    * idk why but if I don't push this container 1px left it loads 1px to the right.
+    * so this is me correctly centering it. 
+    * gets the job done... lol
+    */
+    margin-left: -1px;
+
     min-height: 100%;
     z-index: 10;
     height: 100%;
@@ -40,7 +47,6 @@ html, body {
 
 #header {
     grid-area: header;
-    /* background-color: #8ca0ff; */
     position: relative;
 }
 
@@ -147,7 +153,6 @@ hr {
     background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
 }
 
-
 .about-message-line {
     width: 85%;
     margin: 0 auto;
@@ -184,6 +189,33 @@ hr {
     width: auto;
 }
 
+#loader {
+
+    position: absolute;
+    /* 
+    * 1) use top and left to offset by 50% to set element origin to center
+    * 2) use margin-top and margin-left to offset element origin to page center
+    */ 
+    top: 50%;
+    margin-top: -30px;
+    left: 50%;
+    margin-left: -30px;
+
+    border: 1px solid #f3f3f3; /* Light grey */
+    border-top: 1px solid black; /* Blue */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1.5s linear infinite;
+
+    display: none;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @media only screen and (min-width: 1200px) {
     #about-message {
         width: 600px;
@@ -203,11 +235,17 @@ hr {
     /*background-color: #ffff64;*/
 }
 
-#my-canvas {
+#canvas {
     height: 100%;
     width: 100%;
 }
 
-#videoElement {
+#localVideo {
     position: absolute;
+    visibility: hidden;
+}
+
+#remoteAudio {
+    position: absolute;
+    visibility: hidden; 
 }

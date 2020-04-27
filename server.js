@@ -75,12 +75,9 @@ io.on('connection', function(socket){
 
         // if there isn't a chat partner inline, join the line
         else {
+
             waitlist.push(socket.id);
-            // tell the client it's now waiting
-            socket.emit('message', {
-                title: 'waiting',
-                content: true
-            });
+            
         }            
     });
 
