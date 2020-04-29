@@ -1,10 +1,11 @@
 /********************************/
 /* Import required code */
 /********************************/
+import * as facemesh from '@tensorflow-models/facemesh';
+import adapter from 'webrtc-adapter';
+import * as meshHandler from './meshHandler.js';
+import * as userInterface from './interface.js';
 
-const adapter = require('webrtc-adapter');
-const meshHandler = require('./meshHandler.js');
-const userInterface = require('./interface.js');
 /********************************/
 /* Declare required global variables */
 /********************************/

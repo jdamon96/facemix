@@ -219,45 +219,47 @@ function addChatButtons(){
     });   
 }
 
+/** EXPORTED FUNCTIONS **/
 
-exports.switchToChatUI = function switchToChatUI(){
+
+export function switchToChatUI(){
     removeLobbyButtons();
     addChatButtons();
 }
 
-exports.switchToLobbyUI = function switchToLobbyUI(){
+export function switchToLobbyUI(){
     removeChatButtons();
     addLobbyButtons();
 }
 
-exports.beginLoader = function beginLoader(){
+export function beginLoader(){
     loader.style.display = 'block';
 }
 
-exports.endLoader = function endLoader(){
+export function endLoader(){
     loader.style.display = 'none';
 }
 
-exports.enableFindChatButton = function enableFindChatButton(){
+export function enableFindChatButton(){
     // enable the find chat button
     findChatButton.disabled = false;
 
     findChatButton.style.opacity = 1;
 }
 
-exports.disableFindChatButton = function disableFindChatButton(){
+export function disableFindChatButton(){
     findChatButton.disabled = true;
     findChatButton.style.opacity = 0.5;
 }
 
-exports.enableNewChatButton = function enableNewChatButton(){
+export function enableNewChatButton(){
     // enable the find chat button
     newChatButton.disabled = false;
 
     newChatButton.style.opacity = 1;    
 }
 
-exports.disableNewChatButton = function disableNewChatButton(){
+export function disableNewChatButton(){
     newChatButton.disabled = true;
     newChatButton.style.opacity = 0.5;
 }

@@ -25,7 +25,7 @@ const buttonDelta = 0.1 //Amount a key press moves you within the canvas
 /*************************PUBLIC FUNCTIONS*****************************/
 /**********************************************************************/
 
-exports.getPersonalMeshForTransit = function getPersonalMeshForTransit() {
+export function getPersonalMeshForTransit() {
     let transitMesh = []
     for (let i = 0; i<numFaceCoordinates; i++) {
         if (i % 3 == 0) { //x coordinate
@@ -37,7 +37,7 @@ exports.getPersonalMeshForTransit = function getPersonalMeshForTransit() {
     return transitMesh
 }
 
-exports.updatePersonalMesh = function updatePersonalMesh(rawFacemesh) {
+export function updatePersonalMesh(rawFacemesh) {
     const flattenedMesh = flattenAndTruncateMesh(rawFacemesh)
     let points = translateMesh(flattenedMesh, true)
 
@@ -49,7 +49,7 @@ exports.updatePersonalMesh = function updatePersonalMesh(rawFacemesh) {
     vertices = points
 }
 
-exports.updatePeerMesh = function updatePeerMesh(transitMesh) {
+export function updatePeerMesh(transitMesh) {
     let points = []
     for (let i = 0; i < numFaceCoordinates; i++) {
         points[i] = vertices[i]
@@ -58,7 +58,7 @@ exports.updatePeerMesh = function updatePeerMesh(transitMesh) {
     vertices.push(...transitMesh)
 }
 
-exports.render = function render(){
+export function render(){
     if (!glInitialized) {
         startWebGL();
     }
