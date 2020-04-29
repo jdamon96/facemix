@@ -173,6 +173,9 @@ function dealWithKeyboard(event){
 ** a property of the html elements that live in index.html) 
 */
 
+console.log("this is my current directory: ");
+console.log(__dirname);
+
 document.getElementById('mini-face-scan').addEventListener('mouseenter', function(event){
     this.src = "../src/assets/BLUE-mini-face-scan-button.png"
 });
