@@ -167,29 +167,21 @@ function dealWithKeyboard(event){
     }
 }
 
-/* 
-** note: these paths are relative to the index.html file, not this interface.js file
-** (the reason for this is that we're not actually declaring paths here, we're setting 
-** a property of the html elements that live in index.html) 
-*/
-
-console.log("this is my current directory: ");
-console.log(__dirname);
 
 document.getElementById('mini-face-scan').addEventListener('mouseenter', function(event){
-    this.src = "../src/assets/BLUE-mini-face-scan-button.png"
+    this.src = "./assets/BLUE-mini-face-scan-button.png"
 });
 
 document.getElementById('mini-face-scan').addEventListener('mouseleave', function(event){
-    this.src = "../src/assets/mini-face-scan-button.png"
+    this.src = "./assets/mini-face-scan-button.png"
 });
 
 document.getElementById('mini-find-chat').addEventListener('mouseenter', function(event){
-    this.src = "../src/assets/BLUE-mini-find-chat-button.png"
+    this.src = "./assets/BLUE-mini-find-chat-button.png"
 });
 
 document.getElementById('mini-find-chat').addEventListener('mouseleave', function(event){
-    this.src = "../src/assets/mini-find-chat-button.png"
+    this.src = "./assets/mini-find-chat-button.png"
 });
 
 document.addEventListener("keydown", dealWithKeyboard);
