@@ -11,7 +11,7 @@ var twilio = require('twilio')(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-app.use(express.static('public'));
+app.use(express.static('dist'));
 
 let waitlist = [];
 
