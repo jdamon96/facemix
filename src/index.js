@@ -1,59 +1,52 @@
-/********************************/
-/* Import required code */
-/********************************/
+// Copyright Placeholder
+
 import * as facemesh from '@tensorflow-models/facemesh';
-import adapter from 'webrtc-adapter';
 import * as meshHandler from './meshHandler.js';
 import * as userInterface from './interface.js';
 import * as tf from '@tensorflow/tfjs-core';
 import {setWasmPath} from '@tensorflow/tfjs-backend-wasm';
 import wasmPath from '../node_modules/@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm.wasm';
-setWasmPath(wasmPath);
-tf.setBackend('wasm').then(() => {main()});
-/********************************/
-/* Declare required global variables */
-/********************************/
+import {load} from "@tensorflow-models/facemesh";
 
-/* true if currently in chat*/ 
-var chatMode = false;
-var profiler = [];
+/**********************************
+            Global Variables
+ **********************************/
+let model; //trained facemesh model
+
+let profiler = [];
 let lastSendAllTimes = []
-lastSendAllTimes.push(Date.now())
-
-// if in a chat, this holds the current chat partner
-var chatPartner = null;
 let isInChat = false;
 
 // client role can be INITIATOR or not
 //      INITIATOR creates rooms and initiates RTC Peer Connection (sends offer)
 //      non-INITIATOR recieves room invitations and responds to RTCPeerConnection offer (sends answer)
-var initiator = false;
+let initiator = false;
 
-var currentRoom = '';
-var currentFacemesh;
+let currentRoom = '';
+let currentFacemesh;
 
-//list of all partners that this client has chatted with during session
-var sessionPartners = [];
-
-//initializing the socket.io handle
-var socket = io();
+let socket = io(); //initializing the socket.io handle
 
 // initializing variables to hold user's audio and video media streams
-var accessedCamera = false;
-var audioStream;
-var videoStream;
-var model;
+let accessedCamera = false;
+let audioStream;
+let videoStream;
 
+let remoteAudio;
+let localVideo;
 
-/**********************************/
-/*        WebRTC Setup Code       */
-/**********************************/
+let chatMode = false; // true if currently in chat
+let chatPartner = null; // if in a chat, this holds the current chat partner
+let sessionPartners = []; //list of all partners that this client has chatted with during session
 
-/*
-* Note: this 'ChatInstance' object is responsible for setting up and managing the RTCPeerConnection
-*/ 
+setWasmPath(wasmPath);
+tf.setBackend('wasm').then(() => {main()});
 
-var ChatInstance = {
+/**********************************
+        ChatInstance Object
+ **********************************/
+
+let ChatInstance = {
     peerConnection: null,
     searchingForChatPartner: false,
     connected: false,
@@ -236,86 +229,11 @@ var ChatInstance = {
     }
 };
 
-/*
-* Defining required functions for handling facemodel
-*/
-async function loadModelInternal() {
-    let beforeModel = Date.now()
-    model = await facemesh.load({maxFaces: 1});
-    console.log("Loaded in ", Date.now()-beforeModel);
-}
+/**********************************
+            Event Handlers
+**********************************/
 
-async function getScaledMesh(localVideo) {
-    const video = localVideo;
-    const faces = await model.estimateFaces(video);
-    if(faces[0]){
-        return faces[0].scaledMesh;    
-    }
-    else {
-        console.log('Program does not detect a face');
-    }
-    
-}
-
-function updateProfiler(profiler, checkpointIndex, checkpoints) {
-
-    let checkpointName = checkpoints[checkpointIndex]
-    let lastCheckpointName = checkpointIndex == 0 ? checkpoints[checkpoints.length-1] : checkpoints[checkpointIndex-1]
-    if (checkpointName in profiler && lastCheckpointName in profiler) {
-        let lastCheckpointTime = profiler[lastCheckpointName][0]
-        let totalElapsed = profiler[checkpointName][1]
-        profiler[checkpointName] = [Date.now(), totalElapsed + (Date.now() - lastCheckpointTime)]
-    } else {
-        profiler[checkpointName] = [Date.now(), 0]
-    }
-
-}
-
-async function callModelAndRenderLoop(localVideo) {
-
-    let profiler = [];
-    let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
-    let iterator = 0;
-
-    setInterval(async () => {
-        iterator++;
-        updateProfiler(profiler, 0, checkpoints);
-        if (iterator == 100) {
-            //console.log("After 100")
-            for (let i = 0; i < checkpoints.length; i++) {
-                //console.log(checkpoints[i], profiler[checkpoints[i]][1] / 100.0);
-            }
-            profiler = [];
-            iterator = 0;
-        }
-        const rawFacemesh = await getScaledMesh(localVideo);
-        updateProfiler(profiler, 1, checkpoints);
-
-        meshHandler.updatePersonalMesh(rawFacemesh);
-        currentFacemesh = meshHandler.getPersonalMeshForTransit();
-        if (isInChat) {
-            ChatInstance.sendFacemeshData();
-        }
-        updateProfiler(profiler, 2, checkpoints);
-        meshHandler.render();
-
-        // if searching for chat partner, don't kill the loader 
-        if(!ChatInstance.searchingForChatPartner){
-            //has chat partner - kill the loader
-            userInterface.endLoader(); 
-        }
-        updateProfiler(profiler, 3, checkpoints);
-    }, 50);
-}
-
-/********************************/
-/* Define required functions */
-/********************************/
-
-
-/*
-* Handler function for recieving 'message' events emitted by other sockets
-*/
+// Handler function for recieving 'message' events emitted by other sockets
 function handleMessage(message){
 
     switch(message.title){
@@ -345,9 +263,7 @@ function handleMessage(message){
     }
 }
 
-/*
-* Handler function for recieving 'roomInvitation' events emitted by other sockets
-*/
+// Handler function for recieving 'roomInvitation' events emitted by other sockets
 function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
         console.log('Found chat partner');
@@ -355,23 +271,20 @@ function handleRoomInvitation(roomInvitation){
     }
 }
 
-/*
-* Event handler for event that occurs when the video element has successfully loaded video data given to it
-*/ 
+// Hanlder function for event that occurs when the video element has successfully loaded video data given to it
 function handleLoadedVideoData(event){
     console.log('Processing video data');
     var video = event.target;
     callModelAndRenderLoop(video);
 }
 
-
 function handleRoomJoin(data){
     console.log(data);
 }
 
-/*
-* Handler function for clicking the 'Find-Chat' button
-*/
+// Button Handlers
+
+// Handler function for clicking the 'Find-Chat' button
 function handleFindChat(){
     ChatInstance.searchingForChatPartner = true;
     console.log('Finding chat');
@@ -387,6 +300,7 @@ function handleFindChat(){
     socket.on('roomjoined', handleRoomJoin);
 }
 
+// Handler function for clicking the end chat button
 function handleEndChat(){
     ChatInstance.endCurrentChat();
     console.log('Ending chat');
@@ -394,10 +308,7 @@ function handleEndChat(){
     userInterface.endLoader();
 };
 
-
-/*
-* Handler function for the camera button
-*/
+// Handler function for clicking the camera button
 function handleMediaAccess(){
     //display loading spinner for facemesh model loading
     userInterface.beginLoader();
@@ -419,16 +330,81 @@ function handleMediaAccess(){
         });
 }
 
+/**********************************
+         Driver Functions
+ **********************************/
+
+async function loadModel() {
+    let beforeModel = Date.now()
+    model = await facemesh.load({maxFaces: 1});
+    console.log("Loaded in ", Date.now()-beforeModel);
+}
+
+async function getScaledMesh(localVideo) {
+    const video = localVideo;
+    const faces = await model.estimateFaces(video);
+    if(faces[0]){
+        return faces[0].scaledMesh;
+    }
+    else {
+        console.log('Program does not detect a face');
+    }
+}
+
+function updateProfiler(profiler, checkpointIndex, checkpoints) {
+
+    let checkpointName = checkpoints[checkpointIndex]
+    let lastCheckpointName = checkpointIndex == 0 ? checkpoints[checkpoints.length-1] : checkpoints[checkpointIndex-1]
+    if (checkpointName in profiler && lastCheckpointName in profiler) {
+        let lastCheckpointTime = profiler[lastCheckpointName][0]
+        let totalElapsed = profiler[checkpointName][1]
+        profiler[checkpointName] = [Date.now(), totalElapsed + (Date.now() - lastCheckpointTime)]
+    } else {
+        profiler[checkpointName] = [Date.now(), 0]
+    }
+
+}
+
+async function callModelAndRenderLoop(localVideo) {
+    let profiler = [];
+    let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
+    let iterator = 0;
+
+    setInterval(async () => {
+        iterator++;
+        updateProfiler(profiler, 0, checkpoints);
+        if (iterator == 100) {
+            //console.log("After 100")
+            for (let i = 0; i < checkpoints.length; i++) {
+                //console.log(checkpoints[i], profiler[checkpoints[i]][1] / 100.0);
+            }
+            profiler = [];
+            iterator = 0;
+        }
+        const rawFacemesh = await getScaledMesh(localVideo);
+        updateProfiler(profiler, 1, checkpoints);
+
+        meshHandler.updatePersonalMesh(rawFacemesh);
+        currentFacemesh = meshHandler.getPersonalMeshForTransit();
+        if (isInChat) {
+            ChatInstance.sendFacemeshData();
+        }
+        updateProfiler(profiler, 2, checkpoints);
+        meshHandler.render();
+
+        // if searching for chat partner, don't kill the loader
+        if(!ChatInstance.searchingForChatPartner){
+            //has chat partner - kill the loader
+            userInterface.endLoader();
+        }
+        updateProfiler(profiler, 3, checkpoints);
+    }, 50);
+}
 
 function main() {
-    loadModelInternal();
-
-
-    /* Add message event handler for client socket*/
-    socket.on('message', handleMessage);
-
-    /* Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
-    socket.on('offer', ChatInstance.onOffer);
+    loadModel();
+    socket.on('message', handleMessage);// Add message event handler for client socket
+    socket.on('offer', ChatInstance.onOffer); // Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
 
     /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
     const faceScanButton = document.getElementById('camera-access');
@@ -437,21 +413,18 @@ function main() {
     const endChatButton = document.getElementById('end-chat');
 
     /* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
-    const localVideo = document.getElementById('localVideo');
-    const remoteAudio = document.getElementById('remoteAudio');
-
-    /*
-    * Adding the event listner and attaching the handler function
-    */
+    localVideo = document.getElementById('localVideo');
+    remoteAudio = document.getElementById('remoteAudio');
     localVideo.addEventListener('loadeddata', handleLoadedVideoData);
 
-    /* disable 'find chat' button if no access to client media feed
-    * ( can't join chat if you don't have your camera on )*/
+
+    /* Disable 'find chat' button if no access to client media feed
+    * (can't join chat if you don't have your camera on) */
     if(localVideo.srcObject == null){
         userInterface.disableFindChatButton();
     }
 
-// Adding the 'click' event listener to the button and attaching the handler function
+    // Adding the 'click' event listener to the button and attaching the handler function
     findChatButton.addEventListener('click', handleFindChat);
     endChatButton.addEventListener('click', handleEndChat);
     faceScanButton.addEventListener('click', handleMediaAccess);
