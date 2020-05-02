@@ -5,7 +5,11 @@ import * as facemesh from '@tensorflow-models/facemesh';
 import adapter from 'webrtc-adapter';
 import * as meshHandler from './meshHandler.js';
 import * as userInterface from './interface.js';
-
+import * as tf from '@tensorflow/tfjs-core';
+import {setWasmPath} from '@tensorflow/tfjs-backend-wasm';
+import wasmPath from '../node_modules/@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm.wasm';
+setWasmPath(wasmPath);
+tf.setBackend('wasm').then(() => {main()});
 /********************************/
 /* Declare required global variables */
 /********************************/
@@ -38,7 +42,7 @@ var socket = io();
 var accessedCamera = false;
 var audioStream;
 var videoStream;
-
+var model;
 
 
 /**********************************/
@@ -232,15 +236,6 @@ var ChatInstance = {
     }
 };
 
-/********************************/
-/******* Facemesh set-up ********/
-/********************************/
-
-/*
-* initializing variable that will hold the facemesh model
-*/
-var model;
-
 /*
 * Defining required functions for handling facemodel
 */
@@ -313,11 +308,6 @@ async function callModelAndRenderLoop(localVideo) {
     }, 50);
 }
 
-/*
-* Load the facemesh model
-*/
-loadModelInternal();
-
 /********************************/
 /* Define required functions */
 /********************************/
@@ -365,33 +355,6 @@ function handleRoomInvitation(roomInvitation){
     }
 }
 
-
-/********************************/
-/* Add initial event listeners required for the socket*/
-/********************************/
-
-/* Add message event handler for client socket*/
-socket.on('message', handleMessage);
-
-/* Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
-socket.on('offer', ChatInstance.onOffer);
-
-/**********************************/
-/* Button handlers and event listeners */
-/**********************************/
-
-/* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
-const faceScanButton = document.getElementById('camera-access');
-const findChatButton = document.getElementById('find-a-chat');
-const newChatButton = document.getElementById('new-chat');
-const endChatButton = document.getElementById('end-chat');
-
-/* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
-const localVideo = document.getElementById('localVideo');
-// ho
-const remoteAudio = document.getElementById('remoteAudio');
-
-
 /*
 * Event handler for event that occurs when the video element has successfully loaded video data given to it
 */ 
@@ -401,22 +364,10 @@ function handleLoadedVideoData(event){
     callModelAndRenderLoop(video);
 }
 
-/*
-* Adding the event listner and attaching the handler function
-*/
-localVideo.addEventListener('loadeddata', handleLoadedVideoData);
-
-/* disable 'find chat' button if no access to client media feed 
-* ( can't join chat if you don't have your camera on )*/
-if(localVideo.srcObject == null){
-    userInterface.disableFindChatButton();
-}
-
 
 function handleRoomJoin(data){
     console.log(data);
 }
-
 
 /*
 * Handler function for clicking the 'Find-Chat' button
@@ -443,15 +394,6 @@ function handleEndChat(){
     userInterface.endLoader();
 };
 
-/*
-* Adding the 'click' event listener to the button and attaching the handler function
-*/
-
-findChatButton.addEventListener('click', handleFindChat);
-
-endChatButton.addEventListener('click', handleEndChat);
-
-
 
 /*
 * Handler function for the camera button
@@ -477,4 +419,40 @@ function handleMediaAccess(){
         });
 }
 
-faceScanButton.addEventListener('click', handleMediaAccess);
+
+function main() {
+    loadModelInternal();
+
+
+    /* Add message event handler for client socket*/
+    socket.on('message', handleMessage);
+
+    /* Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
+    socket.on('offer', ChatInstance.onOffer);
+
+    /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
+    const faceScanButton = document.getElementById('camera-access');
+    const findChatButton = document.getElementById('find-a-chat');
+    const newChatButton = document.getElementById('new-chat');
+    const endChatButton = document.getElementById('end-chat');
+
+    /* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
+    const localVideo = document.getElementById('localVideo');
+    const remoteAudio = document.getElementById('remoteAudio');
+
+    /*
+    * Adding the event listner and attaching the handler function
+    */
+    localVideo.addEventListener('loadeddata', handleLoadedVideoData);
+
+    /* disable 'find chat' button if no access to client media feed
+    * ( can't join chat if you don't have your camera on )*/
+    if(localVideo.srcObject == null){
+        userInterface.disableFindChatButton();
+    }
+
+// Adding the 'click' event listener to the button and attaching the handler function
+    findChatButton.addEventListener('click', handleFindChat);
+    endChatButton.addEventListener('click', handleEndChat);
+    faceScanButton.addEventListener('click', handleMediaAccess);
+}
