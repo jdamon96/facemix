@@ -1,12 +1,12 @@
 /* This script is responsible for interacting with the model and rendering the results of the model*/
 "use strict"
 
-var canvasName = "canvas";
+let canvasName = "canvas";
 let delta = 0.0; //WebGL Refresh Rate
-var shaderProgram;
-var glInitialized = false;
-var canvas;
-var gl;
+let shaderProgram;
+let glInitialized = false;
+let canvas;
+let gl;
 
 const numFacePoints = 468
 const numFaceCoordinates = numFacePoints * 3;
@@ -14,8 +14,8 @@ const decimalPrecision = 2 //Number of places to round decimals in model output 
 
 const blueColor = [0.678, 0.847, .90]
 const pinkColor = [1, .752, .796]
-var vertices = [] //Represents all points currently being displayed on the canvas
-var colors = []   //Corresponding colors of each point being displayed
+let unscaledVertices = [] //Represents all points currently being displayed on the canvas before local canvas sizing adjustments
+let colors = []   //Corresponding colors of each point being displayed
 
 let buttonOffsets = []  //Scalars to move the rendering based on key position
 const buttonBounds = {x: {max: 1.0, min: -1.0}, y:{max: 1.0, min:-1.0}, z:{max:1.5, min:0.3}}
@@ -26,43 +26,45 @@ const buttonDelta = 0.1 //Amount a key press moves you within the canvas
 /**********************************************************************/
 
 export function getPersonalMeshForTransit() {
-    let transitMesh = []
-    for (let i = 0; i<numFaceCoordinates; i++) {
+    let peerTransitMesh = []
+    for (let i = 0; i < numFaceCoordinates; i++) {
         if (i % 3 == 0) { //x coordinate
-            transitMesh[i] = -vertices[i]
+            peerTransitMesh[i] = -unscaledVertices[i]
         } else {
-            transitMesh[i] = vertices[i]
+            peerTransitMesh[i] = unscaledVertices[i]
         }
     }
-    return transitMesh
+    return peerTransitMesh
 }
 
 export function updatePersonalMesh(rawFacemesh) {
-    const flattenedMesh = flattenAndTruncateMesh(rawFacemesh)
-    let points = translateMesh(flattenedMesh, true)
+    const flattenedMesh = flattenMesh(rawFacemesh);
+    const truncatedMesh = truncateMesh(flattenedMesh);
+    const updatedVertices = translateMesh(truncatedMesh);
 
-    if (vertices.length > numFaceCoordinates) {
-        for (let i = numFaceCoordinates; i < vertices.length; i++) {
-            points[i] = vertices[i]
+    if (unscaledVertices.length > numFaceCoordinates) {
+        for (let i = numFaceCoordinates; i < unscaledVertices.length; i++) {
+            updatedVertices[i] = unscaledVertices[i]
         }
     }
-    vertices = points
+    unscaledVertices = updatedVertices
 }
 
 export function updatePeerMesh(transitMesh) {
-    let points = []
+    let updatedVertices = []
     for (let i = 0; i < numFaceCoordinates; i++) {
-        points[i] = vertices[i]
+        updatedVertices[i] = unscaledVertices[i]
     }
-    vertices = points
-    vertices.push(...transitMesh)
+    updatedVertices.push(...transitMesh)
+    unscaledVertices = updatedVertices
 }
 
 export function render(){
     if (!glInitialized) {
         startWebGL();
     }
-    drawObjects();
+    const renderVertices = scaleMeshForLocalCanvas(unscaledVertices);
+    drawObjects(renderVertices);
 }
 
 /**********************************************************************/
@@ -98,18 +100,6 @@ function updateOffset(dimension, delta, max, min) {
     }
 }
 
-function flattenAndTruncateMesh(rawFacemesh) {
-    let flattenedMesh = []
-    const roundConstant = 10 ** decimalPrecision
-    for (let i = 0; i < rawFacemesh.length; i++) {
-        for (let j = 0; j < 3; j++) {
-            flattenedMesh.push(Math.round(rawFacemesh[i][j] * roundConstant) / roundConstant)
-        }
-    }
-    return flattenedMesh
-}
-
-
 function populateColorsWithColor(color) {
     for (let i = 0; i < numFacePoints; i++) {
         colors.push(...color)
@@ -119,7 +109,7 @@ function populateColorsWithColor(color) {
 function startWebGL(){
     canvas = document.getElementById(canvasName);
     document.onkeydown = handleKeyPress; // We can do this here because key presses don't matter until the model is rendered
-    buttonOffsets['x'] = -0.1
+    buttonOffsets['x'] = -0.5
     buttonOffsets['y'] = 0.5
     buttonOffsets['z'] = 1
     gl = canvas.getContext('experimental-webgl');
@@ -177,8 +167,62 @@ function startWebGL(){
     gl.attachShader(shaderProgram, fragShader);  // Attach a fragment shader
     gl.linkProgram(shaderProgram); // Link both programs
     gl.useProgram(shaderProgram);
+    resizeCanvas()
     glInitialized = true
 }
+
+function resizeCanvas() {
+    // Lookup the size the browser is displaying the canvas.
+    let displayWidth  = canvas.clientWidth;
+    let displayHeight = canvas.clientHeight;
+
+    // Check if the canvas is not the same size.
+    if (canvas.width  != displayWidth ||
+        canvas.height != displayHeight) {
+
+        // Make the canvas the same size
+        canvas.width  = displayWidth;
+        canvas.height = displayHeight;
+    }
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+}
+
+
+//TODO: Understand why points need to be negated to avoid inverting the mesh
+//      Understand why 0.5 needs to be subtracted from each dimension to center it
+//      Remove unneeded shader Code
+//      Research best way to send new objects down to the vertex buffer
+function drawObjects(renderVertices){
+    //For EVERY attribute
+    //create buffer, bind buffer, buffer data, vertAttribPointer(), enableVertAttribPointer()
+
+    let vertex_buffer = gl.createBuffer(); // Create an empty buffer object to store the vertex buffer
+    let coord = gl.getAttribLocation(shaderProgram, "a_Position"); // Get the attribute location
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer); //Bind appropriate array buffer to it
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(renderVertices), gl.STATIC_DRAW);// Pass the vertex data to the buffer
+    gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0); // Point an attribute to the currently bound VBO
+    gl.enableVertexAttribArray(coord); // Enable the attribute
+
+    let color_buffer = gl.createBuffer();
+    let color = gl.getAttribLocation(shaderProgram, "a_Color");
+    gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl. STATIC_DRAW);
+    gl.vertexAttribPointer(color, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(color);
+
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);     // Clear the canvas
+    gl.enable(gl.DEPTH_TEST);              // Enable the depth test
+    gl.clear(gl.COLOR_BUFFER_BIT);         // Clear the color buffer bit
+
+    gl.useProgram(shaderProgram);          // Use the program I created/compiled and Linked
+    gl.uniform1f(gl.getUniformLocation(shaderProgram, 'delta_x'), delta); // stores value of delta into delta_x on GPU
+
+    gl.drawArrays(gl.POINTS, 0, renderVertices.length/3); // execute the vertex/fragment shader on the bounded buffer, using the shaders and programs linked and compiled
+}
+
+/************************************
+     Mesh Manipulation Functions
+ ************************************/
 
 function getCoordinateDivisors(scaledMesh) {
     let divisors = {maxX: -10000000, maxY: -10000000, maxZ:-10000000,
@@ -214,36 +258,23 @@ function getCoordinateDivisors(scaledMesh) {
     return divisors
 }
 
-//TODO: Understand why points need to be negated to avoid inverting the mesh
-//      Understand why 0.5 needs to be subtracted from each dimension to center it
-//      Remove unneeded shader Code
-//      Research best way to send new objects down to the vertex buffer
-function drawObjects(){
-    //For EVERY attribute
-    //create buffer, bind buffer, buffer data, vertAttribPointer(), enableVertAttribPointer()
+//Expects a nested mesh
+function flattenMesh(nestedMesh) {
+    let flattenedMesh = []
+    for (let i = 0; i < nestedMesh.length; i++) {
+        flattenedMesh.push(...nestedMesh[i])
+    }
+    return flattenedMesh
+}
 
-    let vertex_buffer = gl.createBuffer(); // Create an empty buffer object to store the vertex buffer
-    let coord = gl.getAttribLocation(shaderProgram, "a_Position"); // Get the attribute location
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer); //Bind appropriate array buffer to it
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);// Pass the vertex data to the buffer
-    gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0); // Point an attribute to the currently bound VBO
-    gl.enableVertexAttribArray(coord); // Enable the attribute
-
-    let color_buffer = gl.createBuffer();
-    let color = gl.getAttribLocation(shaderProgram, "a_Color");
-    gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl. STATIC_DRAW);
-    gl.vertexAttribPointer(color, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(color);
-
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);     // Clear the canvas
-    gl.enable(gl.DEPTH_TEST);              // Enable the depth test
-    gl.clear(gl.COLOR_BUFFER_BIT);         // Clear the color buffer bit
-
-    gl.useProgram(shaderProgram);          // Use the program I created/compiled and Linked
-    gl.uniform1f(gl.getUniformLocation(shaderProgram, 'delta_x'), delta); // stores value of delta into delta_x on GPU
-
-    gl.drawArrays(gl.POINTS, 0, vertices.length/3); // execute the vertex/fragment shader on the bounded buffer, using the shaders and programs linked and compiled
+//Expects a flat mesh
+function truncateMesh(flattenedMesh) {
+    let truncatedMesh = []
+    const roundConstant = 10 ** decimalPrecision
+    for (let i = 0; i < flattenedMesh.length; i++) {
+        truncatedMesh[i] = Math.round(flattenedMesh[i] * roundConstant) / roundConstant;
+    }
+    return truncatedMesh
 }
 
 function translateMesh(scaledMesh) {
@@ -263,3 +294,17 @@ function translateMesh(scaledMesh) {
     return meshPoints
 }
 
+//Expects a flat mesh
+function scaleMeshForLocalCanvas(unscaledMesh) {
+    resizeCanvas();
+    const scaledMesh = []
+    const xScalar = canvas.height / canvas.width;
+    for (let i = 0; i < unscaledMesh.length; i++) {
+        if ((i % 3) === 0) {
+            scaledMesh.push(unscaledMesh[i] * xScalar);
+        } else {
+            scaledMesh.push(unscaledMesh[i]);
+        }
+    }
+    return scaledMesh;
+}

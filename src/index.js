@@ -3,6 +3,8 @@
 import * as facemesh from '@tensorflow-models/facemesh';
 import * as meshHandler from './meshHandler.js';
 import * as userInterface from './interface.js';
+
+import adapter from 'webrtc-adapter';
 import * as tf from '@tensorflow/tfjs-core';
 import {setWasmPath} from '@tensorflow/tfjs-backend-wasm';
 import wasmPath from '../node_modules/@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm.wasm';
