@@ -16,6 +16,8 @@ import {load} from "@tensorflow-models/facemesh";
 let model; //trained facemesh model
 
 let profiler = [];
+let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
+let renderIterator = 0;
 let lastSendAllTimes = []
 let isInChat = false;
 
@@ -277,7 +279,7 @@ function handleRoomInvitation(roomInvitation){
 function handleLoadedVideoData(event){
     console.log('Processing video data');
     var video = event.target;
-    callModelAndRenderLoop(video);
+    callModelRenderLoop(video);
 }
 
 function handleRoomJoin(data){
@@ -353,8 +355,8 @@ async function getScaledMesh(localVideo) {
     }
 }
 
-function updateProfiler(profiler, checkpointIndex, checkpoints) {
-
+function updateProfiler(checkpointIndex) {
+    let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
     let checkpointName = checkpoints[checkpointIndex]
     let lastCheckpointName = checkpointIndex == 0 ? checkpoints[checkpoints.length-1] : checkpoints[checkpointIndex-1]
     if (checkpointName in profiler && lastCheckpointName in profiler) {
@@ -364,43 +366,36 @@ function updateProfiler(profiler, checkpointIndex, checkpoints) {
     } else {
         profiler[checkpointName] = [Date.now(), 0]
     }
-
 }
 
-async function callModelAndRenderLoop(localVideo) {
-    let profiler = [];
-    let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
-    let iterator = 0;
+function logProfiler() {
+    for (let i = 0; i < checkpoints.length; i++) {
+        console.log(checkpoints[i], profiler[checkpoints[i]][1] / 100.0);
+    }
+    profiler = [];
+    renderIterator = 0;
+}
 
-    setInterval(async () => {
-        iterator++;
-        updateProfiler(profiler, 0, checkpoints);
-        if (iterator == 100) {
-            //console.log("After 100")
-            for (let i = 0; i < checkpoints.length; i++) {
-                //console.log(checkpoints[i], profiler[checkpoints[i]][1] / 100.0);
-            }
-            profiler = [];
-            iterator = 0;
-        }
-        const rawFacemesh = await getScaledMesh(localVideo);
-        updateProfiler(profiler, 1, checkpoints);
+async function callModelRenderLoop(){
+    updateProfiler(0);
+    let predictions = await model.estimateFaces(localVideo);
+    updateProfiler(1);
+    userInterface.endLoader();
 
-        meshHandler.updatePersonalMesh(rawFacemesh);
-        currentFacemesh = meshHandler.getPersonalMeshForTransit();
-        if (isInChat) {
-            ChatInstance.sendFacemeshData();
+    if (predictions.length > 0) {
+        let facemesh = predictions[0].scaledMesh;
+        meshHandler.updatePersonalMesh(facemesh);
+        updateProfiler(2);
+        if(isInChat){
+            ChatInstance.sendFacemeshData(meshHandler.getPersonalMeshForTransit());
         }
-        updateProfiler(profiler, 2, checkpoints);
         meshHandler.render();
+        updateProfiler(3);
+    }
+    renderIterator++;
+    if (renderIterator % 100 == 0) { logProfiler() }
 
-        // if searching for chat partner, don't kill the loader
-        if(!ChatInstance.searchingForChatPartner){
-            //has chat partner - kill the loader
-            userInterface.endLoader();
-        }
-        updateProfiler(profiler, 3, checkpoints);
-    }, 50);
+    requestAnimationFrame(callModelRenderLoop);
 }
 
 function main() {
