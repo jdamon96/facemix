@@ -101,7 +101,7 @@ function handleFindChat(){
     socket.on('roomjoined', handleRoomJoin);
 }
 
-// Handler function for clicking the end chat button
+// Handler function for clicking the 'End-Chat' button
 function handleEndChat(){
     chatInstance.endCurrentChat();
     console.log('Ending chat');
@@ -109,7 +109,7 @@ function handleEndChat(){
     userInterface.endLoader();
 };
 
-// Handler function for clicking the camera button
+// Handler function for clicking the 'Face-scan' button
 function handleMediaAccess(){
     //display loading spinner for facemesh model loading
     userInterface.beginLoader();

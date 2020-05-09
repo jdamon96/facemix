@@ -1,6 +1,5 @@
 import * as userInterface from "./interface";
 import * as meshHandler from "./meshHandler";
-import Chat from "twilio/lib/rest/Chat";
 
 export let ChatInstance = {
     peerConnection: null,
