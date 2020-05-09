@@ -88,6 +88,7 @@ function handleRoomJoin(data){
 
 // Handler function for clicking the 'Find-Chat' button
 function handleFindChat(){
+
     console.log('Finding chat');
     // switch to chat UI after receiving first data msg from peer client
     userInterface.switchToChatUI();
@@ -111,6 +112,8 @@ function handleEndChat(){
 
 // Handler function for clicking the 'Face-scan' button
 function handleMediaAccess(){
+    // disable the face-scan button to prevent double-firing
+    userInterface.disableFaceScanButton();
     //display loading spinner for facemesh model loading
     userInterface.beginLoader();
     // get access to client media streams
@@ -124,6 +127,7 @@ function handleMediaAccess(){
             videoStream = new MediaStream(stream.getVideoTracks());
             // this will fire the 'loadeddata' event on the localVideo object
             localVideo.srcObject = videoStream;
+            userInterface.removeFaceScanButton();
         })
         .catch(error => {
             console.log('Failed to access user media');
