@@ -264,7 +264,13 @@ export function disableNewChatButton(){
     newChatButton.style.opacity = 0.5;
 }
 
+export function removeFaceScanButton(){
+    console.log("Removing face-scan button");
+    faceScanButton.parentNode.removeChild(faceScanButton);
+}
+
 export function disableFaceScanButton(){
+    console.log("Disabling face-scan button");
     faceScanButton.disabled = true;
     faceScanButton.style.opacity = 0.5;
 }

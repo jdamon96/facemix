@@ -127,6 +127,7 @@ function handleMediaAccess(){
             videoStream = new MediaStream(stream.getVideoTracks());
             // this will fire the 'loadeddata' event on the localVideo object
             localVideo.srcObject = videoStream;
+            userInterface.removeFaceScanButton();
         })
         .catch(error => {
             console.log('Failed to access user media');
