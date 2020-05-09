@@ -130,7 +130,7 @@ function startWebGL(){
         'gl_Position = vec4(a_Position, 1.0); ' +    //Cast a_Position to a vec4
         'gl_Position.x = a_Position.x + delta_x; ' + //Update the xcomponent with delta_x
         'outColor = vec4(a_Color, 1.0); ' +
-        'gl_PointSize = 4.0;' +
+        'gl_PointSize = 3.0;' +
 
         '}';
 
@@ -277,17 +277,17 @@ function truncateMesh(flattenedMesh) {
     return truncatedMesh
 }
 
-function translateMesh(scaledMesh) {
+function translateMesh(unscaledMesh) {
     let meshPoints = []
-    let divisors = getCoordinateDivisors(scaledMesh);
+    let divisors = getCoordinateDivisors(unscaledMesh);
 
     const biggestRange = Math.max(divisors.rangeX, divisors.rangeY, divisors.rangeZ)
 
     for (let i = 0; i < numFaceCoordinates; i+=3) {
         let pointsRow = [
-            -((scaledMesh[i] - divisors.minX) * buttonOffsets['z']) / biggestRange + buttonOffsets['x'],
-            -((scaledMesh[i+1] - divisors.minY) * buttonOffsets['z']) / biggestRange + buttonOffsets['y'],
-            -(scaledMesh[i+2] - divisors.minZ) / biggestRange
+            -((unscaledMesh[i] - divisors.minX) * buttonOffsets['z']) / biggestRange + buttonOffsets['x'],
+            -((unscaledMesh[i+1] - divisors.minY) * buttonOffsets['z']) / biggestRange + buttonOffsets['y'],
+            -(unscaledMesh[i+2] - divisors.minZ) / biggestRange
         ]
         meshPoints.push(...pointsRow)
     }
