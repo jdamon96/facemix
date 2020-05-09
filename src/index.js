@@ -88,6 +88,7 @@ function handleRoomJoin(data){
 
 // Handler function for clicking the 'Find-Chat' button
 function handleFindChat(){
+
     console.log('Finding chat');
     // switch to chat UI after receiving first data msg from peer client
     userInterface.switchToChatUI();
@@ -111,6 +112,8 @@ function handleEndChat(){
 
 // Handler function for clicking the 'Face-scan' button
 function handleMediaAccess(){
+    // disable the face-scan button to prevent double-firing
+    userInterface.disableFaceScanButton();
     //display loading spinner for facemesh model loading
     userInterface.beginLoader();
     // get access to client media streams

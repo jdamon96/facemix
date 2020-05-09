@@ -263,3 +263,9 @@ export function disableNewChatButton(){
     newChatButton.disabled = true;
     newChatButton.style.opacity = 0.5;
 }
+
+export function disableFaceScanButton(){
+    faceScanButton.disabled = true;
+    faceScanButton.style.opacity = 0.5;
+}
+
