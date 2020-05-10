@@ -125,8 +125,9 @@ function containerClickHandler(event){
         // do nothing
     } 
     */
-    console.log('container click');
-    if(state.about_active && event.target.id != 'about' && event.target.id != 'about-message'){
+    console.log(event.target);
+    console.log(event.target.className)
+    if(state.about_active && !event.target.classList.contains('about')){
         hideAboutWindow();
     }
 }
@@ -169,7 +170,7 @@ function dealWithKeyboard(event){
 
 
 document.getElementById('mini-face-scan').addEventListener('mouseenter', function(event){
-    this.src = "./assets/BLUE-mini-face-scan-button.png"
+    this.src = "./assets/mini-face-scan-button-hover.png"
 });
 
 document.getElementById('mini-face-scan').addEventListener('mouseleave', function(event){
@@ -177,7 +178,7 @@ document.getElementById('mini-face-scan').addEventListener('mouseleave', functio
 });
 
 document.getElementById('mini-find-chat').addEventListener('mouseenter', function(event){
-    this.src = "./assets/BLUE-mini-find-chat-button.png"
+    this.src = "./assets/mini-find-chat-button-hover.png"
 });
 
 document.getElementById('mini-find-chat').addEventListener('mouseleave', function(event){
