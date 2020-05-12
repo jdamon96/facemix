@@ -3,7 +3,7 @@
 import * as facemesh from '@tensorflow-models/facemesh';
 import * as meshHandler from './meshHandler.js';
 import * as userInterface from './interface.js';
-import * as ChatInstance from './chatInstance.js';
+import {ChatInstance} from './chatInstance.js';
 
 import * as tf from '@tensorflow/tfjs-core';
 import {setWasmPath} from '@tensorflow/tfjs-backend-wasm';
@@ -17,7 +17,6 @@ let model; //trained facemesh model
 let profiler = [];
 let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
 let renderIterator = 0;
-let chatInstance = ChatInstance.ChatInstance
 
 // initializing variables to hold user's audio and video media streams
 let accessedCamera = false;
@@ -41,7 +40,7 @@ function handleMessage(message){
     switch(message.title){
 
         case 'initiator-status':
-            chatInstance.setInitiator(message.content.initiator);
+            ChatInstance.setInitiator(message.content.initiator);
             break;
 
         case 'text-message':
@@ -50,16 +49,16 @@ function handleMessage(message){
             break;
 
         case 'room-joined':
-            chatInstance.setRoom(message.content.roomname);
-            if(!chatInstance.initiator){
-                chatInstance.createPeerConnection();
+            ChatInstance.setRoom(message.content.roomname);
+            if(!ChatInstance.initiator){
+                ChatInstance.createPeerConnection();
             }
             break;
 
         case 'room-ready':
             console.log('Room is ready for initiating RTCPeerConnection between clients');
-            if(chatInstance.initiator){
-                chatInstance.createPeerConnection();
+            if(ChatInstance.initiator){
+                ChatInstance.createPeerConnection();
             }
             break;
     }
@@ -88,7 +87,6 @@ function handleRoomJoin(data){
 
 // Handler function for clicking the 'Find-Chat' button
 function handleFindChat(){
-
     console.log('Finding chat');
     // switch to chat UI after receiving first data msg from peer client
     userInterface.switchToChatUI();
@@ -104,7 +102,7 @@ function handleFindChat(){
 
 // Handler function for clicking the 'End-Chat' button
 function handleEndChat(){
-    chatInstance.endCurrentChat();
+    ChatInstance.endCurrentChat();
     console.log('Ending chat');
     userInterface.switchToLobbyUI();
     userInterface.endLoader();
@@ -123,7 +121,7 @@ function handleMediaAccess(){
             console.log('Accessed audio and video media');
             accessedCamera = true;
             userInterface.enableFindChatButton();
-            chatInstance.setAudioStream(new MediaStream(stream.getAudioTracks()));
+            ChatInstance.setAudioStream(new MediaStream(stream.getAudioTracks()));
             videoStream = new MediaStream(stream.getVideoTracks());
             // this will fire the 'loadeddata' event on the localVideo object
             localVideo.srcObject = videoStream;
@@ -176,8 +174,8 @@ async function callModelRenderLoop(){
         let facemesh = predictions[0].scaledMesh;
         meshHandler.updatePersonalMesh(facemesh);
         updateProfiler(2);
-        if(chatInstance.shouldSendFacemeshData){
-            chatInstance.sendFacemeshData(meshHandler.getPersonalMeshForTransit());
+        if(ChatInstance.shouldSendFacemeshData){
+            ChatInstance.sendFacemeshData(meshHandler.getPersonalMeshForTransit());
         }
         meshHandler.render();
         updateProfiler(3);
@@ -190,9 +188,9 @@ async function callModelRenderLoop(){
 
 function main() {
     loadModel();
-    chatInstance.setSocket(socket);
+    ChatInstance.setSocket(socket);
     socket.on('message', handleMessage);// Add message event handler for client socket
-    socket.on('offer', chatInstance.onOffer); // Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
+    socket.on('offer', ChatInstance.onOffer); // Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
 
     /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
     const faceScanButton = document.getElementById('camera-access');
