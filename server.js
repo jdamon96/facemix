@@ -141,6 +141,7 @@ io.on('connection', function(socket){
         twilio.tokens.create(function(err, response){
             if(err) {
                 console.log(err);
+                socket.emit('error', err)
             }
             else {
                 console.log('SERVER: returning token to client');

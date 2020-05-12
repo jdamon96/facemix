@@ -102,8 +102,14 @@ export let ChatInstance = {
         });
     },
 
+    onError: function(error){
+        console.log('Recieved error from server:');
+        console.log(error);
+    },
+
     createPeerConnection: function(){
         ChatInstance.socket.on('token', ChatInstance.onToken(ChatInstance.audioStream));
+        ChatInstance.socket.on('error', ChatInstance.onError);
         ChatInstance.socket.emit('token');
     },
 
