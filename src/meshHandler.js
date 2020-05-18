@@ -3,7 +3,7 @@
 "use strict"
 export const canvasName = "canvas"
 export const canvas = document.getElementById(canvasName);
-const decimalPrecision = 2 //Number of places to round decimals in model output to
+const decimalPrecision = 3 //Number of places to round decimals in model output to
 
 import {WebGLEngine} from "./webGLEngine";
 import {CanvasEngine} from "./canvasEngine";

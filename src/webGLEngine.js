@@ -37,8 +37,8 @@ export let WebGLEngine = {
 
     updatePersonalMesh: function(rawFacemesh) {
         const flattenedMesh = WebGLEngine.flattenMesh(rawFacemesh);
-        const truncatedMesh = WebGLEngine.truncateMesh(flattenedMesh);
-        const updatedVertices = WebGLEngine.translateMesh(truncatedMesh);
+        const translatedMesh = WebGLEngine.translateMesh(flattenedMesh);
+        const updatedVertices = WebGLEngine.truncateMesh(translatedMesh);
 
         if (WebGLEngine.unscaledVertices.length > WebGLEngine.numFaceCoordinates) {
             for (let i = WebGLEngine.numFaceCoordinates; i < WebGLEngine.unscaledVertices.length; i++) {

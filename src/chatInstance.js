@@ -1,5 +1,6 @@
 import * as userInterface from "./interface";
 import * as meshHandler from "./meshHandler";
+import Chat from "twilio/lib/rest/Chat";
 
 export let ChatInstance = {
     peerConnection: null,
@@ -11,6 +12,10 @@ export let ChatInstance = {
     audioStream: null,
     dataChannel: null,
     initiator: false,
+    browserSupportsBufferEvents: false,
+    browserSupportsBufferedAmount: false,
+    outgoingMesh: null,
+    lowBufferAmount: 262144,
 
     setSocket: function(socket) {
         ChatInstance.socket = socket
@@ -75,8 +80,34 @@ export let ChatInstance = {
         );
     },
 
+    lowSendBufferAmount: function(){
+        console.log("Retroactive send")
+        ChatInstance.dataChannel.removeEventListener('bufferedamountlow', ChatInstance.lowSendBufferAmount)
+        ChatInstance.dataChannel.send(ChatInstance.outgoingMesh)
+    },
+
     sendFacemeshData: function(transitMesh){
-        ChatInstance.dataChannel.send(transitMesh);
+        ChatInstance.outgoingMesh = transitMesh;
+        if (ChatInstance.browserSupportsBufferedAmount) {
+            if (ChatInstance.dataChannel.bufferedAmount > ChatInstance.bufferFullThreshold) { // Outgoing buffer amount confirmed too full
+
+                if (ChatInstance.browserSupportsBufferEvents) {
+                    // Wait for amount of buffered send data to be below threshold
+                    ChatInstance.dataChannel.addEventListener('bufferedamountlow', ChatInstance.lowSendBufferAmount)
+                } else {
+                    // We can't know when the buffer will be below threshold without polling. So just skip this send
+                    return;
+                }
+            } else { // Outgoing buffer amount confirmed not too full - send it
+                console.log("Happy case")
+                ChatInstance.dataChannel.send(transitMesh);
+            }
+        } else {
+            // We have no visibility into the outgoing buffer amount - just guess and send 40% of the time
+            if (Math.random() > 0.6) {
+                ChatInstance.dataChannel.send(transitMesh)
+            }
+        }
     },
 
     initiateDataChannel: function(channel){
@@ -86,6 +117,21 @@ export let ChatInstance = {
         ChatInstance.dataChannel.addEventListener('open', event => {
             ChatInstance.connected = true
             ChatInstance.shouldSendFacemeshData = true
+            ChatInstance.bufferFullThreshold = 81920; //Slightly larger than the size of one facemesh send (~80k bytes)
+
+            // Browser support found here https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/bufferedAmountLowThreshold
+            if (typeof ChatInstance.dataChannel.bufferedAmountLowThreshold === 'number'){
+                //Because we can listen for buffered amount events, we can use a lower threshold for more efficient control
+                ChatInstance.bufferFullThreshold = ChatInstance.bufferFullThreshold / 10;
+                ChatInstance.dataChannel.bufferedAmountLowThreshold = ChatInstance.bufferFullThreshold;
+                console.log("Browser supports buffer threshold events")
+                ChatInstance.browserSupportsBufferEvents = true;
+            }
+            // Browser support found here https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/bufferedAmount
+            if (typeof ChatInstance.dataChannel.bufferedAmount == 'number') {
+                console.log("Browser supports reading the amount of data in the send buffer")
+                ChatInstance.browserSupportsBufferedAmount = true
+            }
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
@@ -98,7 +144,7 @@ export let ChatInstance = {
         });
 
         ChatInstance.dataChannel.addEventListener('close', event => {
-            console.log('Data channel closed');
+            console.log('Data channel closed', event);
         });
     },
 

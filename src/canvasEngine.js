@@ -30,9 +30,9 @@ export let CanvasEngine = {
             CanvasEngine.setupCanvas()
         }
         const flattenedMesh = CanvasEngine.flattenMesh(rawFacemesh);
-        const truncatedMesh = CanvasEngine.truncateMesh(flattenedMesh);
-        const twoDimensionalMesh = CanvasEngine.removeZCoordinates(truncatedMesh);
-        const updatedVertices = CanvasEngine.translateMesh(twoDimensionalMesh);
+        const twoDimensionalMesh = CanvasEngine.removeZCoordinates(flattenedMesh);
+        const translatedMesh = CanvasEngine.translateMesh(twoDimensionalMesh);
+        const updatedVertices = CanvasEngine.truncateMesh(translatedMesh);
 
         if (CanvasEngine.vertices.length > CanvasEngine.numFaceCoordinates) {
             for (let i = CanvasEngine.numFaceCoordinates; i < CanvasEngine.vertices.length; i++) {

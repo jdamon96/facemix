@@ -26,7 +26,6 @@ let remoteAudio;
 let localVideo;
 
 let socket = io(); //initializing the socket.io handle
-
 setWasmPath(wasmPath);
 tf.setBackend('wasm').then(() => {main()});
 
