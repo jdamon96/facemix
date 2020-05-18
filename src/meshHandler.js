@@ -8,7 +8,7 @@ const decimalPrecision = 2 //Number of places to round decimals in model output 
 import {WebGLEngine} from "./webGLEngine";
 import {CanvasEngine} from "./canvasEngine";
 
-const graphicsEngine = CanvasEngine; //Any graphics engine must implement all public functions below
+const graphicsEngine = WebGLEngine; //Any graphics engine must implement all public functions below
 configureGraphicsEngine();
 
 document.onkeydown = handleKeyPress;
