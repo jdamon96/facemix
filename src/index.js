@@ -72,11 +72,18 @@ function handleRoomInvitation(roomInvitation){
     }
 }
 
+function playConnectedTone(){
+    let connectedTone = document.getElementById('connected-tone');
+    connectedTone.volume = 0.5;
+    connectedTone.play();
+}
+
 // Handler function for event that occurs when the video element has successfully loaded video data given to it
 function handleLoadedVideoData(event){
     console.log('Processing video data');
     var video = event.target;
     callModelRenderLoop(video);
+    playConnectedTone();
 }
 
 function handleRoomJoin(data){
@@ -128,6 +135,9 @@ function handleMediaAccess(){
             userInterface.removeFaceScanButton();
         })
         .catch(error => {
+            userInterface.endLoader();
+            userInterface.showNoCameraAccessMessage();
+            userInterface.enableFaceScanButton();
             console.log('Failed to access user media');
             console.log(error);
         });
@@ -169,9 +179,10 @@ async function callModelRenderLoop(){
     let predictions = await model.estimateFaces(localVideo);
     updateProfiler(1);
     userInterface.endLoader();
+    let facemesh;
 
-    if (predictions.length > 0) {
-        let facemesh = predictions[0].scaledMesh;
+    if (predictions.length > 0){
+        facemesh = predictions[0].scaledMesh;
         meshHandler.updatePersonalMesh(facemesh);
         updateProfiler(2);
         if(ChatInstance.shouldSendFacemeshData){
@@ -181,7 +192,9 @@ async function callModelRenderLoop(){
         updateProfiler(3);
     }
     renderIterator++;
-    if (renderIterator % 100 == 0) { logProfiler() }
+    if (renderIterator % 100 == 0) { 
+        logProfiler();
+    }
 
     requestAnimationFrame(callModelRenderLoop);
 }
@@ -214,3 +227,5 @@ function main() {
     endChatButton.addEventListener('click', handleEndChat);
     faceScanButton.addEventListener('click', handleMediaAccess);
 }
+
+

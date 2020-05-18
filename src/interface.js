@@ -1,8 +1,31 @@
 var state = {
     media_access: false,
-    about_active: false,
-    chat_mode: false
+    popup_active: false,
+    chat_mode: false,
+    mobile_DOM: true
 }
+
+document.addEventListener("DOMContentLoaded", function(event){
+    let mediaQueriesList = [
+        window.matchMedia("(max-width: 550px)")
+    ]
+
+    //call mediaQueryHandler on initial load
+    mediaQueriesHandler();
+
+    for(let i=0; i < mediaQueriesList.length; i++){
+        mediaQueriesList[i].addListener(mediaQueriesHandler);
+    }
+
+    function mediaQueriesHandler(){
+        if(mediaQueriesList[0].matches){
+            switchToMobileDom();
+        } else {
+            switchToDesktopDom();
+        }
+    }
+});
+
 
 /* Get access to HTML elements */
 const header = document.getElementById('header');
@@ -12,11 +35,12 @@ const aboutButton = document.getElementById('about');
 const faceScanButton = document.getElementById('camera-access');
 const findChatButton = document.getElementById('find-a-chat');
 
-const endChatButton = document.getElementById('end-chat');
 const newChatButton = document.getElementById('new-chat');
+const endChatButton = document.getElementById('end-chat');
 
 const overlay = document.getElementById('overlay');
-const aboutMessage = document.getElementById('about-message');
+const aboutPopUp = document.getElementById('about-message');
+const noCamAccessPopUp = document.getElementById('no-camera-access-message');
 
 const loader = document.getElementById('loader');
 
@@ -24,11 +48,12 @@ const loader = document.getElementById('loader');
 /* grouping of html elements */
 let lobbyButtons = [title, aboutButton, faceScanButton, findChatButton];
 let chatModeButtons = [endChatButton, newChatButton];
+let chatButtons = [findChatButton, newChatButton, endChatButton];
 
 /* Helper functions */ 
 
 function onAboutEnterHandler(event){
-    if(!state.about_active){
+    if(!state.popup_active){
         event.target.style.color = 'blue';
     }
 }
@@ -38,7 +63,7 @@ function onAboutLeaveHandler(event){
 }
 
 function onFindChatEnterHandler(event){
-    if(!state.about_active){
+    if(!state.popup_active){
         event.target.style.backgroundColor = '#EFFDEA';
     }
 }
@@ -65,7 +90,7 @@ function onEndChatLeaveHandler(event){
 
 
 function onFaceScanEnterHandler(event){
-    if(!state.about_active){
+    if(!state.popup_active){
         event.target.style.border = '1px solid blue';
         event.target.style.backgroundImage = 'url(\'./assets/BLUE-face-scan-icon.png\')';
     }
@@ -78,37 +103,27 @@ function onFaceScanLeaveHandler(event){
 
 
 
-function showAboutWindow(){
-    /* darken the window background */
-    console.log('showing about');
-    state.about_active = true;
-    overlay.style.display = 'inline';  
-    /* display the about message */ 
-}
+header.addEventListener('click', headerClickHandler);
 
-function hideAboutWindow(){
-    /* un-darken the window background */
-    overlay.style.display = 'none';
-    state.about_active = false; 
-    
-    /* display the about message */ 
 
-}
+aboutButton.addEventListener('click', aboutHandler);
 
+
+overlay.addEventListener('click', containerClickHandler);
 /* Define button onClick handler functions */
 
 function headerClickHandler(event){
     const target_id = event.target.getAttribute('id');
-    
+    console.log(target_id);
     if(target_id == 'about-span'|| target_id == 'about'){
         
     } else {
-        hideAboutWindow();
+        hidePopUpWindow();
     }
 }
 
 function aboutHandler(event){
-    if(state.about_active){
+    if(state.popup_active){
         /* if about is already active */ 
         console.log('already active')  ;
     }
@@ -119,24 +134,13 @@ function aboutHandler(event){
 }
 
 function containerClickHandler(event){
-    // Handle case where the about window itself is clicked
-    /*
-    if(event.target == 'aboutWindow'){
-        // do nothing
-    } 
-    */
-    console.log(event.target);
-    console.log(event.target.className)
-    if(state.about_active && !event.target.classList.contains('about')){
-        hideAboutWindow();
+    if(state.popup_active && !event.target.classList.contains('popup')){
+        hidePopUpWindow();
     }
 }
 
 
 /* Define event listeners and attach handler functions */
-overlay.addEventListener('click', containerClickHandler);
-
-aboutButton.addEventListener('click', aboutHandler);
 
 aboutButton.addEventListener('mouseenter', onAboutEnterHandler);
 aboutButton.addEventListener('mouseleave', onAboutLeaveHandler);
@@ -153,17 +157,17 @@ endChatButton.addEventListener('mouseleave', onEndChatLeaveHandler);
 newChatButton.addEventListener('mouseenter', onNewChatEnterHandler);
 newChatButton.addEventListener('mouseleave', onNewChatLeaveHandler);
 
-header.addEventListener('click', headerClickHandler);
+
 
 
 /* Function to handle any keyboard functinality */
 
 function dealWithKeyboard(event){
     const keyPressed = event.keyCode;
-
+    
     if(keyPressed == 27){
-        if(state.about_active == true){
-            hideAboutWindow();
+        if(state.popup_active == true){
+            hidePopUpWindow();
         }
     }
 }
@@ -187,10 +191,6 @@ document.getElementById('mini-find-chat').addEventListener('mouseleave', functio
 
 document.addEventListener("keydown", dealWithKeyboard);
 
-
-/**********************************************************************/
-/*************************PUBLIC FUNCTIONS*****************************/
-/**********************************************************************/
 
 /*
 * UI controlling functions
@@ -220,8 +220,101 @@ function addChatButtons(){
     });   
 }
 
-/** EXPORTED FUNCTIONS **/
+function moveChatButtonsToFooter(){
+    let footer = document.getElementById('footer');
 
+    chatButtons.map(function(chatButton){
+        footer.appendChild(chatButton);
+    });
+}
+
+function changeChatButtonsClassForFooter(){
+    chatButtons.map(function(chatButton){
+        chatButton.classList.remove('header-button');
+        chatButton.classList.add('footer-button');
+    });
+}
+
+function moveChatButtonsToHeader(){
+    let header = document.getElementById('header');
+
+    chatButtons.map(function(chatButton){
+        // check if button is find-a-chat button in which case need to make sure to insert before About for correct ordering of buttons in header
+        if(chatButton.id == 'find-a-chat'){
+            let faceScanButton = document.getElementById('camera-access');
+            if(faceScanButton){
+                header.insertBefore(chatButton, faceScanButton);    
+            }
+            else {
+                let aboutButton = document.getElementById('about');
+                header.insertBefore(chatButton, aboutButton);
+            }
+            
+        } else {
+            header.appendChild(chatButton);    
+        }
+        
+    });
+}
+
+function changeChatButtonsClassForHeader(){
+    chatButtons.map(function(chatButton){
+        chatButton.classList.remove('footer-button');
+        chatButton.classList.add('header-button');
+    });
+}
+
+function switchToMobileDom(){
+    if(!state.mobile_DOM){
+        moveChatButtonsToFooter();
+        changeChatButtonsClassForFooter();
+    }
+    state.mobile_DOM = true;
+}
+
+function switchToDesktopDom(){
+    if(state.mobile_DOM){
+        moveChatButtonsToHeader();
+        changeChatButtonsClassForHeader();
+    }
+    state.mobile_DOM = false;
+}
+
+function showAboutWindow(){
+    /* darken the window background */
+    console.log('showing about');
+    state.popup_active = true;
+    overlay.style.display = 'inline';  
+    /* display the about message */ 
+    aboutPopUp.style.display = 'inline';
+}
+
+function showNoCameraAccessMessage(){
+    console.log('showing no camera access msg');
+    /* darken the window background */
+    state.popup_active = true;
+    overlay.style.display = 'inline';  
+    /* display the about message */ 
+    noCamAccessPopUp.style.display = 'inline';   
+}
+
+function hidePopUpWindow(){
+    /* un-darken the window background */
+    console.log('hiding popup');
+    overlay.style.display = 'none';
+    state.popup_active = false; 
+
+    /* hide all the pop up messages (only one will be active at a time, but this catches all) */
+    aboutPopUp.style.display = 'none'; 
+    noCamAccessPopUp.style.display = 'none';
+}
+
+
+/**********************************************************************/
+/*************************PUBLIC FUNCTIONS*****************************/
+/**********************************************************************/
+
+export { showNoCameraAccessMessage };
 
 export function switchToChatUI(){
     removeLobbyButtons();
@@ -274,5 +367,11 @@ export function disableFaceScanButton(){
     console.log("Disabling face-scan button");
     faceScanButton.disabled = true;
     faceScanButton.style.opacity = 0.5;
+}
+
+export function enableFaceScanButton(){
+    console.log("Enabling face-scan button");
+    faceScanButton.disabled = false;
+    faceScanButton.style.opacity = 1;
 }
 
