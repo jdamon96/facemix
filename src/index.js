@@ -118,19 +118,24 @@ function handleEndChat(){
 function handleMediaAccess(){
     // disable the face-scan button to prevent double-firing
     userInterface.disableFaceScanButton();
+
     //display loading spinner for facemesh model loading
     userInterface.beginLoader();
+
+    localVideo = document.getElementById('localVideo');
+
     // get access to client media streams
-    navigator.mediaDevices
+    const stream = navigator.mediaDevices
         .getUserMedia({video: true, audio: true})
         .then(stream => {
             console.log('Accessed audio and video media');
+            localVideo.addEventListener('loadeddata', handleLoadedVideoData);
             accessedCamera = true;
             userInterface.enableFindChatButton();
             ChatInstance.setAudioStream(new MediaStream(stream.getAudioTracks()));
             videoStream = new MediaStream(stream.getVideoTracks());
-            // this will fire the 'loadeddata' event on the localVideo object
-            localVideo.srcObject = videoStream;
+            console.log(localVideo);
+            localVideo.srcObject = videoStream; // this will fire the 'loadeddata' event on the localVideo object
             localVideo.play();
             userInterface.removeFaceScanButton();
         })
@@ -193,7 +198,7 @@ async function callModelRenderLoop(){
     }
     renderIterator++;
     if (renderIterator % 100 == 0) { 
-        logProfiler();
+        //logProfiler();
     }
 
     requestAnimationFrame(callModelRenderLoop);
@@ -211,14 +216,13 @@ function main() {
     const endChatButton = document.getElementById('end-chat');
 
     /* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
-    localVideo = document.getElementById('localVideo');
+    var localVideo;
     remoteAudio = document.getElementById('remoteAudio');
-    localVideo.addEventListener('loadeddata', handleLoadedVideoData);
-
+    
 
     /* Disable 'find chat' button if no access to client media feed
     * (can't join chat if you don't have your camera on) */
-    if(localVideo.srcObject == null){
+    if(localVideo == null){
         userInterface.disableFindChatButton();
     }
 

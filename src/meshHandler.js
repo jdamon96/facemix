@@ -40,22 +40,22 @@ export function render(){
 
 function handleKeyPress(e) {
     if (event.keyCode == 68) {
-        console.log("right")
+        //console.log("right")
         graphicsEngine.updateOffset('x', true)
     } else if (event.keyCode == 65) {
-        console.log("left")
+        //console.log("left")
         graphicsEngine.updateOffset('x', false)
     } else if (event.keyCode == 87) {
-        console.log("up")
+        //console.log("up")
         graphicsEngine.updateOffset('y', true)
     } else if (event.keyCode == 83) {
-        console.log("down")
+        //console.log("down")
         graphicsEngine.updateOffset('y', false)
     } else if (event.keyCode == 73) {
-        console.log("forward");
+        //console.log("forward");
         graphicsEngine.updateOffset('z', true)
     } else if (event.keyCode == 75) {
-        console.log("back");
+        //console.log("back");
         graphicsEngine.updateOffset('z', false)
     }
 }

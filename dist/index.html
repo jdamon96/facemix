@@ -67,12 +67,11 @@
           </button>
         </div>
 
-        <video playsinline id="localVideo"></video>
-        <audio autoplay playsinline id="remoteAudio"></audio>
-        <audio id="connected-tone" src="./assets/connected_tone.mp3"></audio>
+        <audio autoplay id="remoteAudio"></audio>
 
     </div>
-
+    <video id="localVideo" playsinline></video>
+    <audio id="connected-tone" src="./assets/connected_tone.mp3"></audio>
     <script src="/socket.io/socket.io.js"></script>
     <script src="main.js"></script>
 

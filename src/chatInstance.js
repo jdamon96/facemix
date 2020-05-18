@@ -50,8 +50,10 @@ export let ChatInstance = {
     },
 
     createOffer: function(){
+        console.log('Creating offer');
         ChatInstance.peerConnection.createOffer(
             function(offer){
+                console.log(offer);
                 ChatInstance.peerConnection.setLocalDescription(offer);
                 ChatInstance.socket.emit('offer', {
                     room: ChatInstance.currentRoom,
@@ -190,7 +192,6 @@ export let ChatInstance = {
                 ChatInstance.initiateDataChannel(dataChannel);
 
                 //create an offer
-                console.log('Creating an offer')
                 ChatInstance.createOffer();
             } else {
                 ChatInstance.peerConnection.addEventListener('datachannel', event => {
