@@ -51,35 +51,35 @@ export let ChatInstance = {
 
     createOffer: function(){
         console.log('Creating offer');
-        ChatInstance.peerConnection.createOffer(
-            function(offer){
-                console.log(offer);
+
+        ChatInstance.peerConnection.createOffer()
+            .then(function(offer){
                 ChatInstance.peerConnection.setLocalDescription(offer);
                 ChatInstance.socket.emit('offer', {
                     room: ChatInstance.currentRoom,
                     offer: JSON.stringify(offer)
                 });
-            },
-            function(err){
+            })
+            .catch(function(err){
                 console.log(err);
-            }
-        );
+            });
+
     },
 
     createAnswer: function(){
         ChatInstance.connected = true;
-        ChatInstance.peerConnection.createAnswer(
-            function(answer){
+
+        ChatInstance.peerConnection.createAnswer()
+            .then(function(answer){
                 ChatInstance.peerConnection.setLocalDescription(answer);
                 ChatInstance.socket.emit('answer', {
                     room: ChatInstance.currentRoom,
                     answer: JSON.stringify(answer)
                 });
-            },
-            function(err){
+            })
+            .catch(function(err){
                 console.log(err);
-            }
-        );
+            });
     },
 
     lowSendBufferAmount: function(){
