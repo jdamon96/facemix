@@ -132,6 +132,7 @@ function handleMediaAccess(){
             videoStream = new MediaStream(stream.getVideoTracks());
             // this will fire the 'loadeddata' event on the localVideo object
             localVideo.srcObject = videoStream;
+            localVideo.play();
             userInterface.removeFaceScanButton();
         })
         .catch(error => {

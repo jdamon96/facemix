@@ -336,7 +336,7 @@ hr {
 
 #localVideo {
     position: absolute;
-    visibility: hidden;
+    display: none;
 }
 
 #remoteAudio {
