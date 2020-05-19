@@ -200,6 +200,19 @@ function logProfiler() {
     renderIterator = 0;
 }
 
+function logCanvasDimensions(){
+    let canvasContainer = document.getElementById('canvas-container');
+    let canvas = document.getElementById('canvas');
+    console.log('Canvas Container width:');
+    console.log(canvasContainer.clientWidth)
+    console.log('Canvas Container height:');
+    console.log(canvasContainer.clientHeight);
+    console.log('Canvas width:');
+    console.log(canvas.width);
+    console.log('Canvas height:');
+    console.log(canvas.height);   
+}
+
 async function callModelRenderLoop(){
 
     updateProfiler(0);
@@ -222,13 +235,14 @@ async function callModelRenderLoop(){
         }
 
         userInterface.endLoader();
-
+        meshHandler.resizeCanvas();
         meshHandler.render();
         updateProfiler(3);
     }
     renderIterator++;
     if (renderIterator % 100 == 0) { 
         //logProfiler();
+        //logCanvasDimensions();
     }
 
     requestAnimationFrame(callModelRenderLoop);

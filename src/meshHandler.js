@@ -29,8 +29,30 @@ export function updatePeerMesh(transitMesh) {
     graphicsEngine.updatePeerMesh(transitMesh);
 }
 
+export function resizeCanvas() {
+    // Lookup the size the browser is displaying the canvas.
+    let canvasContainer = document.getElementById('canvas-container');
+    let displayWidth  = canvasContainer.offsetWidth;
+    let displayHeight = canvasContainer.offsetHeight;
+
+    // Check if the canvas is not the same size.
+    if (canvas.width  != displayWidth || 
+        canvas.height != displayHeight) {
+
+        let widthDiff = displayWidth - canvas.width;
+        let heightDiff = displayHeight - canvas.height;
+        console.log('width diff: ' + widthDiff);
+        console.log('height diff: ' + heightDiff);
+        // Make the canvas the same size
+        canvas.width  = displayWidth;
+        canvas.height = displayHeight;
+    }
+    if (graphicsEngine.isGlInitialized) {
+        graphicsEngine.graphicsResizeOccurred();
+    }
+}
+
 export function render(){
-    resizeCanvas()
     graphicsEngine.render();
 }
 
@@ -69,25 +91,6 @@ function handleKeyPress(e) {
         graphicsEngine.updateOffset('z', false)
     }
 }
-
-function resizeCanvas() {
-    // Lookup the size the browser is displaying the canvas.
-    let displayWidth  = canvas.clientWidth;
-    let displayHeight = canvas.clientHeight;
-
-    // Check if the canvas is not the same size.
-    if (canvas.width  != displayWidth ||
-        canvas.height != displayHeight) {
-
-        // Make the canvas the same size
-        canvas.width  = displayWidth;
-        canvas.height = displayHeight;
-    }
-    if (graphicsEngine.isGlInitialized) {
-        graphicsEngine.graphicsResizeOccurred();
-    }
-}
-
 
 //Expects a nested mesh
 function flattenMesh(nestedMesh) {

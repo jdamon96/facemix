@@ -118,6 +118,7 @@ export let CanvasEngine = {
     },
 
     setupCanvas: function() {
+        console.log('Setting up canvas');
         CanvasEngine.canvasContext = canvas.getContext('2d');
 
         // Our canvas must cover full height of screen, regardless of the resolution
