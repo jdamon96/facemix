@@ -17,7 +17,7 @@ export let WebGLEngine = {
     numFaceCoordinates: (numFacePoints * 3),
     delta: 0.0,   //WebGL Refresh Rate
     shaderProgram: null,
-    unscaledVertices: [],
+    unscaledVertices: [], //vertices with all transforms done except for normalizing for local canvas size
     colors: [],   //Corresponding colors of each point being displayed
     gl: null,
     isGlInitialized: false,
@@ -63,9 +63,12 @@ export let WebGLEngine = {
         if (!WebGLEngine.isGlInitialized) {
             WebGLEngine.startWebGL();
         }
-        const renderVertices = WebGLEngine.scaleMeshForLocalCanvas(WebGLEngine.unscaledVertices);
-
-        WebGLEngine.drawObjects(renderVertices);
+        if (WebGLEngine.unscaledVertices.length != 0) {
+            const renderVertices = WebGLEngine.scaleMeshForLocalCanvas(WebGLEngine.unscaledVertices);
+            WebGLEngine.drawObjects(renderVertices);
+        } else {
+            WebGLEngine.clearCanvas();
+        }
     },
 
     graphicsResizeOccurred: function(){
@@ -76,7 +79,6 @@ export let WebGLEngine = {
     },
 
     setPersonalColor: function(hexColorString) {
-        console.log("in webgl engine ", hexColorString)
         let RGB = WebGLEngine.hexToRGB(hexColorString);
         WebGLEngine.personalColor = [RGB[0]/256, RGB[1]/256, RGB[2]/256]
         WebGLEngine.populateColors();
@@ -99,6 +101,14 @@ export let WebGLEngine = {
         if (result <= max && result >= min) {
             WebGLEngine.buttonOffsets[dimension] = result
         }
+    },
+
+    clearPersonalMesh: function(){
+        WebGLEngine.unscaledVertices = []
+    },
+
+    clearPeerMesh: function(){
+        WebGLEngine.unscaledVertices.length = WebGLEngine.numFaceCoordinates
     },
 
     /************************************
@@ -192,16 +202,17 @@ export let WebGLEngine = {
         gl.vertexAttribPointer(color, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(color);
 
-        gl.clearColor(1.0, 1.0, 1.0, 1.0);     // Clear the canvas
-        gl.enable(gl.DEPTH_TEST);              // Enable the depth test
-        gl.clear(gl.COLOR_BUFFER_BIT);         // Clear the color buffer bit
-
         gl.useProgram(WebGLEngine.shaderProgram);          // Use the program I created/compiled and Linked
         gl.uniform1f(gl.getUniformLocation(WebGLEngine.shaderProgram, 'delta_x'), WebGLEngine.delta); // stores value of delta into delta_x on GPU
 
         gl.drawArrays(gl.POINTS, 0, renderVertices.length/3); // execute the vertex/fragment shader on the bounded buffer, using the shaders and programs linked and compiled
     },
 
+    clearCanvas: function() {
+        WebGLEngine.clearColor(1.0, 1.0, 1.0, 1.0);     // Clear the canvas
+        WebGLEngine.enable(WebGLEngine.gl.DEPTH_TEST);              // Enable the depth test
+        WebGLEngine.clear(WebGLEngine.gl.COLOR_BUFFER_BIT);         // Clear the color buffer bit
+    },
 
     /************************************
         Mesh Manipulation Functions

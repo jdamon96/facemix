@@ -42,6 +42,14 @@ export function setPeerColor(color) {
     graphicsEngine.setPeerColor(color)
 }
 
+export function clearPersonalMesh() {
+    graphicsEngine.clearPersonalMesh();
+}
+
+export function clearPeerMesh() {
+    graphicsEngine.clearPeerMesh();
+}
+
 /**********************************************************************/
 /*******************SHARED GRAPHICS ENGINE FUNCTINOS*******************/
 /**********************************************************************/
@@ -107,10 +115,7 @@ function configureGraphicsEngine() {
 }
 
 function hexToRGB(hex) {
-    console.log("raw hex", hex)
-    console.log("sub", hex.substring(1))
     let bigint = parseInt(hex.substring(1), 16);
-    console.log("bigint", bigint)
     let r = (bigint >> 16) & 255;
     let g = (bigint >> 8) & 255;
     let b = bigint & 255;

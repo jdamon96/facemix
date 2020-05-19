@@ -113,6 +113,8 @@ function handleEndChat(){
     console.log('Ending chat');
     userInterface.switchToLobbyUI();
     userInterface.endLoader();
+    meshHandler.clearPeerMesh();
+    meshHandler.render();
 };
 
 // Handler for a new color selection
@@ -161,8 +163,9 @@ function handleMediaAccess(){
 /* Handler function for when chat peer ends the current chat*/
 function handlePeerEndChat(){
     console.log('Peer client ended chat');
-    // clearCanvas();
     ChatInstance.resetChatInstance();
+    meshHandler.clearPeerMesh();
+    meshHandler.render();
     handleFindChat();
 }
 

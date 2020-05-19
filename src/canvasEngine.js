@@ -65,10 +65,20 @@ export let CanvasEngine = {
         CanvasEngine.peerColor = color;
     },
 
+    clearPersonalMesh: function() {
+        CanvasEngine.vertices = [];
+    },
+
+    clearPeerMesh: function() {
+        CanvasEngine.vertices.length = CanvasEngine.numFaceCoordinates;
+    },
+
+
     render: function() {
         if (!CanvasEngine.isCanvasInitialized) {
             CanvasEngine.setupCanvas()
         }
+        console.log("render")
         CanvasEngine.drawObjects(CanvasEngine.vertices)
     },
 

@@ -100,7 +100,6 @@ export let ChatInstance = {
     },
 
     lowSendBufferAmount: function(){
-        console.log("Retroactive send")
         ChatInstance.dataChannel.removeEventListener('bufferedamountlow', ChatInstance.lowSendBufferAmount)
         ChatInstance.dataChannel.send(ChatInstance.outgoingMesh)
     },
@@ -118,7 +117,6 @@ export let ChatInstance = {
                     return;
                 }
             } else { // Outgoing buffer amount confirmed not too full - send it
-                //console.log("Happy case")
                 ChatInstance.dataChannel.send(transitMesh);
             }
         } else {
@@ -162,7 +160,9 @@ export let ChatInstance = {
                 for (let i = 0; i < incomingData.length; i++) {
                     incomingData[i] = parseFloat(incomingData[i])
                 }
-                meshHandler.updatePeerMesh(incomingData);
+                if (ChatInstance.shouldSendFacemeshData) {
+                    meshHandler.updatePeerMesh(incomingData);
+                }
             }
         });
 
