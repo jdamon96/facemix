@@ -8,7 +8,7 @@ const decimalPrecision = 3 //Number of places to round decimals in model output 
 import {WebGLEngine} from "./webGLEngine";
 import {CanvasEngine} from "./canvasEngine";
 
-const graphicsEngine = WebGLEngine; //Any graphics engine must implement all public functions below
+const graphicsEngine = CanvasEngine; //Any graphics engine must implement all public functions below
 configureGraphicsEngine();
 
 document.onkeydown = handleKeyPress;
@@ -34,28 +34,30 @@ export function render(){
     graphicsEngine.render();
 }
 
+export function setPersonalColor(color) {
+    graphicsEngine.setPersonalColor(color)
+}
+
+export function setPeerColor(color) {
+    graphicsEngine.setPeerColor(color)
+}
+
 /**********************************************************************/
 /*******************SHARED GRAPHICS ENGINE FUNCTINOS*******************/
 /**********************************************************************/
 
 function handleKeyPress(e) {
-    if (event.keyCode == 68) {
-        //console.log("right")
+    if (event.keyCode == 68) { //d: right
         graphicsEngine.updateOffset('x', true)
-    } else if (event.keyCode == 65) {
-        //console.log("left")
+    } else if (event.keyCode == 65) { //a: left
         graphicsEngine.updateOffset('x', false)
-    } else if (event.keyCode == 87) {
-        //console.log("up")
+    } else if (event.keyCode == 87) { //w: up
         graphicsEngine.updateOffset('y', true)
-    } else if (event.keyCode == 83) {
-        //console.log("down")
+    } else if (event.keyCode == 83) { //s: down
         graphicsEngine.updateOffset('y', false)
-    } else if (event.keyCode == 73) {
-        //console.log("forward");
+    } else if (event.keyCode == 73) { //i: forward
         graphicsEngine.updateOffset('z', true)
-    } else if (event.keyCode == 75) {
-        //console.log("back");
+    } else if (event.keyCode == 75) { //k: back
         graphicsEngine.updateOffset('z', false)
     }
 }
@@ -101,6 +103,19 @@ function truncateMesh(flattenedMesh) {
 function configureGraphicsEngine() {
     graphicsEngine.flattenMesh = flattenMesh;
     graphicsEngine.truncateMesh = truncateMesh;
+    graphicsEngine.hexToRGB = hexToRGB;
+}
+
+function hexToRGB(hex) {
+    console.log("raw hex", hex)
+    console.log("sub", hex.substring(1))
+    let bigint = parseInt(hex.substring(1), 16);
+    console.log("bigint", bigint)
+    let r = (bigint >> 16) & 255;
+    let g = (bigint >> 8) & 255;
+    let b = bigint & 255;
+
+    return [r,g,b];
 }
 
 

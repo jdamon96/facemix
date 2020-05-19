@@ -15,20 +15,20 @@ html, body {
     overflow: hidden;
     width: 100%;
     height: 100%;
-    background: #e9e9e9;  
+    background: #e9e9e9;
     display: none;
-    position: absolute;   
-    top: 0;                  
-    right: 0;                
+    position: absolute;
+    top: 0;
+    right: 0;
     bottom: 0;
     left: 0;
 }
 
 
 #app-container {
-    /* 
+    /*
     * idk why but if I don't push this container 1px left it loads 1px to the right.
-    * so this is me correctly centering it. 
+    * so this is me correctly centering it.
     * gets the job done... lol
     */
     margin-left: -1px;
@@ -40,9 +40,9 @@ html, body {
     grid-template-rows: 75px 10fr 75px;
     grid-template-columns: 1fr 10fr 1fr;
     grid-template-areas:
-        ". header ."
-        ". content ."
-        ". footer .";
+            ". header ."
+            ". content ."
+            ". footer .";
 }
 
 #header {
@@ -84,7 +84,7 @@ html, body {
     font-size: 16px;
     margin-left: 10px;
     margin-right: 10px;
-    margin-top: 20px;   
+    margin-top: 20px;
 }
 
 #title {
@@ -129,10 +129,10 @@ html, body {
     border: 1px solid #F14C4C;
     color: #F14C4C;
     float: left;
-    margin-left: 0; 
+    margin-left: 0;
 
     /* this button appears when user is in chat so init with 'display: none' */
-    display: none; 
+    display: none;
 }
 
 #header-border-line {
@@ -157,7 +157,7 @@ html, body {
     top: 50%;
     left: 50%;
     -ms-transform: translate(-50%, -50%);
-    transform: translate(-50%, -50%);    
+    transform: translate(-50%, -50%);
 }
 
 #no-camera-access-message p {
@@ -239,10 +239,10 @@ hr {
 #loader {
 
     position: absolute;
-    /* 
+    /*
     * 1) use top and left to offset by 50% to set element origin to center
     * 2) use margin-top and margin-left to offset element origin to page center
-    */ 
+    */
     top: 50%;
     margin-top: -30px;
     left: 50%;
@@ -259,8 +259,8 @@ hr {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 @media only screen and (max-width: 550px) {
@@ -287,15 +287,15 @@ hr {
 
     #no-camera-access-message {
         width: 300px;
-        height: 300px; 
-        font-size: 20px;  
+        height: 300px;
+        font-size: 20px;
     }
 
     #find-a-chat {
         border: 1px solid #6CBA51;
         color: #6CBA51;
         width: 90%;
-        margin-right: 5%;  
+        margin-right: 5%;
     }
 
     #new-chat {
@@ -312,10 +312,10 @@ hr {
         border: 1px solid #F14C4C;
         color: #F14C4C;
         float: left;
-        margin-left: 0; 
+        margin-left: 0;
 
         /* this button appears when user is in chat so init with 'display: none' */
-        display: none; 
+        display: none;
     }
 
 }
@@ -337,7 +337,7 @@ hr {
 }
 
 #localVideo {
-    position: absolute;  
+    position: absolute;
     top: 0;
     left: 0;
     max-width: 100%;
@@ -347,5 +347,42 @@ hr {
 
 #remoteAudio {
     position: absolute;
-    visibility: hidden; 
+    visibility: hidden;
+}
+
+label.color-picker {
+    width: 20px; /* Width of color picker */
+    padding: 10px; /* Space between outer border and color picker */
+    background: #fff; /* Color between outer border and color picker */
+    border-radius: 100%;
+    display: block; /* Contain color picker within label */
+}
+
+label.color-picker > span {
+    border: none;
+    display: block; /* Contain color picker within span */
+}
+
+label.color-picker > span > input[type=color] {
+    height: 20px; /* Height of color picker */
+    display: block; /* Avoids space above/below color picker */
+    width: 100%; /* Fill available horizontal space */
+    padding: 0px; /* Remove space around color picker in Chrome */
+}
+
+/* Chrome styles */
+label.color-picker > span > input[type=color]::-webkit-color-swatch-wrapper {
+    padding: 0; /* Remove browser's padding around color picker */
+}
+label.color-picker > span > input[type=color]::-webkit-color-swatch {
+    border: none; /* Remove browser's border around color in color picker */
+}
+
+/* Firefox styles */
+label.color-picker > span > input[type=color]::-moz-color-swatch {
+    border: none; /* Remove browser's border around color in color picker */
+}
+label.color-picker > span > input[type=color]::-moz-focus-inner {
+    border: none; /* Remove browser's padding around color in color picker */
+    padding: 0; /* Remove browser's padding around color in color picker */
 }

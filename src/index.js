@@ -24,6 +24,7 @@ let videoStream;
 
 let remoteAudio = document.getElementById('remoteAudio');
 let localVideo;
+let hasSentColor = false;
 
 let socket = io(); //initializing the socket.io handle
 setWasmPath(wasmPath);
@@ -114,6 +115,15 @@ function handleEndChat(){
     userInterface.endLoader();
 };
 
+// Handler for a new color selection
+function handleColorChange(){
+    let color = document.getElementById('color-picker').value
+    if (ChatInstance.shouldSendFacemeshData) {
+        ChatInstance.sendFacemeshData("color," + color);
+    }
+    meshHandler.setPersonalColor(color)
+}
+
 // Handler function for clicking the 'Face-scan' button
 function handleMediaAccess(){
     // disable the face-scan button to prevent double-firing
@@ -148,7 +158,7 @@ function handleMediaAccess(){
         });
 }
 
-/* Handler function for when chat peer ends the current chat*/ 
+/* Handler function for when chat peer ends the current chat*/
 function handlePeerEndChat(){
     console.log('Peer client ended chat');
     // clearCanvas();
@@ -188,11 +198,11 @@ function logProfiler() {
 }
 
 async function callModelRenderLoop(){
-    
+
     updateProfiler(0);
     let predictions = await model.estimateFaces(localVideo);
     updateProfiler(1);
-    
+
     let facemesh;
 
     if (predictions.length > 0){
@@ -202,6 +212,10 @@ async function callModelRenderLoop(){
 
         if(ChatInstance.shouldSendFacemeshData){
             ChatInstance.sendFacemeshData(meshHandler.getPersonalMeshForTransit());
+            if (!hasSentColor) {
+                handleColorChange()
+                hasSentColor = true;
+            }
         }
 
         userInterface.endLoader();
@@ -221,15 +235,16 @@ function main() {
     /* give ChatInstance access to the client socket*/
     ChatInstance.setSocket(socket);
 
-    /* add initial socket event handlers */ 
+    /* add initial socket event handlers */
     socket.on('message', handleMessage);
     socket.on('offer', ChatInstance.onOffer);
-    socket.on('end-chat', handlePeerEndChat); 
+    socket.on('end-chat', handlePeerEndChat);
 
     /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
     const faceScanButton = document.getElementById('camera-access');
     const findChatButton = document.getElementById('find-a-chat');
-    const endChatButton = document.getElementById('end-chat');  
+    const endChatButton = document.getElementById('end-chat');
+    const colorPicker = document.getElementById('color-picker');
 
     /* Disable 'find chat' button if no access to client media feed
     * (can't join chat if you don't have your camera on) */
@@ -241,6 +256,7 @@ function main() {
     findChatButton.addEventListener('click', handleFindChat);
     endChatButton.addEventListener('click', handleEndChat);
     faceScanButton.addEventListener('click', handleMediaAccess);
+    colorPicker.addEventListener('change', handleColorChange);
 
     /* load the tensorflow facemesh model */
     loadModel();

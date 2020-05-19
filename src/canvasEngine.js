@@ -14,6 +14,9 @@ export let CanvasEngine = {
     buttonDelta: 50.0, //Amount a key press moves you within the canvas coordinate system (for wasd)
     zButtonDelta: 0.1, //Amount a key press scales your image (for 'i' and 'k')
     buttonBounds: {x: {max: 1.0, min: -1.0}, y:{max: 1.0, min:-1.0}, z:{max:1.5, min:0.3}},
+    personalColor: '#32EEDB',
+    peerColor: '#FF1493',
+
 
     getPersonalMeshForTransit: function() {
         const midLine = canvas.width / 2
@@ -54,6 +57,14 @@ export let CanvasEngine = {
         CanvasEngine.vertices = updatedVertices
     },
 
+    setPersonalColor: function(color) {
+        CanvasEngine.personalColor = color;
+    },
+
+    setPeerColor: function(color) {
+        CanvasEngine.peerColor = color;
+    },
+
     render: function() {
         if (!CanvasEngine.isCanvasInitialized) {
             CanvasEngine.setupCanvas()
@@ -63,8 +74,8 @@ export let CanvasEngine = {
 
     drawObjects: function(renderVertices) {
         CanvasEngine.canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-        CanvasEngine.canvasContext.fillStyle = '#32EEDB';
-        CanvasEngine.canvasContext.strokeStyle = '#32EEDB';
+        CanvasEngine.canvasContext.fillStyle = CanvasEngine.personalColor;
+        CanvasEngine.canvasContext.strokeStyle = CanvasEngine.personalColor;
 
         for (let i = 0; i < renderVertices.length; i+=2) {
             const x = renderVertices[i];
@@ -74,8 +85,8 @@ export let CanvasEngine = {
             CanvasEngine.canvasContext.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
             CanvasEngine.canvasContext.fill();
             if (i == CanvasEngine.numFaceCoordinates) {
-                CanvasEngine.canvasContext.fillStyle = '#FF1493';
-                CanvasEngine.canvasContext.strokeStyle = '#FF1493';
+                CanvasEngine.canvasContext.fillStyle = CanvasEngine.peerColor;
+                CanvasEngine.canvasContext.strokeStyle = CanvasEngine.peerColor;
             }
         }
     },

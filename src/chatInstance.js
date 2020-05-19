@@ -15,7 +15,6 @@ export let ChatInstance = {
     browserSupportsBufferEvents: false,
     browserSupportsBufferedAmount: false,
     outgoingMesh: null,
-    lowBufferAmount: 262144,
 
     setSocket: function(socket) {
         ChatInstance.socket = socket
@@ -156,11 +155,15 @@ export let ChatInstance = {
 
         ChatInstance.dataChannel.addEventListener('message', event => {
             userInterface.enableNewChatButton();
-            let incomingMesh = event["data"].split(',')
-            for (let i = 0; i < incomingMesh.length; i++) {
-                incomingMesh[i] = parseFloat(incomingMesh[i])
+            let incomingData = event["data"].split(',')
+            if(incomingData[0].includes("color")) {
+                meshHandler.setPeerColor(incomingData[1]);
+            } else {
+                for (let i = 0; i < incomingData.length; i++) {
+                    incomingData[i] = parseFloat(incomingData[i])
+                }
+                meshHandler.updatePeerMesh(incomingData);
             }
-            meshHandler.updatePeerMesh(incomingMesh);
         });
 
         ChatInstance.dataChannel.addEventListener('close', event => {

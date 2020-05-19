@@ -22,3 +22,4 @@ Das it.
 #### Notes
 - This workflow largely eliminates the need for working on a branch other than master, but it would work similarly if you were working on a different branch, just replace the word master in all steps except for the heroku push step with the branch you're on.
 - Eventually, we'll have a separate heroku staging environment that we'll be able to push to without messing with the prod one but no need yet
+- To clear heroku cache: `heroku repo:purge_cache -a facemix`

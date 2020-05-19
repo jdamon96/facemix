@@ -43,12 +43,13 @@ const aboutPopUp = document.getElementById('about-message');
 const noCamAccessPopUp = document.getElementById('no-camera-access-message');
 
 const loader = document.getElementById('loader');
+const colorPicker = document.getElementById('color-picker');
 
 
 /* grouping of html elements */
 let lobbyButtons = [title, aboutButton, faceScanButton, findChatButton];
 let chatModeButtons = [endChatButton, newChatButton];
-let chatButtons = [findChatButton, newChatButton, endChatButton];
+let chatButtons = [findChatButton, newChatButton, endChatButton, colorPicker];
 
 /* Helper functions */ 
 
@@ -158,9 +159,7 @@ newChatButton.addEventListener('mouseenter', onNewChatEnterHandler);
 newChatButton.addEventListener('mouseleave', onNewChatLeaveHandler);
 
 
-
-
-/* Function to handle any keyboard functinality */
+/* Function to handle any keyboard functionality */
 
 function dealWithKeyboard(event){
     const keyPressed = event.keyCode;

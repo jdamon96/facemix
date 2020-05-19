@@ -5,13 +5,15 @@
 //These should be defined in meshHandler but I'm getting "cannot access before initialization" errors when I try to
 //import them
 
+import {ChatInstance} from "./chatInstance";
+
 const canvasName = "canvas"
 const canvas = document.getElementById(canvasName);
 const numFacePoints = 468
 
 export let WebGLEngine = {
-    blueColor: [0.678, 0.847, .90],
-    pinkColor: [1, .752, .796],
+    personalColor: [0.678, 0.847, .90],
+    peerColor: [1, .752, .796],
     numFaceCoordinates: (numFacePoints * 3),
     delta: 0.0,   //WebGL Refresh Rate
     shaderProgram: null,
@@ -73,6 +75,18 @@ export let WebGLEngine = {
         WebGLEngine.gl.viewport(0, 0, WebGLEngine.gl.canvas.width, WebGLEngine.gl.canvas.height);
     },
 
+    setPersonalColor: function(hexColorString) {
+        console.log("in webgl engine ", hexColorString)
+        let RGB = WebGLEngine.hexToRGB(hexColorString);
+        WebGLEngine.personalColor = [RGB[0]/256, RGB[1]/256, RGB[2]/256]
+        WebGLEngine.populateColors();
+    },
+
+    setPeerColor: function(hexColorString) {
+        let RGB = WebGLEngine.hexToRGB(hexColorString);
+        ChatInstance.peerColor = [RGB[0]/256, RGB[1]/256, RGB[2]/256]
+    },
+
     updateOffset: function(dimension, isPositive) {
         let effectiveDelta = WebGLEngine.buttonDelta;
         if (!isPositive) {
@@ -93,8 +107,7 @@ export let WebGLEngine = {
 
     startWebGL: function(){
         let gl = canvas.getContext('experimental-webgl');
-        WebGLEngine.populateColorsWithColor(WebGLEngine.blueColor);
-        WebGLEngine.populateColorsWithColor(WebGLEngine.pinkColor);
+        WebGLEngine.populateColors();
 
         // vertex shader source code
         const vertCode =
@@ -151,9 +164,13 @@ export let WebGLEngine = {
         WebGLEngine.gl = gl //TODO: is this list needed
     },
 
-    populateColorsWithColor: function(color) {
+    populateColors: function () {
+        WebGLEngine.colors = []
         for (let i = 0; i < numFacePoints; i++) {
-            WebGLEngine.colors.push(...color)
+            WebGLEngine.colors.push(...WebGLEngine.personalColor)
+        }
+        for (let i = 0; i < numFacePoints; i++) {
+            WebGLEngine.colors.push(...WebGLEngine.peerColor)
         }
     },
 
