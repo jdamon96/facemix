@@ -112,6 +112,7 @@ html, body {
     color: #6CBA51;
     float: right;
     margin-right: 0;
+    opacity: 0.5; /* initializes as disabled, so setting this 0.5 opacity here avoids flickering on load*/
 }
 
 #new-chat {

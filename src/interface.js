@@ -317,13 +317,19 @@ function hidePopUpWindow(){
 export { showNoCameraAccessMessage };
 
 export function switchToChatUI(){
-    removeLobbyButtons();
-    addChatButtons();
+    if(!state.chat_mode){
+        removeLobbyButtons();
+        addChatButtons();
+    }
+    state.chat_mode = true;
 }
 
 export function switchToLobbyUI(){
-    removeChatButtons();
-    addLobbyButtons();
+    if(state.chat_mode){
+        removeChatButtons();
+        addLobbyButtons();
+    }
+    state.chat_mode = false;
 }
 
 export function beginLoader(){

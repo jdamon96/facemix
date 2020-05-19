@@ -157,6 +157,11 @@ io.on('connection', function(socket){
         socket.broadcast.to(msg.room).emit('candidate', msg.candidate);
     });
 
+    socket.on('end-chat', function(msg){
+        console.log('SERVER: one of the clients ended the chat');
+        socket.broadcast.to(msg.room).emit('end-chat', msg.room);
+    });
+
     // recieve 'offer' from client and relay to the other client in the room
     socket.on('offer', function(msg){
         console.log('SERVER: sending offer to client');

@@ -22,7 +22,7 @@ let renderIterator = 0;
 let accessedCamera = false;
 let videoStream;
 
-let remoteAudio;
+let remoteAudio = document.getElementById('remoteAudio');
 let localVideo;
 
 let socket = io(); //initializing the socket.io handle
@@ -148,6 +148,14 @@ function handleMediaAccess(){
         });
 }
 
+/* Handler function for when chat peer ends the current chat*/ 
+function handlePeerEndChat(){
+    console.log('Peer client ended chat');
+    // clearCanvas();
+    ChatInstance.resetChatInstance();
+    handleFindChat();
+}
+
 /**********************************
          Driver Functions
  **********************************/
@@ -180,19 +188,24 @@ function logProfiler() {
 }
 
 async function callModelRenderLoop(){
+    
     updateProfiler(0);
     let predictions = await model.estimateFaces(localVideo);
     updateProfiler(1);
-    userInterface.endLoader();
+    
     let facemesh;
 
     if (predictions.length > 0){
         facemesh = predictions[0].scaledMesh;
         meshHandler.updatePersonalMesh(facemesh);
         updateProfiler(2);
+
         if(ChatInstance.shouldSendFacemeshData){
             ChatInstance.sendFacemeshData(meshHandler.getPersonalMeshForTransit());
         }
+
+        userInterface.endLoader();
+
         meshHandler.render();
         updateProfiler(3);
     }
@@ -205,20 +218,18 @@ async function callModelRenderLoop(){
 }
 
 function main() {
-    loadModel();
+    /* give ChatInstance access to the client socket*/
     ChatInstance.setSocket(socket);
-    socket.on('message', handleMessage);// Add message event handler for client socket
-    socket.on('offer', ChatInstance.onOffer); // Add an offer handler if this socket recieves an RTCPeerConnection offer from another client */
+
+    /* add initial socket event handlers */ 
+    socket.on('message', handleMessage);
+    socket.on('offer', ChatInstance.onOffer);
+    socket.on('end-chat', handlePeerEndChat); 
 
     /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
     const faceScanButton = document.getElementById('camera-access');
     const findChatButton = document.getElementById('find-a-chat');
-    const endChatButton = document.getElementById('end-chat');
-
-    /* Video HTML element to hold the media stream; this element is invisible on the page (w/ 'visibility' set to hidden) */
-    var localVideo;
-    remoteAudio = document.getElementById('remoteAudio');
-    
+    const endChatButton = document.getElementById('end-chat');  
 
     /* Disable 'find chat' button if no access to client media feed
     * (can't join chat if you don't have your camera on) */
@@ -230,6 +241,9 @@ function main() {
     findChatButton.addEventListener('click', handleFindChat);
     endChatButton.addEventListener('click', handleEndChat);
     faceScanButton.addEventListener('click', handleMediaAccess);
+
+    /* load the tensorflow facemesh model */
+    loadModel();
 }
 
 

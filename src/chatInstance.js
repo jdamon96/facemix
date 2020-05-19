@@ -33,13 +33,31 @@ export let ChatInstance = {
         ChatInstance.initiator = initiator
     },
 
+    resetChatInstance: function(){
+        console.log('Resetting chat instance');
+        ChatInstance.peerConnnection = null;
+        ChatInstance.connected = false;
+        ChatInstance.shouldSendFacemeshData = false;
+        ChatInstance.currentRoom = null;
+        ChatInstance.initiator = false;
+        ChatInstance.outgoingMesh = null;
+        ChatInstance.localICECandidates = [];
+    },
+
     endCurrentChat: function(){
         //if there is a peerConnection
         if(ChatInstance.peerConnection != null){
+            // let the chat peer know that you've ended the call
+            ChatInstance.socket.emit('end-chat', {
+                room: ChatInstance.currentRoom
+            });
+
             // close the current peerConnection
             ChatInstance.peerConnection.close();
-            // remove reference to closed peerConnection
-            ChatInstance.peerConnnection = null;
+
+            // reset ChatInstance state variables
+            ChatInstance.resetChatInstance();
+            
         }
     },
 
@@ -101,7 +119,7 @@ export let ChatInstance = {
                     return;
                 }
             } else { // Outgoing buffer amount confirmed not too full - send it
-                console.log("Happy case")
+                //console.log("Happy case")
                 ChatInstance.dataChannel.send(transitMesh);
             }
         } else {
@@ -118,7 +136,7 @@ export let ChatInstance = {
 
         ChatInstance.dataChannel.addEventListener('open', event => {
             ChatInstance.connected = true
-            ChatInstance.shouldSendFacemeshData = true
+            ChatInstance.shouldSendFacemeshData = true;
             ChatInstance.bufferFullThreshold = 81920; //Slightly larger than the size of one facemesh send (~80k bytes)
 
             // Browser support found here https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/bufferedAmountLowThreshold
