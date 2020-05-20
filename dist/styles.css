@@ -29,6 +29,10 @@ body {
     left: 0;
 }
 
+.popup {
+    z-index: 10;
+}
+
 
 #app-container {
     /*
@@ -39,7 +43,6 @@ body {
     margin-left: -1px;
 
     min-height: 100%;
-    z-index: 10;
     height: 100%;
     display: grid;
     grid-template-rows: 75px 10fr 75px;
@@ -364,6 +367,7 @@ hr {
     position: relative;
     overflow: hidden;
     max-height: 100%;
+    z-index: 5;
 }
 
 #canvas {
