@@ -2,8 +2,59 @@ let state = {
     media_access: false,
     popup_active: false,
     chat_mode: false,
-    mobile_DOM: true
+    mobile_DOM: true,
+    population_display: false
 }
+
+/* Get access to HTML elements */
+const header = document.getElementById('header');
+const title = document.getElementById('title');
+const aboutButton = document.getElementById('about');
+const faceScanButton = document.getElementById('camera-access');
+const colorPickerButton = document.getElementById('color-picker-container');
+const findChatButton = document.getElementById('find-a-chat');
+
+const newChatButton = document.getElementById('new-chat');
+const endChatButton = document.getElementById('end-chat');
+
+const overlay = document.getElementById('overlay');
+const aboutPopUp = document.getElementById('about-message');
+const noCamAccessPopUp = document.getElementById('no-camera-access-message');
+
+const loader = document.getElementById('loader');
+
+/* necessary color picker code */
+const colorPicker = document.getElementById('color-picker');
+var colorDiv = document.getElementById("color-val");
+colorPicker.onchange = function() {
+    colorDiv.style.color = colorPicker.value;
+}
+
+/* grouping of html elements */
+let lobbyButtons = [title, aboutButton, faceScanButton, findChatButton];
+let chatModeButtons = [endChatButton, newChatButton];
+let chatButtons = [findChatButton, newChatButton, endChatButton];
+
+window.addEventListener('click', function(e){
+    if(state.popup_active && !e.target.classList.contains('popup')){
+        if(e.target.id == 'about-span'|| e.target.id == 'about'){
+        
+        } else {
+            hidePopUpWindow();
+        }
+    }
+});
+
+title.addEventListener('dblclick', function(e){
+    if(!state.population_display){
+        showPopulationCounter();
+        state.population_display = true;
+    }
+    else {
+        hidePopulationCounter();
+        state.population_display = false;
+    }
+});
 
 document.addEventListener("DOMContentLoaded", function(event){
     let mediaQueriesList = [
@@ -26,40 +77,17 @@ document.addEventListener("DOMContentLoaded", function(event){
     }
 });
 
+/* Helper functions */ 
 
-/* Get access to HTML elements */
-const header = document.getElementById('header');
-
-const title = document.getElementById('title');
-const aboutButton = document.getElementById('about');
-const faceScanButton = document.getElementById('camera-access');
-const colorPickerButton = document.getElementById('color-picker-container');
-const findChatButton = document.getElementById('find-a-chat');
-
-const newChatButton = document.getElementById('new-chat');
-const endChatButton = document.getElementById('end-chat');
-
-const overlay = document.getElementById('overlay');
-const aboutPopUp = document.getElementById('about-message');
-const noCamAccessPopUp = document.getElementById('no-camera-access-message');
-
-const loader = document.getElementById('loader');
-
-
-/* color picker code */
-const colorPicker = document.getElementById('color-picker');
-var colorDiv = document.getElementById("color-val");
-colorPicker.onchange = function() {
-    colorDiv.style.color = colorPicker.value;
+function showPopulationCounter(){
+    let populationCounter = document.getElementById('population-counter');
+    populationCounter.style.display = 'block';
 }
 
-
-/* grouping of html elements */
-let lobbyButtons = [title, aboutButton, faceScanButton, findChatButton];
-let chatModeButtons = [endChatButton, newChatButton];
-let chatButtons = [findChatButton, newChatButton, endChatButton];
-
-/* Helper functions */ 
+function hidePopulationCounter(){
+    let populationCounter = document.getElementById('population-counter');
+    populationCounter.style.display = 'none';
+}
 
 function onAboutEnterHandler(event){
     if(!state.popup_active){
@@ -110,26 +138,9 @@ function onFaceScanLeaveHandler(event){
     event.target.style.backgroundImage = 'url(\'./assets/face-scan-icon.png\')';
 }
 
-
-
-header.addEventListener('click', headerClickHandler);
-
-
 aboutButton.addEventListener('click', aboutHandler);
 
-
-overlay.addEventListener('click', containerClickHandler);
 /* Define button onClick handler functions */
-
-function headerClickHandler(event){
-    const target_id = event.target.getAttribute('id');
-    console.log(target_id);
-    if(target_id == 'about-span'|| target_id == 'about'){
-        
-    } else {
-        hidePopUpWindow();
-    }
-}
 
 function aboutHandler(event){
     if(state.popup_active){
@@ -139,12 +150,6 @@ function aboutHandler(event){
     else {
         //event.target.style.backgroundColor = 'transparent';  
         showAboutWindow();
-    }
-}
-
-function containerClickHandler(event){
-    if(state.popup_active && !event.target.classList.contains('popup')){
-        hidePopUpWindow();
     }
 }
 
@@ -307,7 +312,6 @@ function showNoCameraAccessMessage(){
 
 function hidePopUpWindow(){
     /* un-darken the window background */
-    console.log('hiding popup');
     overlay.style.display = 'none';
     state.popup_active = false; 
 

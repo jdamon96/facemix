@@ -27,6 +27,7 @@ let localVideo;
 let hasSentColor = false;
 
 let socket = io(); //initializing the socket.io handle
+
 setWasmPath(wasmPath);
 tf.setBackend('wasm').then(() => {main()});
 
@@ -34,20 +35,32 @@ tf.setBackend('wasm').then(() => {main()});
             Event Handlers
 **********************************/
 
-// Handler function for receiving 'message' events emitted by other sockets
+// Handler function for receiving 'message' events
 function handleMessage(message){
 
     switch(message.title){
-
-        case 'initiator-status':
-            ChatInstance.setInitiator(message.content.initiator);
-            break;
 
         case 'text-message':
             console.log('New text message:');
             console.log(message.content)
             break;
 
+        case 'initiator-status':
+            ChatInstance.setInitiator(message.content.initiator);
+            break;
+
+        // triggers 'initiating' client to make their peer connection
+            // in createPeerConnection(), initiator creates the data channel and offers
+        case 'room-ready':
+            console.log('Room is ready for initiating RTCPeerConnection between clients');
+            if(ChatInstance.initiator){
+                ChatInstance.createPeerConnection();
+            }
+            break;
+
+        // triggers 'non-initiating' client to make their peer connection
+            // in createPeerConnection(), non-initiator listens for data channel
+            // creation and doesn't create offers (waits to recieve offer and create answer)
         case 'room-joined':
             ChatInstance.setRoom(message.content.roomname);
             if(!ChatInstance.initiator){
@@ -55,13 +68,16 @@ function handleMessage(message){
             }
             break;
 
-        case 'room-ready':
-            console.log('Room is ready for initiating RTCPeerConnection between clients');
-            if(ChatInstance.initiator){
-                ChatInstance.createPeerConnection();
-            }
+        case 'population-update':
+            let serverPopulation = message.content.population;
+            updatePopulationCounter(serverPopulation);
             break;
     }
+}
+
+function updatePopulationCounter(population){
+    let populationCounter = document.getElementById('population-counter');
+    populationCounter.innerHTML = 'Number of people online: ' + population;
 }
 
 // Handler function for receiving 'roomInvitation' events emitted by other sockets

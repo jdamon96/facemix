@@ -13,9 +13,19 @@ var twilio = require('twilio')(
 
 app.use(express.static('dist'));
 
+let serverPopulation = 0;
 let waitlist = [];
 
 io.on('connection', function(socket){
+    console.log(serverPopulation);
+    serverPopulation = (serverPopulation + 1);
+
+    io.sockets.emit('message', {
+        title: 'population-update',
+        content: {
+            population: serverPopulation
+        }
+    });
 
     // find a chat partner
     socket.on('join', function(roomname){
@@ -172,6 +182,19 @@ io.on('connection', function(socket){
     socket.on('answer', function(msg){
         console.log('SERVER: sending answer to client');
         socket.broadcast.to(msg.room).emit('answer', msg.answer);
+    });
+
+    socket.on('disconnect', function(){
+
+        serverPopulation = (serverPopulation - 1);
+
+        io.sockets.emit('message', {
+            title: 'population-update',
+            content: {
+                population: serverPopulation
+            }
+        });
+
     });
 
 });

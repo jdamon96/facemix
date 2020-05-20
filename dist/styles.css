@@ -10,6 +10,14 @@ body {
     overflow: hidden;
 }
 
+#population-counter {
+    position: fixed;
+    display: none;
+    color: #4988E6;
+    top: 0;
+    left: 45%;
+}
+
 .disable-select {
     user-select: none; /* supported by Chrome and Opera */
     -webkit-user-select: none; /* Safari */
