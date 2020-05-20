@@ -36,11 +36,17 @@
         <div id="loader">
         </div>
         <div id="header">
-            <h1 id= "title" class="disable-select"> Facemix </h1>
-          	
-            <button class="header-button" id="camera-access" class="disable-select"></button>
 
-            <button class="header-button" id="about" class="disable-select"> 
+            <h1 id= "title" class="disable-select"> Facemix </h1>
+
+            <button class="header-button disable-select" id="camera-access"></button>
+
+            <div id="color-picker-container">
+              <input type="color" class="header-button" id="color-picker" value="#1140B7" class="field-radio">
+              <span class="container" id="color-val"></span>
+            </div>
+            
+            <button class="header-button disable-select" id="about"> 
               <span class="disable-select" id="about-span">About</span> 
             </button>
 
@@ -48,11 +54,6 @@
         </div>
 
         <div id="page-content">
-          <label class="color-picker">
-            <span>
-                <input type=color id="color-picker" value="#add9e6">
-            </span>
-          </label>
           <div id="canvas-container">
             <canvas id="canvas" class="disable-select"></canvas>
           </div>

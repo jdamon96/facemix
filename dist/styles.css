@@ -112,6 +112,33 @@ body {
     background-size: 39px 39px;
 }
 
+#color-picker-container {
+    float: right;
+}
+
+#color-picker-container {
+    display: none;
+}
+
+#color-picker{
+    border: 1px solid black;
+    border-radius: 100%;
+    padding: 0px;
+    margin-top: 25px;
+    height: 30px;
+    width: 30px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+#color-picker::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+#color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 100%;
+}
+
 #find-a-chat {
     border: 1px solid #6CBA51;
     color: #6CBA51;
@@ -357,41 +384,4 @@ hr {
 #remoteAudio {
     position: absolute;
     visibility: hidden;
-}
-
-label.color-picker {
-    width: 20px; /* Width of color picker */
-    padding: 10px; /* Space between outer border and color picker */
-    background: #fff; /* Color between outer border and color picker */
-    border-radius: 100%;
-    display: block; /* Contain color picker within label */
-}
-
-label.color-picker > span {
-    border: none;
-    display: block; /* Contain color picker within span */
-}
-
-label.color-picker > span > input[type=color] {
-    height: 20px; /* Height of color picker */
-    display: block; /* Avoids space above/below color picker */
-    width: 100%; /* Fill available horizontal space */
-    padding: 0px; /* Remove space around color picker in Chrome */
-}
-
-/* Chrome styles */
-label.color-picker > span > input[type=color]::-webkit-color-swatch-wrapper {
-    padding: 0; /* Remove browser's padding around color picker */
-}
-label.color-picker > span > input[type=color]::-webkit-color-swatch {
-    border: none; /* Remove browser's border around color in color picker */
-}
-
-/* Firefox styles */
-label.color-picker > span > input[type=color]::-moz-color-swatch {
-    border: none; /* Remove browser's border around color in color picker */
-}
-label.color-picker > span > input[type=color]::-moz-focus-inner {
-    border: none; /* Remove browser's padding around color in color picker */
-    padding: 0; /* Remove browser's padding around color in color picker */
 }

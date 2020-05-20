@@ -33,6 +33,7 @@ const header = document.getElementById('header');
 const title = document.getElementById('title');
 const aboutButton = document.getElementById('about');
 const faceScanButton = document.getElementById('camera-access');
+const colorPickerButton = document.getElementById('color-picker-container');
 const findChatButton = document.getElementById('find-a-chat');
 
 const newChatButton = document.getElementById('new-chat');
@@ -43,13 +44,20 @@ const aboutPopUp = document.getElementById('about-message');
 const noCamAccessPopUp = document.getElementById('no-camera-access-message');
 
 const loader = document.getElementById('loader');
+
+
+/* color picker code */
 const colorPicker = document.getElementById('color-picker');
+var colorDiv = document.getElementById("color-val");
+colorPicker.onchange = function() {
+    colorDiv.style.color = colorPicker.value;
+}
 
 
 /* grouping of html elements */
 let lobbyButtons = [title, aboutButton, faceScanButton, findChatButton];
 let chatModeButtons = [endChatButton, newChatButton];
-let chatButtons = [findChatButton, newChatButton, endChatButton, colorPicker];
+let chatButtons = [findChatButton, newChatButton, endChatButton];
 
 /* Helper functions */ 
 
@@ -361,6 +369,10 @@ export function enableNewChatButton(){
 export function disableNewChatButton(){
     newChatButton.disabled = true;
     newChatButton.style.opacity = 0.5;
+}
+
+export function showColorPickerButton(){
+    colorPickerButton.style.display = 'block';
 }
 
 export function removeFaceScanButton(){

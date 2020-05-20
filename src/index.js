@@ -119,11 +119,11 @@ function handleEndChat(){
 
 // Handler for a new color selection
 function handleColorChange(){
-    let color = document.getElementById('color-picker').value
+    let color = document.getElementById('color-picker').value;
     if (ChatInstance.shouldSendFacemeshData) {
         ChatInstance.sendFacemeshData("color," + color);
     }
-    meshHandler.setPersonalColor(color)
+    meshHandler.setPersonalColor(color);
 }
 
 // Handler function for clicking the 'Face-scan' button
@@ -150,6 +150,7 @@ function handleMediaAccess(){
             localVideo.srcObject = videoStream; // this will fire the 'loadeddata' event on the localVideo object
             localVideo.play();
             userInterface.removeFaceScanButton();
+            userInterface.showColorPickerButton();
         })
         .catch(error => {
             userInterface.endLoader();
@@ -274,6 +275,10 @@ function main() {
     endChatButton.addEventListener('click', handleEndChat);
     faceScanButton.addEventListener('click', handleMediaAccess);
     colorPicker.addEventListener('change', handleColorChange);
+
+    /* set init facemesh color to init color picker value*/
+    let color = colorPicker.value;
+    meshHandler.setPersonalColor(color);
 
     /* load the tensorflow facemesh model */
     loadModel();
