@@ -4,7 +4,7 @@
 export const canvasName = "canvas"
 export const canvas = document.getElementById(canvasName);
 const decimalPrecision = 3 //Number of places to round decimals in model output to
-
+const canvasContainer = document.getElementById('canvas-container');
 import {WebGLEngine} from "./webGLEngine";
 import {CanvasEngine} from "./canvasEngine";
 
@@ -31,13 +31,11 @@ export function updatePeerMesh(transitMesh) {
 
 export function resizeCanvas() {
     // Lookup the size the browser is displaying the canvas.
-    let canvasContainer = document.getElementById('canvas-container');
     let displayWidth  = canvasContainer.offsetWidth;
     let displayHeight = canvasContainer.offsetHeight;
 
     // Check if the canvas is not the same size.
-    if (canvas.width  != displayWidth || 
-        canvas.height != displayHeight) {
+    if (canvas.width != displayWidth || canvas.height != displayHeight) {
 
         let widthDiff = displayWidth - canvas.width;
         let heightDiff = displayHeight - canvas.height;
@@ -46,8 +44,6 @@ export function resizeCanvas() {
         // Make the canvas the same size
         canvas.width  = displayWidth;
         canvas.height = displayHeight;
-    }
-    if (graphicsEngine.isGlInitialized) {
         graphicsEngine.graphicsResizeOccurred();
     }
 }
@@ -73,7 +69,7 @@ export function clearPeerMesh() {
 }
 
 /**********************************************************************/
-/*******************SHARED GRAPHICS ENGINE FUNCTINOS*******************/
+/*******************SHARED GRAPHICS ENGINE FUNCTIONS*******************/
 /**********************************************************************/
 
 function handleKeyPress(e) {

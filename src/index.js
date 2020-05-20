@@ -241,8 +241,8 @@ async function callModelRenderLoop(){
     }
     renderIterator++;
     if (renderIterator % 100 == 0) { 
-        //logProfiler();
-        //logCanvasDimensions();
+        logProfiler();
+        logCanvasDimensions();
     }
 
     requestAnimationFrame(callModelRenderLoop);

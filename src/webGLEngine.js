@@ -23,7 +23,7 @@ export let WebGLEngine = {
     isGlInitialized: false,
     buttonOffsets: {'x': -0.5, 'y': 0.5, 'z': 1}, //Scalars to move the rendering based on key position
     buttonDelta: 0.1, //Amount a key press moves you within the canvas coordinate system
-    buttonBounds: {x: {max: 1.0, min: -1.0}, y:{max: 1.0, min:-1.0}, z:{max:1.5, min:0.3}},
+    buttonBounds: {x: {max: 1.5, min: -1.0}, y:{max: 1.5, min:-1.0}, z:{max:1.5, min:0.3}},
 
     getPersonalMeshForTransit: function() {
         let peerTransitMesh = []
@@ -72,10 +72,9 @@ export let WebGLEngine = {
     },
 
     graphicsResizeOccurred: function(){
-        if (!WebGLEngine.isGlInitialized) {
-            WebGLEngine.startWebGL();
+        if (WebGLEngine.isGlInitialized) {
+            WebGLEngine.gl.viewport(0, 0, WebGLEngine.gl.canvas.width, WebGLEngine.gl.canvas.height);
         }
-        WebGLEngine.gl.viewport(0, 0, WebGLEngine.gl.canvas.width, WebGLEngine.gl.canvas.height);
     },
 
     setPersonalColor: function(hexColorString) {

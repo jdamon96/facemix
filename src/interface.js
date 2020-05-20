@@ -1,4 +1,4 @@
-var state = {
+let state = {
     media_access: false,
     popup_active: false,
     chat_mode: false,

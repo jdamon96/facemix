@@ -3,16 +3,16 @@ const canvas = document.getElementById(canvasName);
 const pageContent = document.getElementById('page-content');
 
 const numFacePoints = 468
-const decimalPrecision = 2 //Number of places to round decimals in model output to
+const decimalPrecision = 2 // Number of places to round decimals in model output to
 
 export let CanvasEngine = {
     canvasContext: null,
     isCanvasInitialized: null,
     numFaceCoordinates: numFacePoints * 2,
-    vertices: [],
-    buttonOffsets: {'x': -0.5, 'y': 0.5, 'z': 1}, //Scalars to move the rendering based on key position
-    buttonDelta: 50.0, //Amount a key press moves you within the canvas coordinate system (for wasd)
-    zButtonDelta: 0.1, //Amount a key press scales your image (for 'i' and 'k')
+    unscaledVertices: [],
+    buttonOffsets: {'x': -0.5, 'y': 0.5, 'z': 1}, // Scalars to move the rendering based on key position
+    buttonDelta: 50.0, // Amount a key press moves you within the canvas coordinate system (for wasd)
+    zButtonDelta: 0.1, // Amount a key press scales your image (for 'i' and 'k')
     buttonBounds: {x: {max: 1.0, min: -1.0}, y:{max: 1.0, min:-1.0}, z:{max:1.5, min:0.3}},
     personalColor: '#32EEDB',
     peerColor: '#FF1493',
@@ -22,10 +22,10 @@ export let CanvasEngine = {
         const midLine = canvas.width / 2
         let peerTransitMesh = []
         for (let i = 0; i < CanvasEngine.numFaceCoordinates; i += 2) {
-            peerTransitMesh[i] = (midLine - (CanvasEngine.vertices[i] - midLine)) / canvas.width
-            peerTransitMesh[i+1] = CanvasEngine.vertices[i+1] / canvas.height
+            peerTransitMesh[i] = (midLine - (CanvasEngine.unscaledVertices[i] - midLine)) / canvas.width
+            peerTransitMesh[i+1] = CanvasEngine.unscaledVertices[i+1] / canvas.height
         }
-        return peerTransitMesh
+        return CanvasEngine.truncateMesh(peerTransitMesh);
     },
 
     updatePersonalMesh: function(rawFacemesh) {
@@ -37,24 +37,24 @@ export let CanvasEngine = {
         const translatedMesh = CanvasEngine.translateMesh(twoDimensionalMesh);
         const updatedVertices = CanvasEngine.truncateMesh(translatedMesh);
 
-        if (CanvasEngine.vertices.length > CanvasEngine.numFaceCoordinates) {
-            for (let i = CanvasEngine.numFaceCoordinates; i < CanvasEngine.vertices.length; i++) {
-                updatedVertices[i] = CanvasEngine.vertices[i]
+        if (CanvasEngine.unscaledVertices.length > CanvasEngine.numFaceCoordinates) {
+            for (let i = CanvasEngine.numFaceCoordinates; i < CanvasEngine.unscaledVertices.length; i++) {
+                updatedVertices[i] = CanvasEngine.unscaledVertices[i]
             }
         }
-        CanvasEngine.vertices = updatedVertices
+        CanvasEngine.unscaledVertices = updatedVertices
     },
 
     updatePeerMesh: function(transitMesh) {
         let updatedVertices = []
         for (let i = 0; i < CanvasEngine.numFaceCoordinates; i++) {
-            updatedVertices[i] = CanvasEngine.vertices[i]
+            updatedVertices[i] = CanvasEngine.unscaledVertices[i]
         }
         for (let j = 0; j < transitMesh.length; j+=2) {
             updatedVertices.push(transitMesh[j] * canvas.width)
             updatedVertices.push(transitMesh[j + 1] * canvas.height)
         }
-        CanvasEngine.vertices = updatedVertices
+        CanvasEngine.unscaledVertices = updatedVertices
     },
 
     setPersonalColor: function(color) {
@@ -66,11 +66,11 @@ export let CanvasEngine = {
     },
 
     clearPersonalMesh: function() {
-        CanvasEngine.vertices = [];
+        CanvasEngine.unscaledVertices = [];
     },
 
     clearPeerMesh: function() {
-        CanvasEngine.vertices.length = CanvasEngine.numFaceCoordinates;
+        CanvasEngine.unscaledVertices.length = CanvasEngine.numFaceCoordinates;
     },
 
 
@@ -78,8 +78,9 @@ export let CanvasEngine = {
         if (!CanvasEngine.isCanvasInitialized) {
             CanvasEngine.setupCanvas()
         }
-        console.log("render")
-        CanvasEngine.drawObjects(CanvasEngine.vertices)
+       // const renderVertices = CanvasEngine.scaleMeshForLocalCanvas(CanvasEngine.unscaledVertices);
+       // CanvasEngine.drawObjects(renderVertices)
+        CanvasEngine.drawObjects(CanvasEngine.unscaledVertices)
     },
 
     drawObjects: function(renderVertices) {
@@ -101,7 +102,12 @@ export let CanvasEngine = {
         }
     },
 
-    graphicsResizeOccurred: function(){},
+    graphicsResizeOccurred: function(){
+        CanvasEngine.setBounds();
+
+        CanvasEngine.canvasContext.translate(canvas.width, 0);
+        CanvasEngine.canvasContext.scale(-1, 1);  //Inverses the coordinate system so greatest val is leftmost. Makes handling an inverted mesh intuitive
+    },
 
     updateOffset: function(dimension, isPositive) {
         let effectiveDelta = dimension == "z" ? CanvasEngine.zButtonDelta : CanvasEngine.buttonDelta
@@ -120,33 +126,28 @@ export let CanvasEngine = {
     setupCanvas: function() {
         console.log('Setting up canvas');
         CanvasEngine.canvasContext = canvas.getContext('2d');
-
-        // Our canvas must cover full height of screen, regardless of the resolution
-        const height = pageContent.offsetHeight;
-
-        /*
-        * Canvas.height/width are the logic canvas dimensions used for drawing
-        * these are diff from canvas.style.height/width CSS attributes
-        * if you DON'T set the CSS attributes, the intrinsic size of the canvas will be used as the display size
-        * if you DO set the CSS attributes, and they differ from the canvas dimensions, the content will be scaled in browser
-        */
-        canvas.width = height;
-        canvas.height = height;
-
-        canvas.style.width = height+'px';
-        canvas.style.height = height+'px';
+        CanvasEngine.setBounds();
 
         CanvasEngine.canvasContext.translate(canvas.width, 0);
         CanvasEngine.canvasContext.scale(-1, 1); //Inverses the coordinate system so greatest val is leftmost. Makes handling an inverted mesh intuitive
         CanvasEngine.canvasContext.lineWidth = 0.5;
 
-        CanvasEngine.buttonOffsets['x'] =  - (canvas.width) / 6
+        CanvasEngine.buttonOffsets['x'] =  0;
+
+        CanvasEngine.isCanvasInitialized = true
+    },
+    
+    setBounds: function() {
+        canvas.width = pageContent.offsetWidth;
+        canvas.height = pageContent.offsetHeight;
+
+        canvas.style.width = pageContent.offsetWidth+'px';
+        canvas.style.height = pageContent.offsetHeight+'px';
 
         CanvasEngine.buttonBounds.x.max = canvas.width / 2
         CanvasEngine.buttonBounds.x.min = - (canvas.width) / 2
         CanvasEngine.buttonBounds.y.max = canvas.height / 2
         CanvasEngine.buttonBounds.y.min = - canvas.height / 2
-        CanvasEngine.isCanvasInitialized = true
     },
 
     /**************************************
@@ -172,6 +173,19 @@ export let CanvasEngine = {
             twoDMesh.push(threeDimensionalMesh[i+1])
         }
         return twoDMesh;
-    }
+    },
 
+    // Expects mesh that is completely ready for render other than local canvas adjustments
+    scaleMeshForLocalCanvas: function(unscaledMesh) {
+        const scaledMesh = []
+        const xScalar = canvas.width / canvas.height;
+        for (let i = 0; i < unscaledMesh.length; i++) {
+            if ((i % 2) === 0) {
+                scaledMesh.push(unscaledMesh[i] * xScalar);
+            } else {
+                scaledMesh.push(unscaledMesh[i]);
+            }
+        }
+        return scaledMesh;
+    }
 }
