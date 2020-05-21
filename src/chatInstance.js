@@ -4,8 +4,6 @@ import Chat from "twilio/lib/rest/Chat";
 
 export let ChatInstance = {
     peerConnection: null,
-    connected: false,
-    shouldSendFacemeshData: false,
     localICECandidates: [],
     socket: null,
     currentRoom: null,
@@ -14,6 +12,7 @@ export let ChatInstance = {
     initiator: false,
     browserSupportsBufferEvents: false,
     browserSupportsBufferedAmount: false,
+    connected: false,
     outgoingMesh: null,
 
     setSocket: function(socket) {
@@ -32,11 +31,17 @@ export let ChatInstance = {
         ChatInstance.initiator = initiator
     },
 
+    //Entry Point
+    createPeerConnection: function(){
+        ChatInstance.socket.on('token', ChatInstance.onToken(ChatInstance.audioStream));
+        ChatInstance.socket.on('error', ChatInstance.onError);
+        ChatInstance.socket.emit('token');
+    },
+
     resetChatInstance: function(){
         console.log('Resetting chat instance');
         ChatInstance.peerConnnection = null;
         ChatInstance.connected = false;
-        ChatInstance.shouldSendFacemeshData = false;
         ChatInstance.currentRoom = null;
         ChatInstance.initiator = false;
         ChatInstance.outgoingMesh = null;
@@ -57,6 +62,10 @@ export let ChatInstance = {
             ChatInstance.resetChatInstance();
             
         }
+    },
+
+    isDataChannelOpen() {
+        return ChatInstance.dataChannel != null && ChatInstance.dataChannel.readyState == "open"
     },
 
     onOffer: function(offer){
@@ -83,8 +92,7 @@ export let ChatInstance = {
     },
 
     createAnswer: function(){
-        ChatInstance.connected = true;
-
+        ChatInstance.connected = true
         ChatInstance.peerConnection.createAnswer()
             .then(function(answer){
                 ChatInstance.peerConnection.setLocalDescription(answer);
@@ -100,11 +108,11 @@ export let ChatInstance = {
 
     lowSendBufferAmount: function(){
         ChatInstance.dataChannel.removeEventListener('bufferedamountlow', ChatInstance.lowSendBufferAmount)
-        ChatInstance.dataChannel.send(ChatInstance.outgoingMesh)
+        ChatInstance.safeSend(ChatInstance.outgoingMesh)
     },
 
-    sendFacemeshData: function(transitMesh){
-        ChatInstance.outgoingMesh = transitMesh;
+    sendData: function(data){
+        ChatInstance.outgoingMesh = data;
         if (ChatInstance.browserSupportsBufferedAmount) {
             if (ChatInstance.dataChannel.bufferedAmount > ChatInstance.bufferFullThreshold) { // Outgoing buffer amount confirmed too full
 
@@ -116,13 +124,21 @@ export let ChatInstance = {
                     return;
                 }
             } else { // Outgoing buffer amount confirmed not too full - send it
-                ChatInstance.dataChannel.send(transitMesh);
+                ChatInstance.safeSend(data)
             }
         } else {
             // We have no visibility into the outgoing buffer amount - just guess and send 40% of the time
             if (Math.random() > 0.6) {
-                ChatInstance.dataChannel.send(transitMesh)
+                ChatInstance.safeSend(data)
             }
+        }
+    },
+
+    safeSend: function(data) {
+        try {
+            ChatInstance.dataChannel.send(data);
+        } catch (e) {
+            console.log("Failed to send with error", e)
         }
     },
 
@@ -131,8 +147,6 @@ export let ChatInstance = {
         ChatInstance.dataChannel = channel;
 
         ChatInstance.dataChannel.addEventListener('open', event => {
-            ChatInstance.connected = true
-            ChatInstance.shouldSendFacemeshData = true;
             ChatInstance.bufferFullThreshold = 81920; //Slightly larger than the size of one facemesh send (~80k bytes)
 
             // Browser support found here https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/bufferedAmountLowThreshold
@@ -159,7 +173,7 @@ export let ChatInstance = {
                 for (let i = 0; i < incomingData.length; i++) {
                     incomingData[i] = parseFloat(incomingData[i])
                 }
-                if (ChatInstance.shouldSendFacemeshData) {
+                if (ChatInstance.isDataChannelOpen()) {
                     meshHandler.updatePeerMesh(incomingData);
                 }
             }
@@ -173,12 +187,6 @@ export let ChatInstance = {
     onError: function(error){
         console.log('Recieved error from server:');
         console.log(error);
-    },
-
-    createPeerConnection: function(){
-        ChatInstance.socket.on('token', ChatInstance.onToken(ChatInstance.audioStream));
-        ChatInstance.socket.on('error', ChatInstance.onError);
-        ChatInstance.socket.emit('token');
     },
 
     onToken: function(){
@@ -226,9 +234,7 @@ export let ChatInstance = {
 
     onAnswer: function(answer){
         ChatInstance.peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
-
-        ChatInstance.connected = true;
-
+        ChatInstance.connected = true
         // Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
         ChatInstance.localICECandidates.forEach(candidate => {
             ChatInstance.socket.emit('candidate', {
@@ -243,13 +249,14 @@ export let ChatInstance = {
 
     onIceCandidate: function(event){
         if(event.candidate){
-            if(ChatInstance.connected){
+            if(ChatInstance.connected) {
                 console.log('Generated candidate');
                 ChatInstance.socket.emit('candidate', {
                     room: ChatInstance.currentRoom,
                     candidate: JSON.stringify(event.candidate)
                 });
             } else {
+                console.log("Chat instance wasn't connected in onIceCandidate")
                 ChatInstance.localICECandidates.push(event.candidate)
             }
         }

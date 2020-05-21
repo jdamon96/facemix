@@ -132,7 +132,7 @@ function handleRoomJoin(data){
 
 // Handler function for clicking the 'Find-Chat' button
 function handleFindChat(){
-    console.log('Finding chat');
+    console.log('Finding new chat partner');
     // switch to chat UI after receiving first data msg from peer client
     userInterface.switchToChatUI();
     // disable 'New Chat' button because not in a chat yet
@@ -158,8 +158,8 @@ function handleEndChat(){
 // Handler for a new color selection
 function handleColorChange(){
     let color = document.getElementById('color-picker').value;
-    if (ChatInstance.shouldSendFacemeshData) {
-        ChatInstance.sendFacemeshData("color," + color);
+    if (ChatInstance.isDataChannelOpen()) {
+        ChatInstance.sendData("color," + color);
     }
     meshHandler.setPersonalColor(color);
 }
@@ -253,7 +253,6 @@ function logProfiler() {
 }
 
 async function callModelRenderLoop(){
-
     updateProfiler(0);
     let predictions = await model.estimateFaces(localVideo);
     updateProfiler(1);
@@ -265,14 +264,13 @@ async function callModelRenderLoop(){
         meshHandler.updatePersonalMesh(facemesh);
         updateProfiler(2);
 
-        if(ChatInstance.shouldSendFacemeshData){
-            ChatInstance.sendFacemeshData(meshHandler.getPersonalMeshForTransit());
+        if(ChatInstance.isDataChannelOpen()){
+            ChatInstance.sendData(meshHandler.getPersonalMeshForTransit());
             if (!hasSentColor) {
                 handleColorChange()
                 hasSentColor = true;
             }
         }
-
         userInterface.endLoader();
         meshHandler.resizeCanvas();
         meshHandler.render();
