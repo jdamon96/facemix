@@ -37,10 +37,6 @@ export function resizeCanvas() {
     // Check if the canvas is not the same size.
     if (canvas.width != displayWidth || canvas.height != displayHeight) {
 
-        let widthDiff = displayWidth - canvas.width;
-        let heightDiff = displayHeight - canvas.height;
-        console.log('width diff: ' + widthDiff);
-        console.log('height diff: ' + heightDiff);
         // Make the canvas the same size
         canvas.width  = displayWidth;
         canvas.height = displayHeight;

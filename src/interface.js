@@ -1,5 +1,6 @@
 let state = {
     media_access: false,
+    facemesh_on: false,
     popup_active: false,
     chat_mode: false,
     mobile_DOM: true,
@@ -10,7 +11,7 @@ let state = {
 const header = document.getElementById('header');
 const title = document.getElementById('title');
 const aboutButton = document.getElementById('about');
-const faceScanButton = document.getElementById('camera-access');
+const faceScanButton = document.getElementById('face-scan');
 const colorPickerButton = document.getElementById('color-picker-container');
 const findChatButton = document.getElementById('find-a-chat');
 
@@ -31,7 +32,7 @@ colorPicker.onchange = function() {
 }
 
 /* grouping of html elements */
-let lobbyButtons = [title, aboutButton, faceScanButton, findChatButton];
+let lobbyButtons = [findChatButton, faceScanButton, aboutButton];
 let chatModeButtons = [endChatButton, newChatButton];
 let chatButtons = [findChatButton, newChatButton, endChatButton];
 
@@ -129,13 +130,13 @@ function onEndChatLeaveHandler(event){
 function onFaceScanEnterHandler(event){
     if(!state.popup_active){
         event.target.style.border = '1px solid blue';
-        event.target.style.backgroundImage = 'url(\'./assets/BLUE-face-scan-icon.png\')';
+        event.target.style.backgroundColor = '#E7EFFF'
     }
 }
 
 function onFaceScanLeaveHandler(event){
     event.target.style.border = '1px solid black';
-    event.target.style.backgroundImage = 'url(\'./assets/face-scan-icon.png\')';
+    event.target.style.backgroundColor = 'transparent';    
 }
 
 aboutButton.addEventListener('click', aboutHandler);
@@ -220,13 +221,13 @@ function addLobbyButtons(){
     });
 }
 
-function removeChatButtons(){
+function removeChatModeButtons(){
     chatModeButtons.map(function(chatButton){
         chatButton.style.display = 'none';
     });   
 }
 
-function addChatButtons(){
+function addChatModeButtons(){
     chatModeButtons.map(function(chatButton){
         chatButton.style.display = 'inline-block';
     });   
@@ -251,17 +252,9 @@ function moveChatButtonsToHeader(){
     let header = document.getElementById('header');
 
     chatButtons.map(function(chatButton){
-        // check if button is find-a-chat button in which case need to make sure to insert before About for correct ordering of buttons in header
-        if(chatButton.id == 'find-a-chat'){
-            let faceScanButton = document.getElementById('camera-access');
-            if(faceScanButton){
-                header.insertBefore(chatButton, faceScanButton);    
-            }
-            else {
-                let aboutButton = document.getElementById('about');
-                header.insertBefore(chatButton, aboutButton);
-            }
-            
+        // check if button is find-a-chat button in which case need to make sure to insert before Color Picker Button for correct ordering of buttons in header
+        if(chatButton.id == 'find-a-chat' || chatButton.id == 'new-chat'){    
+            header.insertBefore(chatButton, colorPickerButton);
         } else {
             header.appendChild(chatButton);    
         }
@@ -274,22 +267,6 @@ function changeChatButtonsClassForHeader(){
         chatButton.classList.remove('footer-button');
         chatButton.classList.add('header-button');
     });
-}
-
-function switchToMobileDom(){
-    if(!state.mobile_DOM){
-        moveChatButtonsToFooter();
-        changeChatButtonsClassForFooter();
-    }
-    state.mobile_DOM = true;
-}
-
-function switchToDesktopDom(){
-    if(state.mobile_DOM){
-        moveChatButtonsToHeader();
-        changeChatButtonsClassForHeader();
-    }
-    state.mobile_DOM = false;
 }
 
 function showAboutWindow(){
@@ -320,24 +297,65 @@ function hidePopUpWindow(){
     noCamAccessPopUp.style.display = 'none';
 }
 
+function titleIsRemoved(){
+    if(title.style.display == 'none'){
+        return true;
+    }
+    return false;
+}
+
+function removeTitle(){
+    title.style.display = 'none';
+}
+
+function addTitle(){
+    title.style.display = 'inline-block';
+}
+
+function switchToMobileDom(){
+    if(!state.mobile_DOM){
+        if(titleIsRemoved()){
+            addTitle();
+        }
+        moveChatButtonsToFooter();
+        changeChatButtonsClassForFooter();
+    }
+    state.mobile_DOM = true;
+}
+
+function switchToDesktopDom(){
+    if(state.mobile_DOM){
+        if(state.chat_mode){
+            removeTitle(); // if entering Desktop Chat Mode, remove title
+        }
+        moveChatButtonsToHeader();
+        changeChatButtonsClassForHeader();
+    }
+    state.mobile_DOM = false;
+}
+
 
 /**********************************************************************/
 /*************************PUBLIC FUNCTIONS*****************************/
 /**********************************************************************/
 
-export { showNoCameraAccessMessage };
-
 export function switchToChatUI(){
     if(!state.chat_mode){
+        if(!state.mobile_DOM){
+            removeTitle(); // if entering Desktop Chat Mode, remove title
+        }
         removeLobbyButtons();
-        addChatButtons();
+        addChatModeButtons();
     }
     state.chat_mode = true;
 }
 
 export function switchToLobbyUI(){
     if(state.chat_mode){
-        removeChatButtons();
+        if(titleIsRemoved()){
+            addTitle();
+        }
+        removeChatModeButtons();
         addLobbyButtons();
     }
     state.chat_mode = false;
@@ -359,6 +377,7 @@ export function enableFindChatButton(){
 }
 
 export function disableFindChatButton(){
+    console.log('disabling find chat button');
     findChatButton.disabled = true;
     findChatButton.style.opacity = 0.5;
 }
@@ -379,11 +398,6 @@ export function showColorPickerButton(){
     colorPickerButton.style.display = 'block';
 }
 
-export function removeFaceScanButton(){
-    console.log("Removing face-scan button");
-    faceScanButton.parentNode.removeChild(faceScanButton);
-}
-
 export function disableFaceScanButton(){
     console.log("Disabling face-scan button");
     faceScanButton.disabled = true;
@@ -396,3 +410,16 @@ export function enableFaceScanButton(){
     faceScanButton.style.opacity = 1;
 }
 
+export function toggleFaceScanButton(){
+    state.facemesh_on = !state.facemesh_on;
+
+    if(state.facemesh_on){
+        faceScanButton.style.backgroundImage = "url('./assets/facescan-off.png')";    
+    }
+    else {
+        faceScanButton.style.backgroundImage = "url('./assets/facescan-on.png')";    
+    }
+    
+}
+
+export { showNoCameraAccessMessage };

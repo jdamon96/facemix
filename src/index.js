@@ -10,20 +10,17 @@ import {setWasmPath} from '@tensorflow/tfjs-backend-wasm';
 import wasmPath from '../node_modules/@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm.wasm';
 
 /**********************************
-            Global Variables
+    Global Variables & Init Code
  **********************************/
 let model; //trained facemesh model
+let showFacemesh = false;
 
 let profiler = [];
 let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
 let renderIterator = 0;
 
-// initializing variables to hold user's audio and video media streams
-let accessedCamera = false;
-let videoStream;
-
 let remoteAudio = document.getElementById('remoteAudio');
-let localVideo;
+let localVideo = document.getElementById('localVideo');
 let hasSentColor = false;
 
 let socket = io(); //initializing the socket.io handle
@@ -32,7 +29,53 @@ setWasmPath(wasmPath);
 tf.setBackend('wasm').then(() => {main()});
 
 /**********************************
-            Event Handlers
+        Helper Functions
+**********************************/
+
+function updatePopulationCounter(population){
+    let populationCounter = document.getElementById('population-counter');
+    populationCounter.innerHTML = 'Number of people online: ' + population;
+}
+
+// Handler function for receiving 'roomInvitation' events emitted by other sockets
+function handleRoomInvitation(roomInvitation){
+    if(socket.id === roomInvitation.recipient){
+        console.log('Found chat partner');
+        socket.emit('joinroom', roomInvitation.roomname);
+    }
+}
+
+function playConnectedTone(){
+    let connectedTone = document.getElementById('connected-tone');
+    connectedTone.volume = 0.5;
+    connectedTone.play();
+}
+
+function prepLocalVideo(videoStream){
+    localVideo.addEventListener('loadeddata', handleLoadedVideoData);  
+    localVideo.srcObject = videoStream; // this will fire the 'loadeddata' event on the localVideo object
+    localVideo.play(); 
+}
+
+function updateUIForMediaAccess(){
+    userInterface.enableFindChatButton();
+    userInterface.enableFaceScanButton();
+    userInterface.showColorPickerButton();
+    turnOnFacemesh();
+}
+
+function turnOnFacemesh(){
+    userInterface.toggleFaceScanButton();
+    console.log('turning ON facemesh');
+}
+
+function turnOffFacemesh(){
+    userInterface.toggleFaceScanButton();
+    console.log('turning OFF facemesh');
+}
+
+/**********************************
+            Handlers
 **********************************/
 
 // Handler function for receiving 'message' events
@@ -75,25 +118,6 @@ function handleMessage(message){
     }
 }
 
-function updatePopulationCounter(population){
-    let populationCounter = document.getElementById('population-counter');
-    populationCounter.innerHTML = 'Number of people online: ' + population;
-}
-
-// Handler function for receiving 'roomInvitation' events emitted by other sockets
-function handleRoomInvitation(roomInvitation){
-    if(socket.id === roomInvitation.recipient){
-        console.log('Found chat partner');
-        socket.emit('joinroom', roomInvitation.roomname);
-    }
-}
-
-function playConnectedTone(){
-    let connectedTone = document.getElementById('connected-tone');
-    connectedTone.volume = 0.5;
-    connectedTone.play();
-}
-
 // Handler function for event that occurs when the video element has successfully loaded video data given to it
 function handleLoadedVideoData(event){
     console.log('Processing video data');
@@ -105,8 +129,6 @@ function handleLoadedVideoData(event){
 function handleRoomJoin(data){
     console.log(data);
 }
-
-// Button Handlers
 
 // Handler function for clicking the 'Find-Chat' button
 function handleFindChat(){
@@ -150,31 +172,44 @@ function handleMediaAccess(){
     //display loading spinner for facemesh model loading
     userInterface.beginLoader();
 
-    localVideo = document.getElementById('localVideo');
-
     // get access to client media streams
     const stream = navigator.mediaDevices
         .getUserMedia({video: true, audio: true})
         .then(stream => {
-            console.log('Accessed audio and video media');
-            localVideo.addEventListener('loadeddata', handleLoadedVideoData);
-            accessedCamera = true;
-            userInterface.enableFindChatButton();
-            ChatInstance.setAudioStream(new MediaStream(stream.getAudioTracks()));
-            videoStream = new MediaStream(stream.getVideoTracks());
-            console.log(localVideo);
-            localVideo.srcObject = videoStream; // this will fire the 'loadeddata' event on the localVideo object
-            localVideo.play();
-            userInterface.removeFaceScanButton();
-            userInterface.showColorPickerButton();
+
+            let videoStream = new MediaStream(stream.getVideoTracks());
+            let audioStream = new MediaStream(stream.getAudioTracks());
+
+            prepLocalVideo(videoStream);
+            ChatInstance.setAudioStream(audioStream);
+
+            updateUIForMediaAccess();
+
         })
         .catch(error => {
             userInterface.endLoader();
             userInterface.showNoCameraAccessMessage();
             userInterface.enableFaceScanButton();
-            console.log('Failed to access user media');
             console.log(error);
         });
+}
+
+function handleFaceScanButton(){
+
+    if (showFacemesh){
+        turnOffFacemesh();
+        showFacemesh = false;    
+    }
+    else {
+       if(localVideo.srcObject == null){
+            handleMediaAccess();    
+        }
+        else {
+            turnOnFacemesh();
+        } 
+        showFacemesh = true;
+    }
+
 }
 
 /* Handler function for when chat peer ends the current chat*/
@@ -217,19 +252,6 @@ function logProfiler() {
     renderIterator = 0;
 }
 
-function logCanvasDimensions(){
-    let canvasContainer = document.getElementById('canvas-container');
-    let canvas = document.getElementById('canvas');
-    console.log('Canvas Container width:');
-    console.log(canvasContainer.clientWidth)
-    console.log('Canvas Container height:');
-    console.log(canvasContainer.clientHeight);
-    console.log('Canvas width:');
-    console.log(canvas.width);
-    console.log('Canvas height:');
-    console.log(canvas.height);   
-}
-
 async function callModelRenderLoop(){
 
     updateProfiler(0);
@@ -258,14 +280,14 @@ async function callModelRenderLoop(){
     }
     renderIterator++;
     if (renderIterator % 100 == 0) { 
-        logProfiler();
-        logCanvasDimensions();
+        //logProfiler();
     }
 
     requestAnimationFrame(callModelRenderLoop);
 }
 
 function main() {
+    userInterface.disableFindChatButton(); // enabled when program has camera access
     /* give ChatInstance access to the client socket*/
     ChatInstance.setSocket(socket);
 
@@ -275,21 +297,15 @@ function main() {
     socket.on('end-chat', handlePeerEndChat);
 
     /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
-    const faceScanButton = document.getElementById('camera-access');
+    const faceScanButton = document.getElementById('face-scan');
     const findChatButton = document.getElementById('find-a-chat');
     const endChatButton = document.getElementById('end-chat');
     const colorPicker = document.getElementById('color-picker');
 
-    /* Disable 'find chat' button if no access to client media feed
-    * (can't join chat if you don't have your camera on) */
-    if(localVideo == null){
-        userInterface.disableFindChatButton();
-    }
-
     // Adding the 'click' event listener to the button and attaching the handler function
     findChatButton.addEventListener('click', handleFindChat);
     endChatButton.addEventListener('click', handleEndChat);
-    faceScanButton.addEventListener('click', handleMediaAccess);
+    faceScanButton.addEventListener('click', handleFaceScanButton);
     colorPicker.addEventListener('change', handleColorChange);
 
     /* set init facemesh color to init color picker value*/
@@ -299,5 +315,3 @@ function main() {
     /* load the tensorflow facemesh model */
     loadModel();
 }
-
-
