@@ -34,7 +34,7 @@ colorPicker.onchange = function() {
 /* grouping of html elements */
 let lobbyButtons = [findChatButton, faceScanButton, aboutButton];
 let chatModeButtons = [endChatButton, newChatButton];
-let chatButtons = [findChatButton, newChatButton, endChatButton];
+let mobileFooterButtons = [findChatButton, newChatButton, faceScanButton, endChatButton];
 
 window.addEventListener('click', function(e){
     if(state.popup_active && !e.target.classList.contains('popup')){
@@ -233,39 +233,44 @@ function addChatModeButtons(){
     });   
 }
 
-function moveChatButtonsToFooter(){
+function moveButtonsForFooter(){
     let footer = document.getElementById('footer');
 
-    chatButtons.map(function(chatButton){
-        footer.appendChild(chatButton);
+    mobileFooterButtons.map(function(footerButton){
+        footer.appendChild(footerButton);
     });
 }
 
-function changeChatButtonsClassForFooter(){
-    chatButtons.map(function(chatButton){
-        chatButton.classList.remove('header-button');
-        chatButton.classList.add('footer-button');
+function changeButtonsClassForFooter(){
+    mobileFooterButtons.map(function(footerButton){
+        footerButton.classList.remove('header-button');
+        footerButton.classList.add('footer-button');
     });
 }
 
-function moveChatButtonsToHeader(){
+function moveFooterButtonsToHeader(){
     let header = document.getElementById('header');
 
-    chatButtons.map(function(chatButton){
+    mobileFooterButtons.map(function(footerButton){
         // check if button is find-a-chat button in which case need to make sure to insert before Color Picker Button for correct ordering of buttons in header
-        if(chatButton.id == 'find-a-chat' || chatButton.id == 'new-chat'){    
-            header.insertBefore(chatButton, colorPickerButton);
+        if(footerButton.id == 'find-a-chat' || footerButton.id == 'new-chat' || footerButton.id == 'face-scan'){ 
+            if(footerButton.id == 'face-scan'){
+                header.insertBefore(footerButton, aboutButton);
+            }
+            else {
+                header.insertBefore(footerButton, colorPickerButton);    
+            }   
         } else {
-            header.appendChild(chatButton);    
+            header.appendChild(footerButton);    
         }
         
     });
 }
 
-function changeChatButtonsClassForHeader(){
-    chatButtons.map(function(chatButton){
-        chatButton.classList.remove('footer-button');
-        chatButton.classList.add('header-button');
+function changeButtonsClassForHeader(){
+    mobileFooterButtons.map(function(footerButton){
+        footerButton.classList.remove('footer-button');
+        footerButton.classList.add('header-button');
     });
 }
 
@@ -317,8 +322,9 @@ function switchToMobileDom(){
         if(titleIsRemoved()){
             addTitle();
         }
-        moveChatButtonsToFooter();
-        changeChatButtonsClassForFooter();
+
+        moveButtonsForFooter();
+        changeButtonsClassForFooter();
     }
     state.mobile_DOM = true;
 }
@@ -328,8 +334,8 @@ function switchToDesktopDom(){
         if(state.chat_mode){
             removeTitle(); // if entering Desktop Chat Mode, remove title
         }
-        moveChatButtonsToHeader();
-        changeChatButtonsClassForHeader();
+        moveFooterButtonsToHeader();
+        changeButtonsClassForHeader();
     }
     state.mobile_DOM = false;
 }
