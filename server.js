@@ -16,8 +16,21 @@ app.use(express.static('dist'));
 let serverPopulation = 0;
 let waitlist = [];
 
+function clearRoom(roomname){
+    io.in(roomname).clients(function(error, socketIds){
+        if(error) throw error;
+        
+        // iterate through all the sockets in the room and instruct them to leave the room
+        socketIds.forEach(socketId => {
+            io.sockets.sockets[socketId].leave(roomname); 
+            io.sockets.sockets[socketId].room = null; //reset socket.room field to null
+        });
+
+    });
+}
+
 io.on('connection', function(socket){
-    console.log(serverPopulation);
+
     serverPopulation = (serverPopulation + 1);
 
     io.sockets.emit('message', {
@@ -28,8 +41,9 @@ io.on('connection', function(socket){
     });
 
     // find a chat partner
-    socket.on('join', function(roomname){
-         
+    socket.on('join', function(){
+        console.log('Waitlist current state: ');
+        console.log(waitlist);
         // Get the first person in line
         const firstInLine = waitlist[0];
 
@@ -54,6 +68,8 @@ io.on('connection', function(socket){
 
         // If there was someone in line
         if(firstInLine){
+            console.log('First in line:');
+            console.log(firstInLine);
             // removes firstInLine from the beginning of the array 
             waitlist.shift(); 
 
@@ -63,7 +79,8 @@ io.on('connection', function(socket){
             socket.broadcast.emit('roominvitation', roominvitation);            
 
             //this client joins the room
-            socket.join(roominvitation.roomname);
+            socket.room = roominvitation.roomname;
+            socket.join(socket.room);
 
             //send message to this client telling it that it is the initiator
             socket.emit('message', {
@@ -85,7 +102,8 @@ io.on('connection', function(socket){
 
         // if there isn't a chat partner inline, join the line
         else {
-
+            console.log('Joining the waitlist:');
+            console.log(socket.id);
             waitlist.push(socket.id);
             
         }            
@@ -116,7 +134,8 @@ io.on('connection', function(socket){
         else if (numClients == 1){
             console.log('SERVER: second client joining room');
             //join the room
-            socket.join(roomname);
+            socket.room = roomname;
+            socket.join(socket.room);
 
             //tell this client it joined a room
             socket.emit('message', {
@@ -167,9 +186,13 @@ io.on('connection', function(socket){
         socket.broadcast.to(msg.room).emit('candidate', msg.candidate);
     });
 
-    socket.on('end-chat', function(msg){
-        console.log('SERVER: one of the clients ended the chat');
-        socket.broadcast.to(msg.room).emit('end-chat', msg.room);
+    socket.on('end-chat', function(){
+        console.log('SERVER: one of the clients ended the chat. Removing all clients from room.');
+
+        let roomname = socket.room;
+        socket.broadcast.to(roomname).emit('chat-ended');
+        clearRoom(roomname);
+  
     });
 
     // recieve 'offer' from client and relay to the other client in the room
@@ -186,6 +209,7 @@ io.on('connection', function(socket){
 
     socket.on('disconnect', function(){
 
+        // update population count on disconnect
         serverPopulation = (serverPopulation - 1);
 
         io.sockets.emit('message', {
@@ -195,8 +219,14 @@ io.on('connection', function(socket){
             }
         });
 
-    });
 
+        if(socket.room){
+            let roomname = socket.room;
+            socket.broadcast.to(roomname).emit('chat-ended');
+            clearRoom(roomname);
+        }
+
+    });
 });
 
 

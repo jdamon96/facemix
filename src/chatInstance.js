@@ -48,9 +48,7 @@ export let ChatInstance = {
         //if there is a peerConnection
         if(ChatInstance.peerConnection != null){
             // let the chat peer know that you've ended the call
-            ChatInstance.socket.emit('end-chat', {
-                room: ChatInstance.currentRoom
-            });
+            ChatInstance.socket.emit('end-chat');
 
             // close the current peerConnection
             ChatInstance.peerConnection.close();

@@ -147,8 +147,8 @@ function handleFindChat(){
 
 // Handler function for clicking the 'End-Chat' button
 function handleEndChat(){
-    ChatInstance.endCurrentChat();
     console.log('Ending chat');
+    ChatInstance.endCurrentChat(); // emits 'end-chat' event to server
     userInterface.switchToLobbyUI();
     userInterface.endLoader();
     meshHandler.clearPeerMesh();
@@ -213,7 +213,7 @@ function handleFaceScanButton(){
 }
 
 /* Handler function for when chat peer ends the current chat*/
-function handlePeerEndChat(){
+function handleChatEnded(){
     console.log('Peer client ended chat');
     ChatInstance.resetChatInstance();
     meshHandler.clearPeerMesh();
@@ -294,7 +294,7 @@ function main() {
     /* add initial socket event handlers */
     socket.on('message', handleMessage);
     socket.on('offer', ChatInstance.onOffer);
-    socket.on('end-chat', handlePeerEndChat);
+    socket.on('chat-ended', handleChatEnded);
 
     /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
     const faceScanButton = document.getElementById('face-scan');
