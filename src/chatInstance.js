@@ -40,6 +40,7 @@ export let ChatInstance = {
         ChatInstance.currentRoom = null;
         ChatInstance.initiator = false;
         ChatInstance.outgoingMesh = null;
+        ChatInstance.dataChannel = null;
         ChatInstance.localICECandidates = [];
     },
 

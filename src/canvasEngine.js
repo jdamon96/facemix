@@ -9,21 +9,24 @@ export let CanvasEngine = {
     canvasContext: null,
     isCanvasInitialized: null,
     numFaceCoordinates: numFacePoints * 2,
-    unscaledVertices: [],
-    buttonOffsets: {'x': -0.5, 'y': 0.5, 'z': 1}, // Scalars to move the rendering based on key position
-    buttonDelta: 50.0, // Amount a key press moves you within the canvas coordinate system (for wasd)
-    zButtonDelta: 0.1, // Amount a key press scales your image (for 'i' and 'k')
-    buttonBounds: {x: {max: 1.0, min: -1.0}, y:{max: 1.0, min:-1.0}, z:{max:1.5, min:0.3}},
+    vertices: [],
+    buttonOffsets: {'x': 0.75, 'y': 0.5, 'z': 1}, // Scalars to move the rendering based on key position
+    xOffset: 300, // The facemesh comes back from the model with 300 as the center x point and 200 as the center y
+    yOffset: 200,
+    buttonDelta: 0.1, // Percent of the screen you are moving across for 'wasd' and amount you scale your image for 'i' and 'k'
+    buttonBounds: {x: {max: 1.0, min: 0}, y:{max: 1.0, min: 0}, z:{max:1.5, min:0.3}},
+    needsOffsetUpdate: false,
     personalColor: '#32EEDB',
     peerColor: '#FF1493',
 
 
     getPersonalMeshForTransit: function() {
+        const minDimension = canvas.width < canvas.height ? canvas.width : canvas.height;
         const midLine = canvas.width / 2
         let peerTransitMesh = []
         for (let i = 0; i < CanvasEngine.numFaceCoordinates; i += 2) {
-            peerTransitMesh[i] = (midLine - (CanvasEngine.unscaledVertices[i] - midLine)) / canvas.width
-            peerTransitMesh[i+1] = CanvasEngine.unscaledVertices[i+1] / canvas.height
+            peerTransitMesh[i] = (midLine - (CanvasEngine.vertices[i] - midLine)) / minDimension
+            peerTransitMesh[i+1] = CanvasEngine.vertices[i+1] / minDimension
         }
         return CanvasEngine.truncateMesh(peerTransitMesh);
     },
@@ -35,26 +38,26 @@ export let CanvasEngine = {
         const flattenedMesh = CanvasEngine.flattenMesh(rawFacemesh);
         const twoDimensionalMesh = CanvasEngine.removeZCoordinates(flattenedMesh);
         const translatedMesh = CanvasEngine.translateMesh(twoDimensionalMesh);
-        const updatedVertices = CanvasEngine.truncateMesh(translatedMesh);
 
-        if (CanvasEngine.unscaledVertices.length > CanvasEngine.numFaceCoordinates) {
-            for (let i = CanvasEngine.numFaceCoordinates; i < CanvasEngine.unscaledVertices.length; i++) {
-                updatedVertices[i] = CanvasEngine.unscaledVertices[i]
+        if (CanvasEngine.vertices.length > CanvasEngine.numFaceCoordinates) {
+            for (let i = CanvasEngine.numFaceCoordinates; i < CanvasEngine.vertices.length; i++) {
+                translatedMesh[i] = CanvasEngine.vertices[i]
             }
         }
-        CanvasEngine.unscaledVertices = updatedVertices
+        CanvasEngine.vertices = translatedMesh
     },
 
     updatePeerMesh: function(transitMesh) {
-        let updatedVertices = []
-        for (let i = 0; i < CanvasEngine.numFaceCoordinates; i++) {
-            updatedVertices[i] = CanvasEngine.unscaledVertices[i]
-        }
+        let peerMeshForRender = []
+        const minDimension = canvas.width < canvas.height ? canvas.width : canvas.height
+
         for (let j = 0; j < transitMesh.length; j+=2) {
-            updatedVertices.push(transitMesh[j] * canvas.width)
-            updatedVertices.push(transitMesh[j + 1] * canvas.height)
+            peerMeshForRender.push(transitMesh[j] * minDimension)
+            peerMeshForRender.push(transitMesh[j + 1] * minDimension)
         }
-        CanvasEngine.unscaledVertices = updatedVertices
+        peerMeshForRender = CanvasEngine.boundsCheckAndCorrectMesh(peerMeshForRender)
+        CanvasEngine.vertices.length = CanvasEngine.numFaceCoordinates
+        CanvasEngine.vertices.push(...peerMeshForRender)
     },
 
     setPersonalColor: function(color) {
@@ -66,21 +69,18 @@ export let CanvasEngine = {
     },
 
     clearPersonalMesh: function() {
-        CanvasEngine.unscaledVertices = [];
+        CanvasEngine.vertices = [];
     },
 
     clearPeerMesh: function() {
-        CanvasEngine.unscaledVertices.length = CanvasEngine.numFaceCoordinates;
+        CanvasEngine.vertices.length = CanvasEngine.numFaceCoordinates;
     },
-
 
     render: function() {
         if (!CanvasEngine.isCanvasInitialized) {
             CanvasEngine.setupCanvas()
         }
-       // const renderVertices = CanvasEngine.scaleMeshForLocalCanvas(CanvasEngine.unscaledVertices);
-       // CanvasEngine.drawObjects(renderVertices)
-        CanvasEngine.drawObjects(CanvasEngine.unscaledVertices)
+        CanvasEngine.drawObjects(CanvasEngine.vertices)
     },
 
     drawObjects: function(renderVertices) {
@@ -103,16 +103,19 @@ export let CanvasEngine = {
     },
 
     graphicsResizeOccurred: function(){
-        CanvasEngine.setBounds();
+        CanvasEngine.setCanvasBounds();
 
         CanvasEngine.canvasContext.translate(canvas.width, 0);
         CanvasEngine.canvasContext.scale(-1, 1);  //Inverses the coordinate system so greatest val is leftmost. Makes handling an inverted mesh intuitive
     },
 
     updateOffset: function(dimension, isPositive) {
-        let effectiveDelta = dimension == "z" ? CanvasEngine.zButtonDelta : CanvasEngine.buttonDelta
+        let effectiveDelta = CanvasEngine.buttonDelta
         if (!isPositive) {
-            effectiveDelta = -effectiveDelta;
+             effectiveDelta = -effectiveDelta;
+        }
+        if (dimension != "z") {
+            effectiveDelta = -effectiveDelta
         }
         const min = CanvasEngine.buttonBounds[dimension]["min"]
         const max = CanvasEngine.buttonBounds[dimension]["max"]
@@ -126,28 +129,21 @@ export let CanvasEngine = {
     setupCanvas: function() {
         console.log('Setting up canvas');
         CanvasEngine.canvasContext = canvas.getContext('2d');
-        CanvasEngine.setBounds();
+        CanvasEngine.setCanvasBounds();
 
         CanvasEngine.canvasContext.translate(canvas.width, 0);
         CanvasEngine.canvasContext.scale(-1, 1); //Inverses the coordinate system so greatest val is leftmost. Makes handling an inverted mesh intuitive
         CanvasEngine.canvasContext.lineWidth = 0.5;
 
-        CanvasEngine.buttonOffsets['x'] =  0;
-
         CanvasEngine.isCanvasInitialized = true
     },
     
-    setBounds: function() {
+    setCanvasBounds: function() {
         canvas.width = pageContent.offsetWidth;
         canvas.height = pageContent.offsetHeight;
 
         canvas.style.width = pageContent.offsetWidth+'px';
         canvas.style.height = pageContent.offsetHeight+'px';
-
-        CanvasEngine.buttonBounds.x.max = canvas.width / 2
-        CanvasEngine.buttonBounds.x.min = - (canvas.width) / 2
-        CanvasEngine.buttonBounds.y.max = canvas.height / 2
-        CanvasEngine.buttonBounds.y.min = - canvas.height / 2
     },
 
     /**************************************
@@ -158,10 +154,61 @@ export let CanvasEngine = {
         let translatedMesh = []
         for (let i = 0; i < unscaledMesh.length; i += 2) {
             let pointsRow = [
-                (unscaledMesh[i] * CanvasEngine.buttonOffsets['z'] - CanvasEngine.buttonOffsets['x']),
-                (unscaledMesh[i+1] * CanvasEngine.buttonOffsets['z'] - CanvasEngine.buttonOffsets['y'])
+                ((unscaledMesh[i] * CanvasEngine.buttonOffsets['z']) + (CanvasEngine.buttonOffsets.x * canvas.width) - CanvasEngine.xOffset),
+                ((unscaledMesh[i+1] * CanvasEngine.buttonOffsets['z']) + (CanvasEngine.buttonOffsets.y * canvas.height) - CanvasEngine.yOffset)
             ]
             translatedMesh.push(...pointsRow)
+        }
+        return CanvasEngine.boundsCheckAndCorrectMesh(translatedMesh)
+    },
+
+    //If any of the points are off the screen, shift the mesh to instead be on the edge of that canvas "wall"
+    boundsCheckAndCorrectMesh: function(translatedMesh) {
+        let xMax = 0, yMax = 0;
+        let xMin = Number.MAX_SAFE_INTEGER, yMin = Number.MAX_SAFE_INTEGER;
+
+        //Calculate if outside of canvas and if it is set it at the exact edge of the canvas
+        for (let i = 0; i < translatedMesh.length; i+=2) {
+            if (translatedMesh[i] < xMin) {
+                xMin = translatedMesh[i]
+            }
+            if (translatedMesh[i] > xMax) {
+                xMax = translatedMesh[i]
+            }
+            if (translatedMesh[i+1] > yMax) {
+                yMax = translatedMesh[i+1]
+            }
+            if (translatedMesh[i+1] < yMin) {
+                yMin = translatedMesh[i+1]
+            }
+        }
+        let xOffScreenCorrector = 0, yOffScreenCorrector = 0;
+
+        const tooLeft = xMax > canvas.width
+        const tooRight = xMin < 0
+        const tooUp = yMin < 0
+        const tooDown = yMax > canvas.height
+        if (!(tooLeft && tooRight)) { //Only enter adjustments if you aren't off both sides of the screen
+            if (tooLeft) {
+                xOffScreenCorrector = canvas.width - xMax
+            } else if (tooRight) {
+                xOffScreenCorrector = 0 - xMin
+            }
+        }
+
+        if (!(tooUp && tooDown)) {
+            if (tooDown) {
+                yOffScreenCorrector = canvas.height - yMax
+            } else if (tooUp) {
+                yOffScreenCorrector = 0 - yMin
+            }
+        }
+
+        if (xOffScreenCorrector != 0 || yOffScreenCorrector != 0) {
+            for (let i = 0; i < translatedMesh.length; i += 2) {
+                translatedMesh[i] = translatedMesh[i] + xOffScreenCorrector
+                translatedMesh[i+1] = translatedMesh[i+1] + yOffScreenCorrector
+            }
         }
         return translatedMesh
     },
@@ -174,18 +221,4 @@ export let CanvasEngine = {
         }
         return twoDMesh;
     },
-
-    // Expects mesh that is completely ready for render other than local canvas adjustments
-    scaleMeshForLocalCanvas: function(unscaledMesh) {
-        const scaledMesh = []
-        const xScalar = canvas.width / canvas.height;
-        for (let i = 0; i < unscaledMesh.length; i++) {
-            if ((i % 2) === 0) {
-                scaledMesh.push(unscaledMesh[i] * xScalar);
-            } else {
-                scaledMesh.push(unscaledMesh[i]);
-            }
-        }
-        return scaledMesh;
-    }
 }
