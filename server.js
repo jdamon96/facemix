@@ -29,6 +29,16 @@ function clearRoom(roomname){
     });
 }
 
+function removeFromWaitlist(socketId) {
+    console.log('Removing ', socketId, ' from the waitlist');
+    console.log('Waitlist before removal: ' + waitlist);
+    let index = waitlist.indexOf(socketId);
+    if (index > -1) {
+        waitlist.splice(index, 1);
+    }
+    console.log('Waitlist after removal: ', waitlist);
+}
+
 io.on('connection', function(socket){
 
     serverPopulation = (serverPopulation + 1);
@@ -42,8 +52,8 @@ io.on('connection', function(socket){
 
     // find a chat partner
     socket.on('join', function(){
-        console.log('Waitlist current state: ');
-        console.log(waitlist);
+        console.log('Waitlist current state: ', waitlist);
+
         // Get the first person in line
         const firstInLine = waitlist[0];
 
@@ -102,8 +112,7 @@ io.on('connection', function(socket){
 
         // if there isn't a chat partner inline, join the line
         else {
-            console.log('Joining the waitlist:');
-            console.log(socket.id);
+            console.log('Adding' + console.log(socket.id) + 'to the waitlist');
             waitlist.push(socket.id);
             
         }            
@@ -111,16 +120,16 @@ io.on('connection', function(socket){
 
     // join a specific room
     socket.on('joinroom', function(roomname){
-    
+        console.log('In joinroom event');
         // Get list of clients in the specified room
-        var clients = io.sockets.adapter.rooms[roomname];
+        let clients = io.sockets.adapter.rooms[roomname];
 
         // get number of clients
-        var numClients = typeof clients !=='undefined' ? clients.length: 0;
+        let numClients = typeof clients !=='undefined' ? clients.length: 0;
 
         // if there are no clients in the room
         if(numClients == 0){
-            console.log('No one in room');
+            console.log('No one in room, emitting room-joined event');
             socket.room = roomname;
             socket.emit('message', {
                 title: 'room-joined',
@@ -132,7 +141,7 @@ io.on('connection', function(socket){
         }
         // if there is another client in the room
         else if (numClients == 1){
-            console.log('SERVER: second client joining room');
+            console.log('Second client joining room, emitting room-joined and room-ready events');
             //join the room
             socket.room = roomname;
             socket.join(socket.room);
@@ -156,11 +165,11 @@ io.on('connection', function(socket){
         }
         // if there are 2 clients in the room, tell this client the room is full
         else {
+            console.log("!!!! This shouldn't occur. Emitting room-full event because more than 2 clients in the room " + socket.room);
             socket.emit('message', {
                 title: 'room-full',
                 content: socket.room
             });
-            console.log('SERVER: room "' + socket.room + '" is full');
         } 
     });
 
@@ -173,7 +182,7 @@ io.on('connection', function(socket){
                 socket.emit('error', err)
             }
             else {
-                console.log('SERVER: returning token to client');
+                console.log('Emitting token event to client');
                 //send the token to the requesting client
                 socket.emit('token', response);
             }
@@ -182,12 +191,12 @@ io.on('connection', function(socket){
 
     // recieve 'candidate' from client and relay to the other client in the room
     socket.on('candidate', function(msg){    
-        console.log('SERVER: sending candidate to client');
+        console.log('Sending candidate to client');
         socket.broadcast.to(msg.room).emit('candidate', msg.candidate);
     });
 
     socket.on('end-chat', function(){
-        console.log('SERVER: one of the clients ended the chat. Removing all clients from room.');
+        console.log('One of the clients ended the chat. Removing all clients from room.');
 
         let roomname = socket.room;
         socket.broadcast.to(roomname).emit('chat-ended');
@@ -197,13 +206,13 @@ io.on('connection', function(socket){
 
     // recieve 'offer' from client and relay to the other client in the room
     socket.on('offer', function(msg){
-        console.log('SERVER: sending offer to client');
+        console.log('Sending offer to client');
         socket.broadcast.to(msg.room).emit('offer', msg.offer);
     });
 
     // recieve 'answer' from client and relay to the other client in the room
     socket.on('answer', function(msg){
-        console.log('SERVER: sending answer to client');
+        console.log('Sending answer to client');
         socket.broadcast.to(msg.room).emit('answer', msg.answer);
     });
 
@@ -218,9 +227,11 @@ io.on('connection', function(socket){
                 population: serverPopulation
             }
         });
+        removeFromWaitlist(socket.id);
 
 
         if(socket.room){
+            console.log("One of the clients disconnected from the chat. Romving all clients from the room")
             let roomname = socket.room;
             socket.broadcast.to(roomname).emit('chat-ended');
             clearRoom(roomname);
