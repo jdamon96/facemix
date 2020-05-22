@@ -31,7 +31,7 @@ function clearRoom(roomname){
 
 function removeFromWaitlist(socketId) {
     console.log('Removing ', socketId, ' from the waitlist');
-    console.log('Waitlist before removal: ' + waitlist);
+    console.log('Waitlist before removal: ', waitlist);
     let index = waitlist.indexOf(socketId);
     if (index > -1) {
         waitlist.splice(index, 1);
@@ -86,6 +86,7 @@ io.on('connection', function(socket){
             // Invite the chat partner to a room
             const roominvitation = createRoomInvitation(socket.id, firstInLine);
             
+            console.log(socket.id, 'broadcasting the following room invitation:', roominvitation);
             socket.broadcast.emit('roominvitation', roominvitation);            
 
             //this client joins the room
@@ -112,15 +113,14 @@ io.on('connection', function(socket){
 
         // if there isn't a chat partner inline, join the line
         else {
-            console.log('Adding' + console.log(socket.id) + 'to the waitlist');
-            waitlist.push(socket.id);
-            
+            console.log('Adding ' + socket.id + ' to the waitlist');
+            waitlist.push(socket.id);    
         }            
     });
 
     // join a specific room
     socket.on('joinroom', function(roomname){
-        console.log('In joinroom event');
+        console.log(socket.id + ' processing invitation to join room ' + roomname);
         // Get list of clients in the specified room
         let clients = io.sockets.adapter.rooms[roomname];
 
@@ -161,7 +161,6 @@ io.on('connection', function(socket){
                     room_population: 2
                 }
             });
-            
         }
         // if there are 2 clients in the room, tell this client the room is full
         else {
@@ -176,13 +175,14 @@ io.on('connection', function(socket){
     // Provide client with a Network Traversal Service Token from Twilio 
     // "Twilio’s Network Traversal Service is a globally distributed STUN/TURN service that helps you deploy more reliable peer-to-peer communications applications."
     socket.on('token', function(){
+        console.log('Recieved Twilio token request from ' + socket.id);
         twilio.tokens.create(function(err, response){
             if(err) {
                 console.log(err);
                 socket.emit('error', err)
             }
             else {
-                console.log('Emitting token event to client');
+                console.log('Returning Twilio token to ' + socket.id);
                 //send the token to the requesting client
                 socket.emit('token', response);
             }
@@ -191,12 +191,12 @@ io.on('connection', function(socket){
 
     // receive 'candidate' from client and relay to the other client in the room
     socket.on('candidate', function(msg){    
-        console.log('Sending candidate to client');
+        console.log('Sending candidate from', socket.id);
         socket.broadcast.to(msg.room).emit('candidate', msg.candidate);
     });
 
     socket.on('end-chat', function(){
-        console.log('One of the clients ended the chat. Removing all clients from room.');
+        console.log(socket.id, 'ended the chat. Removing all clients from room.');
 
         let roomname = socket.room;
         socket.broadcast.to(roomname).emit('chat-ended');
@@ -205,13 +205,13 @@ io.on('connection', function(socket){
 
     // receive 'offer' from client and relay to the other client in the room
     socket.on('offer', function(msg){
-        console.log('Sending offer to client');
+        console.log('Sending offer from', socket.id, 'to other socket in the room');
         socket.broadcast.to(msg.room).emit('offer', msg.offer);
     });
 
     // receive 'answer' from client and relay to the other client in the room
     socket.on('answer', function(msg){
-        console.log('Sending answer to client');
+        console.log('Sending answer from', socket.id, 'to other socket in the room');
         socket.broadcast.to(msg.room).emit('answer', msg.answer);
     });
 
@@ -230,7 +230,7 @@ io.on('connection', function(socket){
 
 
         if(socket.room){
-            console.log("One of the clients disconnected from the chat. Romving all clients from the room")
+            console.log("One of the clients disconnected from the chat. Removing all clients from the room")
             let roomname = socket.room;
             socket.broadcast.to(roomname).emit('chat-ended');
             clearRoom(roomname);

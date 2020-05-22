@@ -40,7 +40,7 @@ function updatePopulationCounter(population){
 // Handler function for receiving 'roomInvitation' events emitted by other sockets
 function handleRoomInvitation(roomInvitation){
     if(socket.id === roomInvitation.recipient){
-        console.log('Found chat partner');
+        console.log(socket.id, 'received room invitation: ', roomInvitation);
         socket.emit('joinroom', roomInvitation.roomname);
     }
 }
@@ -89,6 +89,7 @@ function handleMessage(message){
             break;
 
         case 'initiator-status':
+            console.log('Setting initiator status of', socket.id, ':', message.content.initiator);
             ChatInstance.setInitiator(message.content.initiator);
             break;
 
@@ -97,6 +98,7 @@ function handleMessage(message){
         case 'room-ready':
             console.log('Room is ready for initiating RTCPeerConnection between clients');
             if(ChatInstance.initiator){
+                console.log('Firing create peer connection');
                 ChatInstance.createPeerConnection();
             }
             break;
@@ -107,6 +109,7 @@ function handleMessage(message){
         case 'room-joined':
             ChatInstance.setRoom(message.content.roomname);
             if(!ChatInstance.initiator){
+                console.log('Firing create peer connection');
                 ChatInstance.createPeerConnection();
             }
             break;
@@ -126,10 +129,6 @@ function handleLoadedVideoData(event){
     playConnectedTone();
 }
 
-function handleRoomJoin(data){
-    console.log(data);
-}
-
 // Handler function for clicking the 'Find-Chat' button
 function handleFindChat(){
     console.log('Finding new chat partner');
@@ -141,8 +140,6 @@ function handleFindChat(){
     userInterface.beginLoader();
 
     socket.emit('join');
-    socket.on('roominvitation', handleRoomInvitation);
-    socket.on('roomjoined', handleRoomJoin);
 }
 
 // Handler function for clicking the 'End-Chat' button
@@ -293,6 +290,9 @@ function main() {
     socket.on('message', handleMessage);
     socket.on('offer', ChatInstance.onOffer);
     socket.on('chat-ended', handleChatEnded);
+    socket.on('roominvitation', handleRoomInvitation);
+    socket.on('token', ChatInstance.onToken);
+
 
     /* Don't need to declare these variables because they're already declared in 'index.js' - just leaving here for readability */
     const faceScanButton = document.getElementById('face-scan');

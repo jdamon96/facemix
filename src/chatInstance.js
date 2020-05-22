@@ -33,7 +33,6 @@ export let ChatInstance = {
 
     //Entry Point
     createPeerConnection: function(){
-        ChatInstance.socket.on('token', ChatInstance.onToken(ChatInstance.audioStream));
         ChatInstance.socket.on('error', ChatInstance.onError);
         ChatInstance.socket.emit('token');
     },
@@ -189,47 +188,47 @@ export let ChatInstance = {
         console.log(error);
     },
 
-    onToken: function(){
+    onToken: function(token){
         console.log('firing onToken function');
-        return function(token){
-            // Create the peer connection
-            ChatInstance.peerConnection = new RTCPeerConnection({
-                iceServers: token.iceServers
-            });
+        
+        // Create the peer connection
+        ChatInstance.peerConnection = new RTCPeerConnection({
+            iceServers: token.iceServers
+        });
 
-            // attach handler for when a new track is added to the peer connection
-            ChatInstance.peerConnection.addEventListener('track', ChatInstance.onTrackHandler);
+        // attach handler for when a new track is added to the peer connection
+        ChatInstance.peerConnection.addEventListener('track', ChatInstance.onTrackHandler);
 
-            // Add user's local audio track to the peer connection
-            let audioTracks = ChatInstance.audioStream.getAudioTracks();
-            let audioTrack = audioTracks[0];
-            ChatInstance.peerConnection.addTrack(audioTrack);
+        // Add user's local audio track to the peer connection
+        let audioTracks = ChatInstance.audioStream.getAudioTracks();
+        let audioTrack = audioTracks[0];
+        ChatInstance.peerConnection.addTrack(audioTrack);
 
-            // send any ice candidates to the other peer
-            ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
-            console.log('Assigning this client to be initiator: ' + ChatInstance.initiator);
-            if(ChatInstance.initiator){
-                // create the data channel
-                console.log('Creating a data channel')
-                let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel',
-                    {
-                        maxRetransmits: 0,
-                        reliable: false,
-                        ordered: false
-                    });
-                ChatInstance.initiateDataChannel(dataChannel);
-
-                //create an offer
-                ChatInstance.createOffer();
-            } else {
-                ChatInstance.peerConnection.addEventListener('datachannel', event => {
-                    console.log('datachannel:', event.channel);
-                    ChatInstance.initiateDataChannel(event.channel);
+        // send any ice candidates to the other peer
+        ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
+        console.log('Assigning this client to be initiator: ' + ChatInstance.initiator);
+        if(ChatInstance.initiator){
+            // create the data channel
+            console.log('Creating a data channel')
+            let dataChannel = ChatInstance.peerConnection.createDataChannel('facemesh channel',
+                {
+                    maxRetransmits: 0,
+                    reliable: false,
+                    ordered: false
                 });
-            }
-            ChatInstance.socket.on('candidate', ChatInstance.onCandidate);
-            ChatInstance.socket.on('answer', ChatInstance.onAnswer);
+            ChatInstance.initiateDataChannel(dataChannel);
+
+            //create an offer
+            ChatInstance.createOffer();
+        } else {
+            ChatInstance.peerConnection.addEventListener('datachannel', event => {
+                console.log('datachannel:', event.channel);
+                ChatInstance.initiateDataChannel(event.channel);
+            });
         }
+        ChatInstance.socket.on('candidate', ChatInstance.onCandidate);
+        ChatInstance.socket.on('answer', ChatInstance.onAnswer);
+        
     },
 
     onAnswer: function(answer){
