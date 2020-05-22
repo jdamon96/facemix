@@ -124,7 +124,7 @@ function handleMessage(message){
 // Handler function for event that occurs when the video element has successfully loaded video data given to it
 function handleLoadedVideoData(event){
     console.log('Processing video data');
-    var video = event.target;
+    let video = event.target;
     callModelRenderLoop(video);
     playConnectedTone();
 }

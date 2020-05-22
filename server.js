@@ -1,12 +1,12 @@
 // index.js
-var express = require('express');
-var app = express();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+let express = require('express');
+let app = express();
+let http = require('http').createServer(app);
+let io = require('socket.io')(http);
 const PORT = process.env.PORT || 3000;
 const LOBBY_NAME = 'main-lobby';
 
-var twilio = require('twilio')(
+let twilio = require('twilio')(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
@@ -58,7 +58,7 @@ io.on('connection', function(socket){
         const firstInLine = waitlist[0];
 
         function getRoomName(client_id, chat_partner_id){
-            var roomName = client_id + chat_partner_id;
+            let roomName = client_id + chat_partner_id;
             return(roomName);
         };
 
@@ -78,16 +78,13 @@ io.on('connection', function(socket){
 
         // If there was someone in line
         if(firstInLine){
-            console.log('First in line:');
-            console.log(firstInLine);
-            // removes firstInLine from the beginning of the array 
-            waitlist.shift(); 
-
-            // Invite the chat partner to a room
-            const roominvitation = createRoomInvitation(socket.id, firstInLine);
+            console.log('First in line:', firstInLine);
+            waitlist.shift(); // removes firstInLine from the beginning of the array
             
+            const roominvitation = createRoomInvitation(socket.id, firstInLine); // Invite the chat partner to a room
+            //TODO: send this only to the actual partner not everyone connected to the server
             console.log(socket.id, 'broadcasting the following room invitation:', roominvitation);
-            socket.broadcast.emit('roominvitation', roominvitation);            
+            socket.broadcast.emit('roominvitation', roominvitation);
 
             //this client joins the room
             socket.room = roominvitation.roomname;
@@ -114,7 +111,7 @@ io.on('connection', function(socket){
         // if there isn't a chat partner inline, join the line
         else {
             console.log('Adding ' + socket.id + ' to the waitlist');
-            waitlist.push(socket.id);    
+            waitlist.push(socket.id);
         }            
     });
 

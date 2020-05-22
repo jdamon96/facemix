@@ -12,11 +12,13 @@ export let ChatInstance = {
     initiator: false,
     browserSupportsBufferEvents: false,
     browserSupportsBufferedAmount: false,
-    connected: false,
     outgoingMesh: null,
 
     setSocket: function(socket) {
         ChatInstance.socket = socket
+        ChatInstance.socket.on('error', ChatInstance.onError);
+        ChatInstance.socket.on('candidate', ChatInstance.onCandidate);
+        ChatInstance.socket.on('answer', ChatInstance.onAnswer);
     },
 
     setRoom: function(room) {
@@ -33,14 +35,12 @@ export let ChatInstance = {
 
     //Entry Point
     createPeerConnection: function(){
-        ChatInstance.socket.on('error', ChatInstance.onError);
         ChatInstance.socket.emit('token');
     },
 
     resetChatInstance: function(){
         console.log('Resetting chat instance');
         ChatInstance.peerConnnection = null;
-        ChatInstance.connected = false;
         ChatInstance.currentRoom = null;
         ChatInstance.initiator = false;
         ChatInstance.outgoingMesh = null;
@@ -91,7 +91,6 @@ export let ChatInstance = {
     },
 
     createAnswer: function(){
-        ChatInstance.connected = true
         ChatInstance.peerConnection.createAnswer()
             .then(function(answer){
                 ChatInstance.peerConnection.setLocalDescription(answer);
@@ -150,7 +149,7 @@ export let ChatInstance = {
 
             // Browser support found here https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/bufferedAmountLowThreshold
             if (typeof ChatInstance.dataChannel.bufferedAmountLowThreshold === 'number'){
-                //Because we can listen for buffered amount events, we can use a lower threshold for more efficient control
+                // Because we can listen for buffered amount events, we can use a lower threshold for more efficient control
                 ChatInstance.bufferFullThreshold = ChatInstance.bufferFullThreshold / 10;
                 ChatInstance.dataChannel.bufferedAmountLowThreshold = ChatInstance.bufferFullThreshold;
                 console.log("Browser supports buffer threshold events")
@@ -226,14 +225,10 @@ export let ChatInstance = {
                 ChatInstance.initiateDataChannel(event.channel);
             });
         }
-        ChatInstance.socket.on('candidate', ChatInstance.onCandidate);
-        ChatInstance.socket.on('answer', ChatInstance.onAnswer);
-        
     },
 
     onAnswer: function(answer){
         ChatInstance.peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
-        ChatInstance.connected = true
         // Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
         ChatInstance.localICECandidates.forEach(candidate => {
             ChatInstance.socket.emit('candidate', {
@@ -248,14 +243,18 @@ export let ChatInstance = {
 
     onIceCandidate: function(event){
         if(event.candidate){
-            if(ChatInstance.connected) {
+            const signalingState = ChatInstance.peerConnection.signalingState
+            const description = ChatInstance.peerConnection.localDescription
+            // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/signalingState
+            if(signalingState == "have-local-offer" || signalingState == "stable" && description != null) {
                 console.log('Generated candidate');
                 ChatInstance.socket.emit('candidate', {
                     room: ChatInstance.currentRoom,
                     candidate: JSON.stringify(event.candidate)
                 });
             } else {
-                console.log("Chat instance wasn't connected in onIceCandidate")
+                console.log("signaling state was ", signalingState)
+                console.log("description was ", description)
                 ChatInstance.localICECandidates.push(event.candidate)
             }
         }

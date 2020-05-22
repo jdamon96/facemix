@@ -26,7 +26,7 @@ const loader = document.getElementById('loader');
 
 /* necessary color picker code */
 const colorPicker = document.getElementById('color-picker');
-var colorDiv = document.getElementById("color-val");
+let colorDiv = document.getElementById("color-val");
 colorPicker.onchange = function() {
     colorDiv.style.color = colorPicker.value;
 }
