@@ -19,13 +19,12 @@ let waitlist = [];
 function clearRoom(roomname){
     io.in(roomname).clients(function(error, socketIds){
         if(error) throw error;
-        
+
         // iterate through all the sockets in the room and instruct them to leave the room
         socketIds.forEach(socketId => {
             io.sockets.sockets[socketId].leave(roomname); 
             io.sockets.sockets[socketId].room = null; //reset socket.room field to null
         });
-
     });
 }
 
@@ -50,82 +49,62 @@ io.on('connection', function(socket){
         }
     });
 
-    // find a chat partner
+    function getRoomName(client_id, chat_partner_id) { // Make unique room name
+        let roomName = client_id + chat_partner_id;
+        return(roomName);
+    };
+
+    function createRoomInvitation(client_id, chat_partner_id){
+        const newRoomName = getRoomName(socket.id, chat_partner_id);
+
+        const roominvitation = { // Create room invitation for the chat partner */
+            recipient: chat_partner_id,
+            roomname: newRoomName
+        }
+        return roominvitation;
+    };
+
+    // Find a chat partner
     socket.on('join', function(){
         console.log('Waitlist current state: ', waitlist);
 
-        // Get the first person in line
-        const firstInLine = waitlist[0];
-
-        function getRoomName(client_id, chat_partner_id){
-            let roomName = client_id + chat_partner_id;
-            return(roomName);
-        };
-
-        function createRoomInvitation(client_id, chat_partner_id){
-
-            /* Make unique room name */
-            const newRoomName = getRoomName(socket.id, chat_partner_id);
-
-            /* Create room invitation for the chat partner */
-            const roominvitation = {
-                recipient: chat_partner_id,
-                roomname: newRoomName
-            }
-
-            return roominvitation;
-        };
-
-        // If there was someone in line
-        if(firstInLine){
-            console.log('First in line:', firstInLine);
-            waitlist.shift(); // removes firstInLine from the beginning of the array
-            
+        const firstInLine = waitlist.shift();// Remove the first person off the front of the line and store it
+        if(firstInLine){ // If there was someone in line
             const roominvitation = createRoomInvitation(socket.id, firstInLine); // Invite the chat partner to a room
-            //TODO: send this only to the actual partner not everyone connected to the server
-            console.log(socket.id, 'broadcasting the following room invitation:', roominvitation);
-            socket.broadcast.emit('roominvitation', roominvitation);
 
-            //this client joins the room
+            console.log(socket.id, ' joined and waitlist was non-empty.Sending room invitation to: ', firstInLine);
+            io.to(firstInLine).emit('roominvitation', roominvitation);
+
             socket.room = roominvitation.roomname;
-            socket.join(socket.room);
+            socket.join(socket.room); // Put this client in the room
 
-            //send message to this client telling it that it is the initiator
-            socket.emit('message', {
+            socket.emit('message', { // Send message to this client telling it that it is the initiator
                 title: 'initiator-status',
                 content: {
                     initiator: true
                 }
             });
 
-            //send message to this client telling it that it has joined a room
-            socket.emit('message', {
+            socket.emit('message', { // Send message to this client telling it that it has joined a room
                 title: 'room-joined',
                 content: {
                     roomname: roominvitation.roomname
                 }
             });
-      
-        } 
 
-        // if there isn't a chat partner inline, join the line
-        else {
-            console.log('Adding ' + socket.id + ' to the waitlist');
+        } else { // Waitlist is empty, join the line
+            console.log('No one in waitlist to pair with, so adding ', socket.id, ' to the waitlist');
             waitlist.push(socket.id);
         }            
     });
 
-    // join a specific room
-    socket.on('joinroom', function(roomname){
+    socket.on('joinroom', function(roomname){ // join a specific room
         console.log(socket.id + ' processing invitation to join room ' + roomname);
-        // Get list of clients in the specified room
-        let clients = io.sockets.adapter.rooms[roomname];
 
-        // get number of clients
-        let numClients = typeof clients !=='undefined' ? clients.length: 0;
+        let clients = io.sockets.adapter.rooms[roomname]; // Get list of clients in the specified room
+        let numClients = typeof clients !=='undefined' ? clients.length: 0;  // get number of clients
 
-        // if there are no clients in the room
-        if(numClients == 0){
+        if(numClients == 0){  // No clients in the room
             console.log('No one in room, emitting room-joined event');
             socket.room = roomname;
             socket.emit('message', {
@@ -135,32 +114,26 @@ io.on('connection', function(socket){
                 }
             });
             socket.join(socket.room);
-        }
-        // if there is another client in the room
-        else if (numClients == 1){
+        } else if (numClients == 1) { // One other client in the room
             console.log('Second client joining room, emitting room-joined and room-ready events');
-            //join the room
             socket.room = roomname;
             socket.join(socket.room);
 
-            //tell this client it joined a room
-            socket.emit('message', {
+            socket.emit('message', { //tell this client it joined a room
                 title: 'room-joined',
                 content: {
                     roomname: roomname
                 }
             });
 
-            // tell the other client in the room that the room is ready
-            socket.broadcast.to(roomname).emit("message", {
+            socket.broadcast.to(roomname).emit("message", { // tell the other client in the room that the room is ready
                 title: 'room-ready',
                 content: {
                     room_population: 2
                 }
             });
         }
-        // if there are 2 clients in the room, tell this client the room is full
-        else {
+        else { // 2 other clients in the room, tell this client the room is full
             console.log("!!!! This shouldn't occur. Emitting room-full event because more than 2 clients in the room " + socket.room);
             socket.emit('message', {
                 title: 'room-full',
@@ -177,11 +150,9 @@ io.on('connection', function(socket){
             if(err) {
                 console.log(err);
                 socket.emit('error', err)
-            }
-            else {
+            } else {
                 console.log('Returning Twilio token to ' + socket.id);
-                //send the token to the requesting client
-                socket.emit('token', response);
+                socket.emit('token', response); //send the token to the requesting client
             }
         });
     });
@@ -212,9 +183,7 @@ io.on('connection', function(socket){
     });
 
     socket.on('disconnect', function(){
-
-        // update population count on disconnect
-        serverPopulation = (serverPopulation - 1);
+        serverPopulation = (serverPopulation - 1); // update population count on disconnect
 
         io.sockets.emit('message', {
             title: 'population-update',
@@ -222,8 +191,8 @@ io.on('connection', function(socket){
                 population: serverPopulation
             }
         });
-        removeFromWaitlist(socket.id);
 
+        removeFromWaitlist(socket.id);
 
         if(socket.room){
             console.log("One of the clients disconnected from the chat. Removing all clients from the room")
@@ -231,7 +200,6 @@ io.on('connection', function(socket){
             socket.broadcast.to(roomname).emit('chat-ended');
             clearRoom(roomname);
         }
-
     });
 });
 

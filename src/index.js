@@ -39,6 +39,7 @@ function updatePopulationCounter(population){
 
 // Handler function for receiving 'roomInvitation' events emitted by other sockets
 function handleRoomInvitation(roomInvitation){
+    console.log("received room invitation")
     if(socket.id === roomInvitation.recipient){
         console.log(socket.id, 'received room invitation: ', roomInvitation);
         socket.emit('joinroom', roomInvitation.roomname);
