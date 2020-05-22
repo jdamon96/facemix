@@ -185,7 +185,7 @@ export let ChatInstance = {
     },
 
     onError: function(error){
-        console.log('Recieved error from server:');
+        console.log('Received error from server:');
         console.log(error);
     },
 

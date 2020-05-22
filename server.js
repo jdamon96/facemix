@@ -189,7 +189,7 @@ io.on('connection', function(socket){
         });
     });
 
-    // recieve 'candidate' from client and relay to the other client in the room
+    // receive 'candidate' from client and relay to the other client in the room
     socket.on('candidate', function(msg){    
         console.log('Sending candidate to client');
         socket.broadcast.to(msg.room).emit('candidate', msg.candidate);
@@ -201,16 +201,15 @@ io.on('connection', function(socket){
         let roomname = socket.room;
         socket.broadcast.to(roomname).emit('chat-ended');
         clearRoom(roomname);
-  
     });
 
-    // recieve 'offer' from client and relay to the other client in the room
+    // receive 'offer' from client and relay to the other client in the room
     socket.on('offer', function(msg){
         console.log('Sending offer to client');
         socket.broadcast.to(msg.room).emit('offer', msg.offer);
     });
 
-    // recieve 'answer' from client and relay to the other client in the room
+    // receive 'answer' from client and relay to the other client in the room
     socket.on('answer', function(msg){
         console.log('Sending answer to client');
         socket.broadcast.to(msg.room).emit('answer', msg.answer);

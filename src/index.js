@@ -103,7 +103,7 @@ function handleMessage(message){
 
         // triggers 'non-initiating' client to make their peer connection
             // in createPeerConnection(), non-initiator listens for data channel
-            // creation and doesn't create offers (waits to recieve offer and create answer)
+            // creation and doesn't create offers (waits to receive offer and create answer)
         case 'room-joined':
             ChatInstance.setRoom(message.content.roomname);
             if(!ChatInstance.initiator){
