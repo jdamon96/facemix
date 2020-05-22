@@ -30,13 +30,13 @@ function clearRoom(roomname){
 }
 
 function removeFromWaitlist(socketId) {
-    console.log('Removing ', socketId, ' from the waitlist');
-    console.log('Waitlist before removal: ', waitlist);
     let index = waitlist.indexOf(socketId);
     if (index > -1) {
+        console.log('Removing ', socketId, ' from the waitlist');
+        console.log('Waitlist before removal: ', waitlist);
         waitlist.splice(index, 1);
+        console.log('Waitlist after removal: ', waitlist);
     }
-    console.log('Waitlist after removal: ', waitlist);
 }
 
 io.on('connection', function(socket){
@@ -187,8 +187,7 @@ io.on('connection', function(socket){
     });
 
     // receive 'candidate' from client and relay to the other client in the room
-    socket.on('candidate', function(msg){    
-        console.log('Sending candidate from', socket.id);
+    socket.on('candidate', function(msg){
         socket.broadcast.to(msg.room).emit('candidate', msg.candidate);
     });
 

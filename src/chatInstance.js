@@ -18,7 +18,7 @@ export let ChatInstance = {
     setSocket: function(socket) {
         ChatInstance.socket = socket
         ChatInstance.socket.on('error', ChatInstance.onError);
-        ChatInstance.socket.on('candidate', ChatInstance.onCandidate);
+        ChatInstance.socket.on('candidate', ChatInstance.onIceCandidateFromPeer);
         ChatInstance.socket.on('answer', ChatInstance.onAnswer);
     },
 
@@ -207,7 +207,7 @@ export let ChatInstance = {
         ChatInstance.peerConnection.addTrack(audioTrack);
 
         // send any ice candidates to the other peer
-        ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidate;
+        ChatInstance.peerConnection.onicecandidate = ChatInstance.onIceCandidateFromTwilio;
         console.log('Assigning this client to be initiator: ' + ChatInstance.initiator);
         if(ChatInstance.initiator){
             // create the data channel
@@ -248,11 +248,8 @@ export let ChatInstance = {
         ChatInstance.localICECandidates = [];
     },
 
-    onIceCandidate: function(event){
+    onIceCandidateFromTwilio: function(event){
         if(event.candidate){
-            const signalingState = ChatInstance.peerConnection.signalingState
-            const description = ChatInstance.peerConnection.localDescription
-            // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/signalingState
             if(ChatInstance.isReadyForIceCandidates) {
                 console.log('Generated candidate');
                 ChatInstance.socket.emit('candidate', {
@@ -260,16 +257,13 @@ export let ChatInstance = {
                     candidate: JSON.stringify(event.candidate)
                 });
             } else {
-                console.log("signaling state was ", signalingState)
-                console.log("description was ", description)
                 ChatInstance.localICECandidates.push(event.candidate)
             }
         }
     },
 
-    onCandidate: function(candidate){
+    onIceCandidateFromPeer: function(candidate){
         let rtcCandidate = new RTCIceCandidate(JSON.parse(candidate));
-        console.log(rtcCandidate);
         if(rtcCandidate != null){
             ChatInstance.peerConnection.addIceCandidate(rtcCandidate);    
         }
