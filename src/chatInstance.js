@@ -3,9 +3,10 @@ import * as meshHandler from "./meshHandler";
 import Chat from "twilio/lib/rest/Chat";
 
 export let ChatInstance = {
-    peerConnection: null,
-    localICECandidates: [],
     socket: null,
+    peerConnection: null,
+    isReadyForIceCandidates: false,
+    localICECandidates: [],
     currentRoom: null,
     audioStream: null,
     dataChannel: null,
@@ -41,6 +42,7 @@ export let ChatInstance = {
     resetChatInstance: function(){
         console.log('Resetting chat instance');
         ChatInstance.peerConnnection = null;
+        ChatInstance.isReadyForIceCandidates = false;
         ChatInstance.currentRoom = null;
         ChatInstance.initiator = false;
         ChatInstance.outgoingMesh = null;
@@ -98,6 +100,7 @@ export let ChatInstance = {
                     room: ChatInstance.currentRoom,
                     answer: JSON.stringify(answer)
                 });
+                ChatInstance.isReadyForIceCandidates = true;
             })
             .catch(function(err){
                 console.log(err);
@@ -231,7 +234,7 @@ export let ChatInstance = {
     onAnswer: function(answer){
         ChatInstance.peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
 
-        ChatInstance.connected = true;
+        ChatInstance.isReadyForIceCandidates = true;
 
         // Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
         ChatInstance.localICECandidates.forEach(candidate => {
@@ -250,7 +253,7 @@ export let ChatInstance = {
             const signalingState = ChatInstance.peerConnection.signalingState
             const description = ChatInstance.peerConnection.localDescription
             // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/signalingState
-            if(signalingState == "have-local-offer" || signalingState == "stable" && description != null) {
+            if(ChatInstance.isReadyForIceCandidates) {
                 console.log('Generated candidate');
                 ChatInstance.socket.emit('candidate', {
                     room: ChatInstance.currentRoom,
