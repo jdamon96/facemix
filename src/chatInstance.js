@@ -227,8 +227,12 @@ export let ChatInstance = {
         }
     },
 
+
     onAnswer: function(answer){
         ChatInstance.peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
+
+        ChatInstance.connected = true;
+
         // Take buffer of localICECandidates we've been saving and emit them now that connected to remote client
         ChatInstance.localICECandidates.forEach(candidate => {
             ChatInstance.socket.emit('candidate', {
@@ -262,7 +266,10 @@ export let ChatInstance = {
 
     onCandidate: function(candidate){
         let rtcCandidate = new RTCIceCandidate(JSON.parse(candidate));
-        ChatInstance.peerConnection.addIceCandidate(rtcCandidate);
+        console.log(rtcCandidate);
+        if(rtcCandidate != null){
+            ChatInstance.peerConnection.addIceCandidate(rtcCandidate);    
+        }
     },
 
     onTrackHandler: function(event){
