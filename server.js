@@ -163,11 +163,13 @@ io.on('connection', function(socket){
     });
 
     socket.on('end-chat', function(){
-        console.log(socket.id, 'ended the chat. Removing all clients from room.');
-
-        let roomname = socket.room;
-        socket.broadcast.to(roomname).emit('chat-ended');
-        clearRoom(roomname);
+        console.log(socket.id, 'ended the chat.');
+        removeFromWaitlist(socket.id);
+        if(socket.room != null){
+            console.log(socket.id, 'was in room', socket.room, '. Broadcasting \'chat ended\' event to all clients in the room and clearing the room.');
+            socket.broadcast.to(socket.room).emit('chat-ended');
+            clearRoom(socket.room); 
+        }
     });
 
     // receive 'offer' from client and relay to the other client in the room
