@@ -36,6 +36,7 @@ let lobbyButtons = [findChatButton, faceScanButton, aboutButton];
 let chatModeButtons = [endChatButton, newChatButton];
 let mobileFooterButtons = [findChatButton, newChatButton, faceScanButton, endChatButton];
 
+// handle closing pop ups with mouse clicks
 window.addEventListener('click', function(e){
     if(state.popup_active && !e.target.classList.contains('popup')){
         if(e.target.id == 'about-span'|| e.target.id == 'about'){
@@ -45,6 +46,19 @@ window.addEventListener('click', function(e){
         }
     }
 });
+
+// handle closing pop ups with touch
+window.addEventListener('touchend', function(e){
+    if(state.popup_active && !e.target.classList.contains('popup')){
+        if(e.target.id == 'about-span'|| e.target.id == 'about'){
+        
+        } else {
+            hidePopUpWindow();
+        }
+    }
+});
+
+
 
 title.addEventListener('dblclick', function(e){
     if(!state.population_display){
@@ -91,43 +105,52 @@ function hidePopulationCounter(){
 }
 
 function onAboutEnterHandler(event){
+    console.log('enter handler fired');
     if(!state.popup_active){
         event.target.style.color = 'blue';
     }
 }
 
 function onAboutLeaveHandler(event){
+    console.log('leave handler fired');
     event.target.style.color = 'black';
 }
 
 function onFindChatEnterHandler(event){
+    console.log('enter handler fired');
     if(!state.popup_active){
         event.target.style.backgroundColor = '#EFFDEA';
     }
 }
 
 function onFindChatLeaveHandler(event){
+    console.log('leave handler fired');
     event.target.style.backgroundColor = '#FFFFFF';
 }
 
 function onNewChatEnterHandler(event){
+    console.log('enter handler fired');
     event.target.style.backgroundColor = '#EFFDEA';
 }
 
 function onNewChatLeaveHandler(event){
+    console.log('leave handler fired');
     event.target.style.backgroundColor = '#FFFFFF';
 }
 
 function onEndChatEnterHandler(event){
+    console.log('enter handler fired');
     event.target.style.backgroundColor = '#FFE8E8';
 }
 
 function onEndChatLeaveHandler(event){
+    console.log('leave handler fired');
     event.target.style.backgroundColor = '#FFFFFF';
 }
 
 
 function onFaceScanEnterHandler(event){
+    console.log('enter handler fired');
     if(!state.popup_active){
         event.target.style.border = '1px solid blue';
         event.target.style.backgroundColor = '#E7EFFF'
@@ -135,6 +158,7 @@ function onFaceScanEnterHandler(event){
 }
 
 function onFaceScanLeaveHandler(event){
+    console.log('leave handler fired');
     event.target.style.border = '1px solid black';
     event.target.style.backgroundColor = 'transparent';    
 }
@@ -159,18 +183,24 @@ function aboutHandler(event){
 
 aboutButton.addEventListener('mouseenter', onAboutEnterHandler);
 aboutButton.addEventListener('mouseleave', onAboutLeaveHandler);
+aboutButton.addEventListener('touchend', onAboutLeaveHandler);
 
 faceScanButton.addEventListener('mouseenter', onFaceScanEnterHandler);
 faceScanButton.addEventListener('mouseleave', onFaceScanLeaveHandler);
+faceScanButton.addEventListener('touchend', onFaceScanLeaveHandler);
+
 
 findChatButton.addEventListener('mouseenter', onFindChatEnterHandler);
 findChatButton.addEventListener('mouseleave', onFindChatLeaveHandler);
+findChatButton.addEventListener('touchend', onFindChatLeaveHandler);
 
 endChatButton.addEventListener('mouseenter', onEndChatEnterHandler);
 endChatButton.addEventListener('mouseleave', onEndChatLeaveHandler);
+endChatButton.addEventListener('touchend', onEndChatLeaveHandler);
 
 newChatButton.addEventListener('mouseenter', onNewChatEnterHandler);
 newChatButton.addEventListener('mouseleave', onNewChatLeaveHandler);
+newChatButton.addEventListener('touchend', onNewChatLeaveHandler);
 
 
 /* Function to handle any keyboard functionality */
@@ -388,11 +418,13 @@ export function disableFindChatButton(){
     findChatButton.style.opacity = 0.5;
 }
 
-export function enableNewChatButton(){
-    // enable the find chat button
-    newChatButton.disabled = false;
+export function enableNewChatButton(shouldEnable){
+    if(shouldEnable){
+        // enable the find chat button
+        newChatButton.disabled = false;
 
-    newChatButton.style.opacity = 1;    
+        newChatButton.style.opacity = 1;    
+    }
 }
 
 export function disableNewChatButton(){

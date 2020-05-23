@@ -65,6 +65,23 @@ export let ChatInstance = {
         }
     },
 
+    findNewChat: function(){
+        //if there is a peerConnection
+        if(ChatInstance.peerConnection != null){
+            // let the chat peer know that you've ended the call
+            ChatInstance.socket.emit('end-chat');
+
+            // close the current peerConnection
+            ChatInstance.peerConnection.close();
+
+            // reset ChatInstance state variables
+            ChatInstance.resetChatInstance();
+
+
+            
+        }
+    },
+
     isDataChannelOpen() {
         return ChatInstance.dataChannel != null && ChatInstance.dataChannel.readyState == "open"
     },
@@ -166,7 +183,7 @@ export let ChatInstance = {
         });
 
         ChatInstance.dataChannel.addEventListener('message', event => {
-            userInterface.enableNewChatButton();
+            userInterface.enableNewChatButton(ChatInstance.isReadyForIceCandidates);
             let incomingData = event["data"].split(',')
             if(incomingData[0].includes("color")) {
                 meshHandler.setPeerColor(incomingData[1]);

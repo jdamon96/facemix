@@ -13,7 +13,7 @@ import wasmPath from '../node_modules/@tensorflow/tfjs-backend-wasm/dist/tfjs-ba
     Global Variables & Init Code
  **********************************/
 let model; //trained facemesh model
-let showFacemesh = false;
+let showFacemesh = false; // used for tracking the facescan toggle
 
 let profiler = [];
 let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
@@ -153,6 +153,15 @@ function handleEndChat(){
     meshHandler.render();
 };
 
+// Handler function for clicking the 'New-Chat' button
+function handleNewChat(){
+    ChatInstance.endCurrentChat();
+    meshHandler.clearPeerMesh();
+    meshHandler.render();
+    handleFindChat();
+}
+
+
 // Handler for a new color selection
 function handleColorChange(){
     let color = document.getElementById('color-picker').value;
@@ -182,7 +191,7 @@ function handleMediaAccess(){
             ChatInstance.setAudioStream(audioStream);
 
             updateUIForMediaAccess();
-
+            showFacemesh = true;
         })
         .catch(error => {
             userInterface.endLoader();
@@ -204,8 +213,8 @@ function handleFaceScanButton(){
         }
         else {
             turnOnFacemesh();
-        } 
-        showFacemesh = true;
+            showFacemesh = true;
+        }
     }
 
 }
@@ -299,11 +308,13 @@ function main() {
     const faceScanButton = document.getElementById('face-scan');
     const findChatButton = document.getElementById('find-a-chat');
     const endChatButton = document.getElementById('end-chat');
+    const newChatButton = document.getElementById('new-chat')
     const colorPicker = document.getElementById('color-picker');
 
     // Adding the 'click' event listener to the button and attaching the handler function
     findChatButton.addEventListener('click', handleFindChat);
     endChatButton.addEventListener('click', handleEndChat);
+    newChatButton.addEventListener('click', handleNewChat);
     faceScanButton.addEventListener('click', handleFaceScanButton);
     colorPicker.addEventListener('change', handleColorChange);
 
