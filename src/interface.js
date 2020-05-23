@@ -1,4 +1,4 @@
-let state = {
+export let state = {
     media_access: false,
     facemesh_on: false,
     popup_active: false,
@@ -6,6 +6,8 @@ let state = {
     mobile_DOM: true,
     population_display: false
 }
+
+const faceMeshButtonURLs = {"true": "url('./assets/facescan-off.png')", "false": "url('./assets/facescan-on.png')"}
 
 /* Get access to HTML elements */
 const header = document.getElementById('header');
@@ -27,6 +29,7 @@ const loader = document.getElementById('loader');
 /* necessary color picker code */
 const colorPicker = document.getElementById('color-picker');
 let colorDiv = document.getElementById("color-val");
+
 colorPicker.onchange = function() {
     colorDiv.style.color = colorPicker.value;
 }
@@ -450,14 +453,7 @@ export function enableFaceScanButton(){
 
 export function toggleFaceScanButton(){
     state.facemesh_on = !state.facemesh_on;
-
-    if(state.facemesh_on){
-        faceScanButton.style.backgroundImage = "url('./assets/facescan-off.png')";    
-    }
-    else {
-        faceScanButton.style.backgroundImage = "url('./assets/facescan-on.png')";    
-    }
-    
+    faceScanButton.style.backgroundImage = faceMeshButtonURLs[state.facemesh_on]
 }
 
 export { showNoCameraAccessMessage };

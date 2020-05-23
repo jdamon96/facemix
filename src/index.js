@@ -13,7 +13,6 @@ import wasmPath from '../node_modules/@tensorflow/tfjs-backend-wasm/dist/tfjs-ba
     Global Variables & Init Code
  **********************************/
 let model; //trained facemesh model
-let showFacemesh = false; // used for tracking the facescan toggle
 
 let profiler = [];
 let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
@@ -62,17 +61,6 @@ function updateUIForMediaAccess(){
     userInterface.enableFindChatButton();
     userInterface.enableFaceScanButton();
     userInterface.showColorPickerButton();
-    turnOnFacemesh();
-}
-
-function turnOnFacemesh(){
-    userInterface.toggleFaceScanButton();
-    console.log('turning ON facemesh');
-}
-
-function turnOffFacemesh(){
-    userInterface.toggleFaceScanButton();
-    console.log('turning OFF facemesh');
 }
 
 /**********************************
@@ -191,7 +179,6 @@ function handleMediaAccess(){
             ChatInstance.setAudioStream(audioStream);
 
             updateUIForMediaAccess();
-            showFacemesh = true;
         })
         .catch(error => {
             userInterface.endLoader();
@@ -202,21 +189,14 @@ function handleMediaAccess(){
 }
 
 function handleFaceScanButton(){
-
-    if (showFacemesh){
-        turnOffFacemesh();
-        showFacemesh = false;    
-    }
-    else {
-       if(localVideo.srcObject == null){
-            handleMediaAccess();    
-        }
-        else {
-            turnOnFacemesh();
-            showFacemesh = true;
+    userInterface.toggleFaceScanButton()
+    if (userInterface.state.facemesh_on) {
+        if(localVideo.srcObject == null){
+            handleMediaAccess();
+        } else {
+            callModelRenderLoop();
         }
     }
-
 }
 
 /* Handler function for when chat peer ends the current chat*/
@@ -260,35 +240,39 @@ function logProfiler() {
 }
 
 async function callModelRenderLoop(){
-    updateProfiler(0);
-    let predictions = await model.estimateFaces(localVideo);
-    updateProfiler(1);
+    if (userInterface.state.facemesh_on) {
+        updateProfiler(0);
+        let predictions = await model.estimateFaces(localVideo);
+        updateProfiler(1);
 
-    let facemesh;
+        let facemesh;
 
-    if (predictions.length > 0){
-        facemesh = predictions[0].scaledMesh;
-        meshHandler.updatePersonalMesh(facemesh);
-        updateProfiler(2);
+        if (predictions.length > 0){
+            facemesh = predictions[0].scaledMesh;
+            meshHandler.updatePersonalMesh(facemesh);
+            updateProfiler(2);
 
-        if(ChatInstance.isDataChannelOpen()){
-            ChatInstance.sendData(meshHandler.getPersonalMeshForTransit());
-            if (!hasSentColor) {
-                handleColorChange()
-                hasSentColor = true;
+            if(ChatInstance.isDataChannelOpen()){
+                ChatInstance.sendData(meshHandler.getPersonalMeshForTransit());
+                if (!hasSentColor) {
+                    handleColorChange()
+                    hasSentColor = true;
+                }
             }
+            userInterface.endLoader();
+            meshHandler.resizeCanvas();
+            meshHandler.render();
+            updateProfiler(3);
         }
-        userInterface.endLoader();
-        meshHandler.resizeCanvas();
+        renderIterator++;
+        if (renderIterator % 100 == 0) {
+            //logProfiler();
+        }
+        requestAnimationFrame(callModelRenderLoop);
+    } else {
+        meshHandler.clearPersonalMesh();
         meshHandler.render();
-        updateProfiler(3);
     }
-    renderIterator++;
-    if (renderIterator % 100 == 0) { 
-        //logProfiler();
-    }
-
-    requestAnimationFrame(callModelRenderLoop);
 }
 
 function main() {
