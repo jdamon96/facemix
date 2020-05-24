@@ -16,6 +16,7 @@ export let ChatInstance = {
     outgoingMesh: null,
 
     setSocket: function(socket) {
+        console.log("Running set socket function");
         ChatInstance.socket = socket
         ChatInstance.socket.on('error', ChatInstance.onError);
         ChatInstance.socket.on('candidate', ChatInstance.onIceCandidateFromPeer);
@@ -51,35 +52,13 @@ export let ChatInstance = {
     },
 
     endCurrentChat: function(){
+        ChatInstance.socket.emit('end-chat'); // let the chat peer know that you've ended the call
         //if there is a peerConnection
         if(ChatInstance.peerConnection != null){
-            // let the chat peer know that you've ended the call
-            ChatInstance.socket.emit('end-chat');
-
-            // close the current peerConnection
-            ChatInstance.peerConnection.close();
-
-            // reset ChatInstance state variables
-            ChatInstance.resetChatInstance();
-            
+            // if there is a peerConnection, close it
+            ChatInstance.peerConnection.close();   
         }
-    },
-
-    findNewChat: function(){
-        //if there is a peerConnection
-        if(ChatInstance.peerConnection != null){
-            // let the chat peer know that you've ended the call
-            ChatInstance.socket.emit('end-chat');
-
-            // close the current peerConnection
-            ChatInstance.peerConnection.close();
-
-            // reset ChatInstance state variables
-            ChatInstance.resetChatInstance();
-
-
-            
-        }
+        ChatInstance.resetChatInstance(); // reset ChatInstance state variables
     },
 
     isDataChannelOpen() {

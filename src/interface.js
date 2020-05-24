@@ -61,6 +61,18 @@ window.addEventListener('touchend', function(e){
     }
 });
 
+findChatButton.addEventListener('touchstart', event => {
+    console.log('touch start');
+});
+
+findChatButton.addEventListener('touchmove', event => {
+    console.log('touch move');
+});
+
+findChatButton.addEventListener('touchend', event => {
+    console.log('touch end');
+});
+
 
 
 title.addEventListener('dblclick', function(e){
@@ -107,65 +119,6 @@ function hidePopulationCounter(){
     populationCounter.style.display = 'none';
 }
 
-function onAboutEnterHandler(event){
-    console.log('enter handler fired');
-    if(!state.popup_active){
-        event.target.style.color = 'blue';
-    }
-}
-
-function onAboutLeaveHandler(event){
-    console.log('leave handler fired');
-    event.target.style.color = 'black';
-}
-
-function onFindChatEnterHandler(event){
-    console.log('enter handler fired');
-    if(!state.popup_active){
-        event.target.style.backgroundColor = '#EFFDEA';
-    }
-}
-
-function onFindChatLeaveHandler(event){
-    console.log('leave handler fired');
-    event.target.style.backgroundColor = '#FFFFFF';
-}
-
-function onNewChatEnterHandler(event){
-    console.log('enter handler fired');
-    event.target.style.backgroundColor = '#EFFDEA';
-}
-
-function onNewChatLeaveHandler(event){
-    console.log('leave handler fired');
-    event.target.style.backgroundColor = '#FFFFFF';
-}
-
-function onEndChatEnterHandler(event){
-    console.log('enter handler fired');
-    event.target.style.backgroundColor = '#FFE8E8';
-}
-
-function onEndChatLeaveHandler(event){
-    console.log('leave handler fired');
-    event.target.style.backgroundColor = '#FFFFFF';
-}
-
-
-function onFaceScanEnterHandler(event){
-    console.log('enter handler fired');
-    if(!state.popup_active){
-        event.target.style.border = '1px solid blue';
-        event.target.style.backgroundColor = '#E7EFFF'
-    }
-}
-
-function onFaceScanLeaveHandler(event){
-    console.log('leave handler fired');
-    event.target.style.border = '1px solid black';
-    event.target.style.backgroundColor = 'transparent';    
-}
-
 aboutButton.addEventListener('click', aboutHandler);
 
 /* Define button onClick handler functions */
@@ -173,37 +126,13 @@ aboutButton.addEventListener('click', aboutHandler);
 function aboutHandler(event){
     if(state.popup_active){
         /* if about is already active */ 
-        console.log('already active')  ;
+        console.log('About pop-up already active')  ;
     }
     else {
         //event.target.style.backgroundColor = 'transparent';  
         showAboutWindow();
     }
 }
-
-
-/* Define event listeners and attach handler functions */
-
-aboutButton.addEventListener('mouseenter', onAboutEnterHandler);
-aboutButton.addEventListener('mouseleave', onAboutLeaveHandler);
-aboutButton.addEventListener('touchend', onAboutLeaveHandler);
-
-faceScanButton.addEventListener('mouseenter', onFaceScanEnterHandler);
-faceScanButton.addEventListener('mouseleave', onFaceScanLeaveHandler);
-faceScanButton.addEventListener('touchend', onFaceScanLeaveHandler);
-
-
-findChatButton.addEventListener('mouseenter', onFindChatEnterHandler);
-findChatButton.addEventListener('mouseleave', onFindChatLeaveHandler);
-findChatButton.addEventListener('touchend', onFindChatLeaveHandler);
-
-endChatButton.addEventListener('mouseenter', onEndChatEnterHandler);
-endChatButton.addEventListener('mouseleave', onEndChatLeaveHandler);
-endChatButton.addEventListener('touchend', onEndChatLeaveHandler);
-
-newChatButton.addEventListener('mouseenter', onNewChatEnterHandler);
-newChatButton.addEventListener('mouseleave', onNewChatLeaveHandler);
-newChatButton.addEventListener('touchend', onNewChatLeaveHandler);
 
 
 /* Function to handle any keyboard functionality */

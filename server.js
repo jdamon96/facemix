@@ -72,7 +72,7 @@ io.on('connection', function(socket){
         if(firstInLine){ // If there was someone in line
             const roominvitation = createRoomInvitation(socket.id, firstInLine); // Invite the chat partner to a room
 
-            console.log(socket.id, ' joined and waitlist was non-empty.Sending room invitation to: ', firstInLine);
+            console.log(socket.id, 'joined and waitlist was non-empty. Sending room invitation to:', firstInLine);
             io.to(firstInLine).emit('roominvitation', roominvitation);
 
             socket.room = roominvitation.roomname;
@@ -197,7 +197,7 @@ io.on('connection', function(socket){
         removeFromWaitlist(socket.id);
 
         if(socket.room){
-            console.log("One of the clients disconnected from the chat. Removing all clients from the room")
+            console.log("One of the clients disconnected from the chat. Removing all clients from the room.")
             let roomname = socket.room;
             socket.broadcast.to(roomname).emit('chat-ended');
             clearRoom(roomname);

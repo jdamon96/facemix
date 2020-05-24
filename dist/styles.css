@@ -10,6 +10,28 @@ body {
     overflow: hidden;
 }
 
+@media (hover: hover) {
+
+    #about:hover {
+        color: blue;
+    }
+
+    #find-a-chat:hover:enabled {
+        background-color: #EFFDEA;
+    }
+    #new-chat:hover:enabled {
+        background-color: #EFFDEA;
+    }
+
+    #end-chat:hover {
+        background-color: #FFE8E8;
+    }
+
+    #face-scan:hover {
+        background-color: #E7EFFF;
+    }
+}
+
 #population-counter {
     position: fixed;
     display: none;

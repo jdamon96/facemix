@@ -276,6 +276,7 @@ async function callModelRenderLoop(){
 }
 
 function main() {
+    console.log('Running main() function');
     userInterface.disableFindChatButton(); // enabled when program has camera access
     /* give ChatInstance access to the client socket*/
     ChatInstance.setSocket(socket);
