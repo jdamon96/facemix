@@ -18,6 +18,7 @@ let profiler = [];
 let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
 let renderIterator = 0;
 
+let videoStream;
 let remoteAudio = document.getElementById('remoteAudio');
 let localVideo = document.getElementById('localVideo');
 let hasSentColor = false;
@@ -172,7 +173,7 @@ function handleMediaAccess(){
         .getUserMedia({video: true, audio: true})
         .then(stream => {
 
-            let videoStream = new MediaStream(stream.getVideoTracks());
+            videoStream = new MediaStream(stream.getVideoTracks());
             let audioStream = new MediaStream(stream.getAudioTracks());
 
             prepLocalVideo(videoStream);
@@ -189,13 +190,16 @@ function handleMediaAccess(){
 }
 
 function handleFaceScanButton(){
-    userInterface.toggleFaceScanButton()
+    userInterface.toggleFaceScanButton();
     if (userInterface.state.facemesh_on) {
+        videoStream.start();
         if(localVideo.srcObject == null){
             handleMediaAccess();
         } else {
             callModelRenderLoop();
         }
+    } else {
+        videoStream.stop();
     }
 }
 
