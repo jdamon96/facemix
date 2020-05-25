@@ -189,17 +189,26 @@ function handleMediaAccess(){
         });
 }
 
+function toggleVideoStream(){
+    if(videoStream){
+        if(userInterface.state.facemesh_on){
+            videoStream.start();
+        } else {
+            videoStream.stop();
+        }
+    }
+
+}
+
 function handleFaceScanButton(){
     userInterface.toggleFaceScanButton();
+    toggleVideoStream();
     if (userInterface.state.facemesh_on) {
-        videoStream.start();
         if(localVideo.srcObject == null){
             handleMediaAccess();
         } else {
             callModelRenderLoop();
         }
-    } else {
-        videoStream.stop();
     }
 }
 
