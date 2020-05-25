@@ -18,7 +18,7 @@ let profiler = [];
 let checkpoints = ["Timeout length: ", "Model Responded: ", "Handle Mesh: ", "Render: "];
 let renderIterator = 0;
 
-let videoStream;
+let videoTrack;
 let remoteAudio = document.getElementById('remoteAudio');
 let localVideo = document.getElementById('localVideo');
 let hasSentColor = false;
@@ -173,7 +173,8 @@ function handleMediaAccess(){
         .getUserMedia({video: true, audio: true})
         .then(stream => {
 
-            videoStream = new MediaStream(stream.getVideoTracks());
+            videoTrack = stream.getVideoTracks();
+            let videoStream = new MediaStream(videoTrack);
             let audioStream = new MediaStream(stream.getAudioTracks());
 
             prepLocalVideo(videoStream);
@@ -189,12 +190,12 @@ function handleMediaAccess(){
         });
 }
 
-function toggleVideoStream(){
-    if(videoStream){
+function toggleVideoTrack(){
+    if(videoTrack){
         if(userInterface.state.facemesh_on){
-            videoStream.start();
+            videoTrack.start();
         } else {
-            videoStream.stop();
+            videoTrack.stop();
         }
     }
 
@@ -202,7 +203,7 @@ function toggleVideoStream(){
 
 function handleFaceScanButton(){
     userInterface.toggleFaceScanButton();
-    toggleVideoStream();
+    toggleVideoTrack();
     if (userInterface.state.facemesh_on) {
         if(localVideo.srcObject == null){
             handleMediaAccess();
@@ -290,6 +291,7 @@ async function callModelRenderLoop(){
 
 function main() {
     console.log('Running main() function');
+    console.log('wassu bitch');
     userInterface.disableFindChatButton(); // enabled when program has camera access
     /* give ChatInstance access to the client socket*/
     ChatInstance.setSocket(socket);
