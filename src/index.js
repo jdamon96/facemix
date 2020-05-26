@@ -191,13 +191,6 @@ function handleMediaAccess(){
 }
 
 function toggleVideoTrack(){
-    if(videoTrack){
-        if(userInterface.state.facemesh_on){
-            videoTrack.start();
-        } else {
-            videoTrack.stop();
-        }
-    }
 
 }
 
@@ -291,7 +284,6 @@ async function callModelRenderLoop(){
 
 function main() {
     console.log('Running main() function');
-    console.log('wassu bitch');
     userInterface.disableFindChatButton(); // enabled when program has camera access
     /* give ChatInstance access to the client socket*/
     ChatInstance.setSocket(socket);
