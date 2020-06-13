@@ -32,6 +32,46 @@ body {
     }
 }
 
+#preload-container {
+    position: relative;
+    height: 100%;
+    width: 60%;
+    margin: 0 auto;
+    padding: 20px;
+    resize: both;
+    overflow: auto;
+}
+
+#pre-loader {
+    position: absolute;
+    /*
+    * 1) use top and left to offset by 50% to set element origin to center
+    * 2) use margin-top and margin-left to offset element origin to page center
+    */
+    top: 50%;
+    margin-top: -30px;
+    left: 50%;
+    margin-left: -30px;
+
+    border: 1px solid #f3f3f3; /* Light grey */
+    border-top: 1px solid black; /* Blue */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1.5s linear infinite;
+}
+
+#donate-text {
+    position: absolute;
+    /*
+    * 1) use top and left to offset by 50% to set element origin to center
+    * 2) use margin-top and margin-left to offset element origin to page center
+    */
+    top: 60%;
+    left: 50%;
+    margin-left: -159px;  
+}
+
 #population-counter {
     position: fixed;
     display: none;
@@ -71,10 +111,9 @@ body {
     * gets the job done... lol
     */
     margin-left: -1px;
-
     min-height: 100%;
     height: 100%;
-    display: grid;
+    display: none;
     grid-template-rows: 75px 10fr 75px;
     grid-template-columns: 1fr 10fr 1fr;
     grid-template-areas:
@@ -325,11 +364,11 @@ hr {
     100% { transform: rotate(360deg); }
 }
 
-@media only screen and (max-width: 550px) {
+@media only screen and (max-width: 600px) {
 
     #title {
         font-size: 24px;
-        margin-top: 20px;
+        margin-top: 25px;
     }
 
     #about-message {

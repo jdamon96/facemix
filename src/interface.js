@@ -88,7 +88,7 @@ title.addEventListener('dblclick', function(e){
 
 document.addEventListener("DOMContentLoaded", function(event){
     let mediaQueriesList = [
-        window.matchMedia("(max-width: 550px)")
+        window.matchMedia("(max-width: 600px)")
     ]
 
     //call mediaQueryHandler on initial load

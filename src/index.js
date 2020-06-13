@@ -28,6 +28,7 @@ let socket = io(); //initializing the socket.io handle
 setWasmPath(wasmPath);
 tf.setBackend('wasm').then(() => {main()});
 
+
 /**********************************
         Helper Functions
 **********************************/
@@ -262,7 +263,7 @@ async function callModelRenderLoop(){
             if(ChatInstance.isDataChannelOpen()){
                 ChatInstance.sendData(meshHandler.getPersonalMeshForTransit());
                 if (!hasSentColor) {
-                    handleColorChange()
+                    handleColorChange();
                     hasSentColor = true;
                 }
             }
@@ -308,7 +309,7 @@ function main() {
     endChatButton.addEventListener('click', handleEndChat);
     newChatButton.addEventListener('click', handleNewChat);
     faceScanButton.addEventListener('click', handleFaceScanButton);
-    colorPicker.addEventListener('change', handleColorChange);
+    colorPicker.addEventListener('input', handleColorChange);
 
     /* set init facemesh color to init color picker value*/
     let color = colorPicker.value;
